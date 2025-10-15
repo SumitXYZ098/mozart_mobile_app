@@ -1,55 +1,213 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from "react";
 import {
-  View, Text, StyleSheet, TouchableOpacity, Animated, ScrollView
-} from 'react-native';
-import InputField from '../components/InputField';
-import { Colors } from '../theme/colors';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { AuthStackParamList } from '../navigation/AuthNavigator';
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Animated,
+  Image,
+} from "react-native";
+import InputField from "../components/InputField";
+import { Colors } from "../theme/colors";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { AuthStackParamList } from "../navigation/AuthNavigator";
+import AuthLayout from "@/components/AuthLayout";
+import KeyboardWrapper from "@/components/KeyboardWrapper";
+import Checkbox from "@/components/Checkbox";
+import Divider from "@/components/Divider";
+import { Controller, useForm } from "react-hook-form";
 
-type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
+type Props = NativeStackScreenProps<AuthStackParamList, "Login">;
+
+type FormValues = {
+  email: string;
+  password: string;
+};
 
 export default function LoginScreen({ navigation }: Props) {
+  const [remember, setRemember] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }).start();
+    Animated.timing(fadeAnim, {
+      duration: 600,
+      useNativeDriver: true,
+      toValue: 1,
+    }).start();
   }, []);
 
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormValues>({
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+    mode: "onChange",
+  });
+
+  const onSubmit = (data: FormValues) => {
+    console.log("Form submitted:", data);
+  };
   return (
-    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
-      <ScrollView contentContainerStyle={styles.inner}>
-        <Text style={styles.title}>Welcome Back!</Text>
-        <InputField placeholder="Email or phone number" />
-        <InputField placeholder="Password" secureTextEntry />
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Login</Text>
-        </TouchableOpacity>
+    <KeyboardWrapper scrollable>
+      <AuthLayout withBackground>
+        <Animated.View
+          style={[styles.container, { opacity: fadeAnim }]}
+          className="h-auto"
+        >
+          <ScrollView contentContainerStyle={styles.inner}>
+            <Text style={styles.title}>Welcome Back!</Text>
+            <Text style={styles.subtitle}>
+              Sign up to enjoy the feature of Revolutie
+            </Text>
 
-        <Text style={styles.linkText}>Forgot password?</Text>
+            {/* Email Field */}
+            <Controller
+              control={control}
+              name="email"
+              rules={{
+                required: "Email is required",
+                pattern: {
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: "Invalid email address",
+                }, 
+              }}
+              render={({ field, fieldState }) => (
+                <>
+                  <InputField
+                    placeholder="Enter your email or phone number"
+                    label="Email or Phone number"
+                    type="email"
+                    value={field.value}
+                    onChangeText={field.onChange}
+                    onBlur={field.onBlur}
+                    keyboardType="email-address"
+                    error={fieldState.error?.message}
+                  />
+                </>
+              )}
+            />
 
-        <View style={{ flexDirection: 'row', marginTop: 20 }}>
-          <Text>Don’t have an account? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-            <Text style={styles.signupText}>Sign Up</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </Animated.View>
+            <Controller
+              control={control}
+              name="password"
+              rules={{
+                required: "Password is required",
+                minLength: {
+                  value: 6,
+                  message: "Password must be at least 6 characters",
+                },
+              }}
+              render={({ field, fieldState }) => (
+                <>
+                  <InputField
+                    placeholder="Enter your password"
+                    label="Password"
+                    type="password"
+                    value={field.value}
+                    onBlur={field.onBlur}
+                    onChangeText={field.onChange}
+                    error={fieldState.error?.message}
+                  />
+                </>
+              )}
+            />
+            <View className="flex flex-row justify-between items-center mb-5">
+              <Checkbox
+                label="Keep me logged in"
+                checked={remember}
+                onChange={setRemember}
+              />
+              <Text style={styles.linkText}>Forgot password</Text>
+            </View>
+            <TouchableOpacity
+              onPress={handleSubmit(onSubmit)}
+              style={styles.button}
+            >
+              <Text style={styles.buttonText}>Login</Text>
+            </TouchableOpacity>
+            <Divider label="or" />
+            <View className=" flex-1 flex-row items-center gap-x-4 mb-[10px]">
+              <TouchableOpacity className="py-3 bg-[#F3F3F3] flex-grow flex flex-row rounded-3xl justify-center items-center">
+                <Text style={styles.loginText}>Login with</Text>
+                <Image
+                  source={require("../../assets/google.png")}
+                  className="w-6 h-6"
+                />
+              </TouchableOpacity>
+              <TouchableOpacity className="py-3 bg-[#F3F3F3] flex-grow flex-row rounded-3xl justify-center items-center ">
+                <Text style={styles.loginText}>Login with</Text>
+                <Image
+                  source={require("../../assets/apple.png")}
+                  className="w-6 h-6"
+                />
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ flexDirection: "row", justifyContent: "center" }}>
+              <Text>Need an account?</Text>
+              <TouchableOpacity onPress={() => navigation.navigate("SignUp")}>
+                <Text style={styles.signupText}> Create one</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </Animated.View>
+      </AuthLayout>
+    </KeyboardWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.white },
-  inner: { flexGrow: 1, justifyContent: 'center', padding: 25 },
-  title: { fontSize: 28, fontWeight: 'bold', marginBottom: 25, color: Colors.primary },
+  container: {},
+  inner: {
+    display: "flex",
+    justifyContent: "flex-end",
+    paddingVertical: 24,
+    paddingHorizontal: 48,
+    backgroundColor: Colors.white,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 700,
+    marginBottom: 12,
+    color: Colors.black,
+    textAlign: "center",
+    fontFamily: "PlusJakartaSans_700Bold",
+  },
+  subtitle: {
+    fontSize: 14,
+    color: Colors.black,
+    textAlign: "center",
+    marginBottom: 12,
+    fontFamily: "Poppins_400Regular",
+  },
   button: {
     backgroundColor: Colors.primary,
-    paddingVertical: 15,
-    borderRadius: 12,
-    marginTop: 10,
+    paddingVertical: 14,
+    borderRadius: 32,
   },
-  buttonText: { color: Colors.white, textAlign: 'center', fontSize: 18, fontWeight: '600' },
-  linkText: { color: Colors.gray, textAlign: 'center', marginTop: 15 },
-  signupText: { color: Colors.primary, fontWeight: '600' },
+  buttonText: {
+    color: Colors.white,
+    textAlign: "center",
+    fontSize: 16,
+    fontFamily: "PlusJakartaSans_700Bold",
+  },
+  linkText: {
+    color: Colors.primary,
+    textAlign: "center",
+    fontFamily: "Poppins_400Regular",
+    fontSize: 12,
+  },
+  signupText: { color: Colors.primary, fontWeight: "600" },
+  loginText: {
+    color: Colors.black,
+    fontSize: 12,
+    fontFamily: "Poppins_400Regular",
+  },
 });

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../theme/colors';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
@@ -10,7 +11,7 @@ export default function VerifyEmailScreen({ navigation }: Props) {
   const [code, setCode] = useState(['', '', '', '', '', '']);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Verify Your Account</Text>
       <Text style={styles.subtitle}>Enter the 6-digit code sent to your email</Text>
 
@@ -37,8 +38,8 @@ export default function VerifyEmailScreen({ navigation }: Props) {
         <Text style={styles.buttonText}>Verify Email</Text>
       </TouchableOpacity>
 
-      <Text style={styles.resend}>Didn’t receive the code? <Text style={styles.link}>Resend</Text></Text>
-    </View>
+      <Text style={styles.resend}>Didn't receive the code? <Text style={styles.link}>Resend</Text></Text>
+    </SafeAreaView>
   );
 }
 

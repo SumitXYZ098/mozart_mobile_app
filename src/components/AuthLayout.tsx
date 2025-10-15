@@ -27,11 +27,11 @@ export default function AuthLayout({ children, withBackground = true }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  background: { flex: 1, justifyContent: 'center' },
+  background: { flex: 1, justifyContent: 'center', width:'100%', height:'100%' },
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    padding: 20,
+    padding: 0,
     backgroundColor: 'rgba(0,0,0,0.3)',
   },
 });

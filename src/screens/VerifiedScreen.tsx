@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../theme/colors';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
@@ -14,7 +15,7 @@ export default function VerifiedScreen({ navigation }: Props) {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Animated.View style={[styles.circle, { transform: [{ scale: scaleAnim }] }]}>
         <Text style={styles.check}>✓</Text>
       </Animated.View>
@@ -25,7 +26,7 @@ export default function VerifiedScreen({ navigation }: Props) {
       <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Onboarding')}>
         <Text style={styles.buttonText}>Go to Home</Text>
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 }
 

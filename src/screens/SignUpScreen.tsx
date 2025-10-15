@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import InputField from '../components/InputField';
 import { Colors } from '../theme/colors';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -9,27 +10,29 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'SignUp'>;
 
 export default function SignUpScreen({ navigation }: Props) {
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Create Your Account</Text>
+    <SafeAreaView style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.title}>Create Your Account</Text>
 
-      <InputField placeholder="First Name" />
-      <InputField placeholder="Last Name" />
-      <InputField placeholder="Email" keyboardType="email-address" />
-      <InputField placeholder="Phone Number" keyboardType="phone-pad" />
-      <InputField placeholder="Password" secureTextEntry />
-      <InputField placeholder="Confirm Password" secureTextEntry />
+        <InputField placeholder="First Name" />
+        <InputField placeholder="Last Name" />
+        <InputField placeholder="Email" keyboardType="email-address" />
+        <InputField placeholder="Phone Number" keyboardType="phone-pad" />
+        <InputField placeholder="Password" secureTextEntry />
+        <InputField placeholder="Confirm Password" secureTextEntry />
 
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('VerifyEmail')}>
-        <Text style={styles.buttonText}>Sign Up</Text>
-      </TouchableOpacity>
-
-      <View style={styles.footer}>
-        <Text>Already have an account? </Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.link}>Login</Text>
+        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('VerifyEmail')}>
+          <Text style={styles.buttonText}>Sign Up</Text>
         </TouchableOpacity>
-      </View>
-    </ScrollView>
+
+        <View style={styles.footer}>
+          <Text>Already have an account? </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+            <Text style={styles.link}>Login</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
