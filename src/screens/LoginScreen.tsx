@@ -17,17 +17,20 @@ import KeyboardWrapper from "@/components/KeyboardWrapper";
 import Checkbox from "@/components/Checkbox";
 import Divider from "@/components/Divider";
 import { Controller, useForm } from "react-hook-form";
+import { useLogin } from "@/hooks/useAuth";
+import { toast } from "@/stores/useToastStore";
 
 type Props = NativeStackScreenProps<AuthStackParamList, "Login">;
 
 type FormValues = {
   email: string;
   password: string;
+  rememberMe: boolean;
 };
 
 export default function LoginScreen({ navigation }: Props) {
-  const [remember, setRemember] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const { mutate: login, isPending } = useLogin();
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -45,12 +48,31 @@ export default function LoginScreen({ navigation }: Props) {
     defaultValues: {
       email: "",
       password: "",
+      rememberMe: false,
     },
     mode: "onChange",
   });
 
   const onSubmit = (data: FormValues) => {
-    console.log("Form submitted:", data);
+    login(
+      {
+        identifier: data.email,
+        password: data.password,
+        rememberMe: data.rememberMe,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Logged in successfully");
+          console.log("Form submitted:successfull", data);
+          
+        },
+        onError: (err: unknown) => {
+          console.log("Form submitted:err", data);
+          const message = err instanceof Error ? "Invalid username and password !" : "Login failed";
+          toast.error(message);
+        },
+      }
+    );
   };
   return (
     <KeyboardWrapper scrollable>
@@ -74,21 +96,19 @@ export default function LoginScreen({ navigation }: Props) {
                 pattern: {
                   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
                   message: "Invalid email address",
-                }, 
+                },
               }}
               render={({ field, fieldState }) => (
-                <>
-                  <InputField
-                    placeholder="Enter your email or phone number"
-                    label="Email or Phone number"
-                    type="email"
-                    value={field.value}
-                    onChangeText={field.onChange}
-                    onBlur={field.onBlur}
-                    keyboardType="email-address"
-                    error={fieldState.error?.message}
-                  />
-                </>
+                <InputField
+                  placeholder="Enter your email"
+                  label="Email"
+                  type="email"
+                  value={field.value.toLowerCase()}
+                  onChangeText={field.onChange}
+                  onBlur={field.onBlur}
+                  keyboardType="email-address"
+                  error={fieldState.error?.message}
+                />
               )}
             />
 
@@ -103,24 +123,28 @@ export default function LoginScreen({ navigation }: Props) {
                 },
               }}
               render={({ field, fieldState }) => (
-                <>
-                  <InputField
-                    placeholder="Enter your password"
-                    label="Password"
-                    type="password"
-                    value={field.value}
-                    onBlur={field.onBlur}
-                    onChangeText={field.onChange}
-                    error={fieldState.error?.message}
-                  />
-                </>
+                <InputField
+                  placeholder="Enter your password"
+                  label="Password"
+                  type="password"
+                  value={field.value}
+                  onBlur={field.onBlur}
+                  onChangeText={field.onChange}
+                  error={fieldState.error?.message}
+                />
               )}
             />
             <View className="flex flex-row justify-between items-center mb-5">
-              <Checkbox
-                label="Keep me logged in"
-                checked={remember}
-                onChange={setRemember}
+              <Controller
+                name="rememberMe"
+                control={control}
+                render={({ field }) => (
+                  <Checkbox
+                    label="Keep me logged in"
+                    checked={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
               />
               <Text style={styles.linkText}>Forgot password</Text>
             </View>

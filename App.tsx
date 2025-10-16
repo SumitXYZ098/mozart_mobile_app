@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import RootNavigator from './src/navigation/RootNavigator';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Font from 'expo-font';
@@ -16,6 +15,11 @@ import {
   Poppins_700Bold,
 } from '@expo-google-fonts/poppins';
 import './global.css';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import RootNavigator from '@/navigation/RootNavigator';
+import ToastHost from '@/components/ToastHost';
+
+const queryClient = new QueryClient();
 
 export default function App() {
   useEffect(() => {
@@ -37,9 +41,12 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       {/* Wrap with view to enforce SafeAreaProvider taking flex:1 */}
-      <SafeAreaProvider style={{ flex: 1 }}>
-        <RootNavigator />
-      </SafeAreaProvider>
+      <QueryClientProvider client={queryClient}>
+        <SafeAreaProvider style={{ flex: 1 }}>
+          <RootNavigator />
+          <ToastHost />
+        </SafeAreaProvider>
+      </QueryClientProvider>
     </GestureHandlerRootView>
   );
 }

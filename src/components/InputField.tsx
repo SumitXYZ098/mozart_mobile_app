@@ -60,7 +60,10 @@ export default function InputField({ label, type, error, ...props }: Props) {
 
     if (type === "search" && controlledValue.length > 0) {
       return (
-        <Pressable onPress={() => props.onChangeText && props.onChangeText("")} hitSlop={10}>
+        <Pressable
+          onPress={() => props.onChangeText && props.onChangeText("")}
+          hitSlop={10}
+        >
           <X size={20} color={Colors.gray} />
         </Pressable>
       );
@@ -70,7 +73,12 @@ export default function InputField({ label, type, error, ...props }: Props) {
   };
 
   return (
-    <View style={styles.container}>
+    <View
+      style={{
+        marginBottom: error ? 8 : 16,
+        flex: 1,
+      }}
+    >
       {label && <Text style={styles.label}>{label}</Text>}
 
       <View
@@ -79,8 +87,6 @@ export default function InputField({ label, type, error, ...props }: Props) {
           { borderColor: error ? Colors.error : Colors.gray },
         ]}
       >
-        
-
         <TextInput
           {...props}
           style={styles.input}
@@ -106,9 +112,6 @@ export default function InputField({ label, type, error, ...props }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    marginBottom: 16,
-  },
   label: {
     color: Colors.gray,
     marginBottom: 6,
