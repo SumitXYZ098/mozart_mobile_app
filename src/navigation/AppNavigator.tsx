@@ -1,37 +1,42 @@
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Colors } from '../theme/colors';
-import Ionicons from '@expo/vector-icons/Ionicons';
+import React, { useState } from 'react';
+import { View } from 'react-native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HomeScreen from '@/screens/app/HomeScreen';
 import ProfileScreen from '@/screens/app/ProfileScreen';
+import AnalyticsScreen from '@/screens/app/AnalyticsScreen';
+import WalletScreen from '@/screens/app/WalletScreen';
+import MusicScreen from '@/screens/app/MusicScreen';
+import TabNavigation from '@/components/TabNavigation';
 
-const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
+  const [activeTab, setActiveTab] = useState('home');
+
+  const renderScreen = () => {
+    switch (activeTab) {
+      case 'home':
+        return <HomeScreen />;
+      case 'analytics':
+        return <AnalyticsScreen />;
+      case 'wallet':
+        return <WalletScreen />;
+      case 'music':
+        return <MusicScreen />;
+      case 'profile':
+        return <ProfileScreen />;
+      default:
+        return <HomeScreen />;
+    }
+  };
+
   return (
-    <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.gray,
-      }}>
-      <Tab.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" color={color} size={size} />
-          ),
-        }}
+    <View className="flex-1">
+      {renderScreen()}
+      <TabNavigation 
+        activeTab={activeTab} 
+        onTabPress={setActiveTab} 
       />
-      <Tab.Screen
-        name="Profile"
-        component={ProfileScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" color={color} size={size} />
-          ),
-        }}
-      />
-    </Tab.Navigator>
+    </View>
   );
 }

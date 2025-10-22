@@ -8,10 +8,10 @@ import {
   Animated,
   Image,
 } from "react-native";
-import InputField from "../components/InputField";
-import { Colors } from "../theme/colors";
+import InputField from "../../components/InputField";
+import { Colors } from "../../theme/colors";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { AuthStackParamList } from "../navigation/AuthNavigator";
+import { AuthStackParamList } from "../../navigation/AuthNavigator";
 import AuthLayout from "@/components/AuthLayout";
 import KeyboardWrapper from "@/components/KeyboardWrapper";
 import Divider from "@/components/Divider";
@@ -277,14 +277,14 @@ export default function SignUpScreen({ navigation }: Props) {
               <TouchableOpacity className="py-3 bg-[#F3F3F3] flex-grow flex flex-row rounded-3xl justify-center items-center">
                 <Text style={styles.loginText}>Sign Up with</Text>
                 <Image
-                  source={require("../../assets/google.png")}
+                  source={require("../../../assets/images/google.png")}
                   className="w-6 h-6"
                 />
               </TouchableOpacity>
               <TouchableOpacity className="py-3 bg-[#F3F3F3] flex-grow flex-row rounded-3xl justify-center items-center ">
                 <Text style={styles.loginText}>Sign Up with</Text>
                 <Image
-                  source={require("../../assets/apple.png")}
+                  source={require("../../../assets/images/apple.png")}
                   className="w-6 h-6"
                 />
               </TouchableOpacity>

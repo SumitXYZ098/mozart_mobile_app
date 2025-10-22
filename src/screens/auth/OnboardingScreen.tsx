@@ -8,9 +8,9 @@ import {
   Animated,
   Dimensions,
 } from "react-native";
-import { Colors } from "../theme/colors";
+import { Colors } from "../../theme/colors";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { AuthStackParamList } from "../navigation/AuthNavigator";
+import { AuthStackParamList } from "../../navigation/AuthNavigator";
 
 type Props = NativeStackScreenProps<AuthStackParamList, "Onboarding">;
 
@@ -48,11 +48,11 @@ export default function OnboardingScreen({ navigation }: Props) {
 
   return (
     <ImageBackground
-      source={require("../../assets/background.png")}
+      source={require("../../../assets/images/background.png")}
       style={styles.bg}
     >
       <Animated.Image
-        source={require("../../assets/icon.png")}
+        source={require("../../../assets/icon.png")}
         style={[
           styles.logo,
           {

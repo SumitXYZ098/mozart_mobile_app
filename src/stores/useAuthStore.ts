@@ -41,7 +41,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
       return;
     }
 
-    const ttlMinutes = rememberMe ? undefined : 1440; // 1 hour session for non-remembered
+    const ttlMinutes = rememberMe ? undefined : 1440; 
     await storageAPI.setItem(STORAGE_KEY, JSON.stringify(user), ttlMinutes);
   },
 
@@ -49,8 +49,8 @@ export const useAuthStore = create<AuthStore>((set) => ({
    * Clear user from store and AsyncStorage
    */
   logOut: async () => {
-    set({ user: null });
     await storageAPI.removeItem(STORAGE_KEY);
+    set({ user: null });
   },
 
   /**
@@ -78,14 +78,14 @@ export const useAuthStore = create<AuthStore>((set) => ({
             return;
           }
 
-          set({ user: fullUser, isAuthLoaded: true });
+          set({ user: JSON.parse(savedUser), isAuthLoaded: true });
         } catch (apiError) {
           // failed to fetch full user, fallback to stored data
           console.warn("Failed to refresh user:", apiError);
-          set({ user: parsedUser, isAuthLoaded: true });
+          set({ user: JSON.parse(savedUser), isAuthLoaded: true });
         }
       } else {
-        set({ user: parsedUser, isAuthLoaded: true });
+        set({ user: JSON.parse(savedUser), isAuthLoaded: true });
       }
     } catch (err) {
       console.warn("loadUserFromStorage error:", err);

@@ -1,11 +1,10 @@
-import LoginScreen from '@/screens/LoginScreen';
-import OnboardingScreen from '@/screens/OnboardingScreen';
-import SignUpScreen from '@/screens/SignUpScreen';
-import SplashScreen from '@/screens/SplashScreen';
-import VerifiedScreen from '@/screens/VerifiedScreen';
-import VerifyEmailScreen from '@/screens/VerifyEmailScreen';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-
+import LoginScreen from "@/screens/auth/LoginScreen";
+import OnboardingScreen from "@/screens/auth/OnboardingScreen";
+import SignUpScreen from "@/screens/auth/SignUpScreen";
+import SplashScreen from "@/screens/SplashScreen";
+import VerifiedScreen from "@/screens/auth/VerifiedScreen";
+import VerifyEmailScreen from "@/screens/auth/VerifyEmailScreen";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 export type AuthStackParamList = {
   Splash: undefined;
@@ -22,7 +21,8 @@ export default function AuthNavigator() {
   return (
     <Stack.Navigator
       initialRouteName="Splash"
-      screenOptions={{ headerShown: false, animation: 'fade' }}>
+      screenOptions={{ headerShown: false, animation: "fade" }}
+    >
       <Stack.Screen name="Splash" component={SplashScreen} />
       <Stack.Screen name="Onboarding" component={OnboardingScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
