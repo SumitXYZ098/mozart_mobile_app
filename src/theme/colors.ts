@@ -5,5 +5,7 @@ export const Colors = {
     gray: '#B3B3B3',
     lightGray: '#E5E5E5',
     error: "#E63946",
+    secondary:'#F8F8F8',
+    lightPrimary:'#EEE8FF',
   };
   

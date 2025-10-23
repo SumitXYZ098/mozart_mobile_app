@@ -8,17 +8,17 @@ import {
   Animated,
   Image,
 } from "react-native";
-import InputField from "../../components/InputField";
 import { Colors } from "../../theme/colors";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { AuthStackParamList } from "../../navigation/AuthNavigator";
-import AuthLayout from "@/components/AuthLayout";
-import KeyboardWrapper from "@/components/KeyboardWrapper";
-import Checkbox from "@/components/Checkbox";
-import Divider from "@/components/Divider";
+import KeyboardWrapper from "@/components/modules/KeyboardWrapper";
+import Checkbox from "@/components/modules/Checkbox";
+import Divider from "@/components/modules/Divider";
 import { Controller, useForm } from "react-hook-form";
 import { useLogin } from "@/hooks/useAuth";
 import { toast } from "@/stores/useToastStore";
+import { AuthStackParamList } from "@/navigation/AuthNavigator";
+import AuthLayout from "@/components/layout/AuthLayout";
+import InputField from "@/components/modules/InputField";
 
 type Props = NativeStackScreenProps<AuthStackParamList, "Login">;
 

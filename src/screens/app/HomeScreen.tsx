@@ -12,51 +12,12 @@ import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { Colors } from "../../theme/colors";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { LinearGradient } from "expo-linear-gradient";
+import CounterCardSection from "@/components/screenComponents/homeScreen/CounterCardSection";
+import DraftListSection from "@/components/screenComponents/homeScreen/DraftListSection";
+import UploadedListSection from "@/components/screenComponents/homeScreen/UploadedListSection";
 
-export default function HomeScreen() {
+export default function HomeScreen({ navigation }: any) {
   const { logOut, user } = useAuthStore();
-
-  const bottomSheetActions = [
-    {
-      id: "settings",
-      title: "Settings",
-      subtitle: "Manage your preferences",
-      icon: "settings-outline",
-      color: Colors.primary,
-      onPress: () => console.log("Settings"),
-    },
-    {
-      id: "profile",
-      title: "Profile",
-      subtitle: "View and edit your profile",
-      icon: "person-outline",
-      color: "#10B981",
-      onPress: () => console.log("Profile"),
-    },
-    {
-      id: "notifications",
-      title: "Notifications",
-      subtitle: "Manage your notifications",
-      icon: "notifications-outline",
-      color: "#F59E0B",
-      onPress: () => console.log("Notifications"),
-    },
-  ];
-
-  const cardData = [
-    {
-      id: "withdraw",
-      title: "₹100K",
-      subTitle: "Available to withdraw",
-      imgSrc: require("../../../assets/images/wallet-with-dollar.png"),
-    },
-    {
-      id: "artists",
-      title: "12",
-      subTitle: "Total Artists",
-      imgSrc: require("../../../assets/images/3d-multimedia-record.png"),
-    },
-  ];
 
   return (
     <LinearGradient
@@ -80,7 +41,7 @@ export default function HomeScreen() {
               />
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => console.log("Menu")}
+              onPress={() => navigation?.navigate("notification")}
               style={styles.topButton}
             >
               <Image
@@ -114,41 +75,19 @@ export default function HomeScreen() {
             <View className="w-[64px] h-[64px] rounded-full bg-white opacity-[0.1] absolute -right-6 -top-[42px] z-10" />
           </View>
 
-          <View style={styles.section}>
-            {cardData.map((card) => (
-              <View key={card.id} style={styles.card}>
-                <Text style={styles.cardTitle}>{card.title}</Text>
-                <Text style={styles.cardSubTitle}>{card.subTitle}</Text>
-                <Image
-                  source={card.imgSrc}
-                  style={styles.cardImg}
-                  resizeMode="contain"
-                />
-                <View className="absolute z-10 w-[96px] h-[96px] bg-primary opacity-20 rounded-full -bottom-[30px] -right-[30px]" />
-              </View>
-            ))}
-          </View>
+          <CounterCardSection />
 
-          <View style={styles.draftSection}>
-            <Text style={styles.sectionTitle}>Recent Activity</Text>
-            <View style={styles.activityCard}>
-              <Ionicons name="musical-notes" size={24} color={Colors.primary} />
-              <View style={styles.activityContent}>
-                <Text style={styles.activityTitle}>No recent activity</Text>
-                <Text style={styles.activitySubtitle}>
-                  Start exploring music to see your activity here
-                </Text>
-              </View>
-            </View>
-          </View>
+          <DraftListSection navigation={navigation} />
 
-          <TouchableOpacity
+          <UploadedListSection navigation={navigation} />
+
+          {/* <TouchableOpacity
             style={styles.logoutButton}
             onPress={() => logOut()}
           >
             <Ionicons name="log-out-outline" size={20} color={Colors.error} />
             <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>
@@ -165,7 +104,6 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   topBar: {
-    flex: 1,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -216,47 +154,7 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_400Regular",
     opacity: 0.7,
   },
-  section: {
-    display: "flex",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    columnGap: 15,
-    marginBottom: 32,
-  },
-  card: {
-    marginBottom: 20,
-    position: "relative",
-    backgroundColor: Colors.white,
-    borderRadius: 16,
-    padding: 12,
-    width: "48%",
-    height: 121,
-    boxShadow: "0 0 16px 0 rgba(17, 17, 17, 0.08)",
-    overflow: "hidden",
-  },
-  cardTitle: {
-    fontSize: 24,
-    fontWeight: "800",
-    color: Colors.black,
-    fontFamily: "PlusJakartaSans_800Bold",
-  },
-  cardSubTitle: {
-    fontSize: 10,
-    color: Colors.gray,
-    fontFamily: "Poppins_400Regular",
-    width: "60%",
-  },
-  cardImg: {
-    width: 68,
-    height: 68,
-    zIndex: 20,
-    position: "absolute",
-    right: 10,
-    bottom: 10,
-  },
-  draftSection:{
-
-  },
+  draftSection: {},
   sectionTitle: {
     fontSize: 20,
     fontWeight: "600",

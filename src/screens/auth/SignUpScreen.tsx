@@ -8,18 +8,18 @@ import {
   Animated,
   Image,
 } from "react-native";
-import InputField from "../../components/InputField";
-import { Colors } from "../../theme/colors";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { AuthStackParamList } from "../../navigation/AuthNavigator";
-import AuthLayout from "@/components/AuthLayout";
-import KeyboardWrapper from "@/components/KeyboardWrapper";
-import Divider from "@/components/Divider";
+import KeyboardWrapper from "@/components/modules/KeyboardWrapper";
+import Divider from "@/components/modules/Divider";
 import { Controller, useForm } from "react-hook-form";
 import { checkEmailExists } from "@/api/userApi";
 import { storageAPI } from "@/utils/storage";
 import { toast } from "@/stores/useToastStore";
 import { useSendEmailVerification } from "@/hooks/useUser";
+import { AuthStackParamList } from "@/navigation/AuthNavigator";
+import AuthLayout from "@/components/layout/AuthLayout";
+import InputField from "@/components/modules/InputField";
+import { Colors } from "@/theme/colors";
 
 type Props = NativeStackScreenProps<AuthStackParamList, "SignUp">;
 

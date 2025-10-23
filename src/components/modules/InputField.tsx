@@ -7,7 +7,6 @@ import {
   TextInputProps,
   Pressable,
 } from "react-native";
-import { Colors } from "../theme/colors";
 import {
   Eye,
   EyeOff,
@@ -18,6 +17,7 @@ import {
   Lock,
   X,
 } from "lucide-react-native";
+import { Colors } from "@/theme/colors";
 
 interface Props extends TextInputProps {
   label?: string;

@@ -1,8 +1,7 @@
 import React from "react";
 import { View, TouchableOpacity, Image } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { Colors } from "../theme/colors";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { Colors } from "@/theme/colors";
 
 interface TabNavigationProps {
   activeTab: string;
@@ -16,23 +15,23 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
   const tabs = [
     {
       id: "home",
-      icon: require("../../assets/images/home_one.png"),
-      activeIcon: require("../../assets/images/homeFill.png"),
+      icon: require("../../../assets/images/home_one.png"),
+      activeIcon: require("../../../assets/images/homeFill.png"),
     },
     {
       id: "analytics",
-      icon: require("../../assets/images/analytics.png"),
-      activeIcon: require("../../assets/images/analyticsFill.png"),
+      icon: require("../../../assets/images/analytics.png"),
+      activeIcon: require("../../../assets/images/analyticsFill.png"),
     },
     {
       id: "wallet",
-      icon: require("../../assets/images/wallet.png"),
-      activeIcon: require("../../assets/images/walletFill.png"),
+      icon: require("../../../assets/images/wallet.png"),
+      activeIcon: require("../../../assets/images/walletFill.png"),
     },
     {
       id: "music",
-      icon: require("../../assets/images/music.png"),
-      activeIcon: require("../../assets/images/musicFill.png"),
+      icon: require("../../../assets/images/music.png"),
+      activeIcon: require("../../../assets/images/musicFill.png"),
     },
     {
       id: "profile",
@@ -45,7 +44,7 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
   const profileImg = user?.Profile_image?.formats?.small?.url;
 
   return (
-    <View className="absolute bottom-8 left-6 right-6 z-50">
+    <View className="sticky pb-6">
       <View
         className="flex-row items-center justify-between p-4 rounded-full shadow-lg"
         style={{

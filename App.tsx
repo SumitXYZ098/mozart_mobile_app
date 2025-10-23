@@ -17,7 +17,7 @@ import {
 import './global.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import RootNavigator from '@/navigation/RootNavigator';
-import ToastHost from '@/components/ToastHost';
+import ToastHost from '@/components/modules/ToastHost';
 
 const queryClient = new QueryClient();
 
