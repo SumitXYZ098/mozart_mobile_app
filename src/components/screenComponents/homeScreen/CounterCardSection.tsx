@@ -86,22 +86,13 @@ const CounterCardSection = () => {
     return (
       <View style={styles.card}>
         <Animated.View
-          style={[
-            styles.skeletonTitle,
-            { opacity: shimmerOpacity }
-          ]}
+          style={[styles.skeletonTitle, { opacity: shimmerOpacity }]}
         />
         <Animated.View
-          style={[
-            styles.skeletonSubTitle,
-            { opacity: shimmerOpacity }
-          ]}
+          style={[styles.skeletonSubTitle, { opacity: shimmerOpacity }]}
         />
         <Animated.View
-          style={[
-            styles.skeletonImage,
-            { opacity: shimmerOpacity }
-          ]}
+          style={[styles.skeletonImage, { opacity: shimmerOpacity }]}
         />
         <View className="absolute z-10 w-[96px] h-[96px] bg-primary opacity-20 rounded-full -bottom-[30px] -right-[30px]" />
       </View>

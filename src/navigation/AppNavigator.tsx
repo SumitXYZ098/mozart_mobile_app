@@ -4,7 +4,6 @@ import HomeScreen from "@/screens/app/HomeScreen";
 import ProfileScreen from "@/screens/app/ProfileScreen";
 import AnalyticsScreen from "@/screens/app/AnalyticsScreen";
 import WalletScreen from "@/screens/app/WalletScreen";
-import MusicScreen from "@/screens/app/MusicScreen";
 import DraftScreen from "@/screens/app/DraftScreen";
 import UploadedListScreen from "@/screens/app/UploadedListScreen";
 import TabNavigation from "@/components/modules/TabNavigation";
@@ -51,17 +50,21 @@ export default function AppNavigator() {
       default:
         switch (activeTab) {
           case "home":
-            return <HomeScreen navigation={{ navigate: handleScreenNavigation }} />;
+            return (
+              <HomeScreen navigation={{ navigate: handleScreenNavigation }} />
+            );
           case "analytics":
             return <AnalyticsScreen />;
           case "wallet":
             return <WalletScreen />;
           case "music":
-            return <DraftScreen navigation={{ goBack: goBackToHome }}/>;
+            return <DraftScreen navigation={{ goBack: goBackToHome }} />;
           case "profile":
             return <ProfileScreen />;
           default:
-            return <HomeScreen navigation={{ navigate: handleScreenNavigation }} />;
+            return (
+              <HomeScreen navigation={{ navigate: handleScreenNavigation }} />
+            );
         }
     }
   };

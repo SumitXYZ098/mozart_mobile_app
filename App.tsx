@@ -1,23 +1,22 @@
-import React, { useEffect } from 'react';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import * as Font from 'expo-font';
+import React, { useEffect } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import * as Font from "expo-font";
 import {
   PlusJakartaSans_400Regular,
   PlusJakartaSans_500Medium,
   PlusJakartaSans_600SemiBold,
   PlusJakartaSans_700Bold,
-} from '@expo-google-fonts/plus-jakarta-sans';
+} from "@expo-google-fonts/plus-jakarta-sans";
 import {
   Poppins_400Regular,
   Poppins_500Medium,
   Poppins_600SemiBold,
   Poppins_700Bold,
-} from '@expo-google-fonts/poppins';
-import './global.css';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import RootNavigator from '@/navigation/RootNavigator';
-import ToastHost from '@/components/modules/ToastHost';
+} from "@expo-google-fonts/poppins";
+import "./global.css";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import RootNavigator from "@/navigation/RootNavigator";
 
 const queryClient = new QueryClient();
 
@@ -44,7 +43,6 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <SafeAreaProvider style={{ flex: 1 }}>
           <RootNavigator />
-          <ToastHost />
         </SafeAreaProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>

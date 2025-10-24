@@ -1,6 +1,6 @@
 import { useUserPublishTracks } from "@/hooks/useUserPublishTracks";
 import { Colors } from "@/theme/colors";
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import UploadCard from "./UploadCard";
 import EmptyState from "@/components/modules/EmptyState";
+import { horizontalScale, moderateScale, verticalScale } from "@/utils/metrics";
 
 interface UploadedListSectionProps {
   navigation?: {
@@ -122,29 +123,29 @@ export default UploadedListSection;
 
 const styles = StyleSheet.create({
   section: {
-    marginBottom: Platform.OS === 'android'? 60 : 30,
+    marginBottom: moderateScale(40),
     flexDirection: "column",
     rowGap: 10,
   },
   heading: {
-    fontSize: 20,
+    fontSize: moderateScale(20),
     fontFamily: "PlusJakartaSans_700Bold",
     color: Colors.black,
   },
   linkText: {
     color: Colors.primary,
-    fontSize: 12,
+    fontSize: moderateScale(12),
     fontFamily: "PlusJakartaSans_700Bold",
   },
   disabledText: {
     opacity: 0.5,
   },
   scrollContainer: {
-    marginHorizontal: -24, // Extend to screen edges
+    marginHorizontal: horizontalScale(-24), // Extend to screen edges
   },
   tracksList: {
     flexDirection: "row",
-    paddingHorizontal: 24,
+    paddingHorizontal: horizontalScale(24),
     gap: 15,
   },
   cardSection: {
@@ -163,7 +164,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: 12,
+    paddingHorizontal: horizontalScale(12),
   },
   // Skeleton styles
   skeletonImage: {
@@ -177,7 +178,7 @@ const styles = StyleSheet.create({
     height: 18,
     backgroundColor: Colors.gray,
     borderRadius: 4,
-    marginBottom: 8,
+    marginBottom: verticalScale(8),
   },
   skeletonSubTitle: {
     width: "60%",

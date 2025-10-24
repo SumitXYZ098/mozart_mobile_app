@@ -8,7 +8,7 @@ import {
   Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { MaterialIcons } from "@expo/vector-icons";
 import { Colors } from "../../theme/colors";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { LinearGradient } from "expo-linear-gradient";
@@ -17,8 +17,13 @@ import DraftListSection from "@/components/screenComponents/homeScreen/DraftList
 import UploadedListSection from "@/components/screenComponents/homeScreen/UploadedListSection";
 
 export default function HomeScreen({ navigation }: any) {
-  const { logOut, user } = useAuthStore();
-
+  const { user } = useAuthStore();
+  // navigation is sometimes passed as a function (handleScreenNavigation)
+  // and sometimes as an object with navigate(). Handle both.
+  const navigateTo = (screen: string) => {
+    if (typeof navigation === "function") return navigation(screen);
+    return navigation?.navigate?.(screen);
+  };
   return (
     <LinearGradient
       colors={["#EDE5F7", "#FFFFFF"]}
@@ -31,7 +36,7 @@ export default function HomeScreen({ navigation }: any) {
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.topBar}>
             <TouchableOpacity
-              onPress={() => console.log("Menu")}
+              onPress={() => console.log("Open Drawer")}
               style={styles.topButton}
             >
               <Image
@@ -41,14 +46,13 @@ export default function HomeScreen({ navigation }: any) {
               />
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => navigation?.navigate("notification")}
+              onPress={() => navigateTo("notification")}
               style={styles.topButton}
             >
               <Image
                 source={require("../../../assets/images/notification.png")}
                 resizeMode="contain"
                 style={styles.menuIcon}
-                
               />
             </TouchableOpacity>
           </View>
@@ -75,20 +79,9 @@ export default function HomeScreen({ navigation }: any) {
             <View className="w-[64px] h-[64px] rounded-full bg-white opacity-[0.1] absolute -right-[35px] -top-[35px] z-10" />
             <View className="w-[64px] h-[64px] rounded-full bg-white opacity-[0.1] absolute -right-6 -top-[42px] z-10" />
           </View>
-
           <CounterCardSection />
-
           <DraftListSection navigation={navigation} />
-
           <UploadedListSection navigation={navigation} />
-
-          {/* <TouchableOpacity
-            style={styles.logoutButton}
-            onPress={() => logOut()}
-          >
-            <Ionicons name="log-out-outline" size={20} color={Colors.error} />
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity> */}
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>
@@ -154,23 +147,5 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontFamily: "Poppins_400Regular",
     opacity: 0.7,
-  },
-  logoutButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: Colors.error + "10",
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderWidth: 1,
-    borderColor: Colors.error + "30",
-  },
-  logoutText: {
-    color: Colors.error,
-    fontSize: 16,
-    fontWeight: "600",
-    marginLeft: 8,
-    fontFamily: "PlusJakartaSans_600SemiBold",
   },
 });

@@ -1,9 +1,16 @@
 import { Colors } from "@/theme/colors";
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, View, TouchableOpacity, Animated } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  Animated,
+} from "react-native";
 import DraftCard from "./DraftCard";
 import { getUserDrafts } from "@/api/draftApi";
 import EmptyState from "@/components/modules/EmptyState";
+import { horizontalScale, moderateScale, verticalScale } from "@/utils/metrics";
 type DraftItem = {
   id: string;
   ReleaseTitle: string;
@@ -76,30 +83,18 @@ const DraftListSection = ({ navigation }: DraftListSectionProps) => {
     return (
       <View style={styles.draftCard}>
         <Animated.View
-          style={[
-            styles.skeletonImage,
-            { opacity: shimmerOpacity }
-          ]}
+          style={[styles.skeletonImage, { opacity: shimmerOpacity }]}
         />
         <View style={styles.draftContent}>
           <Animated.View
-            style={[
-              styles.skeletonTitle,
-              { opacity: shimmerOpacity }
-            ]}
+            style={[styles.skeletonTitle, { opacity: shimmerOpacity }]}
           />
           <Animated.View
-            style={[
-              styles.skeletonSubTitle,
-              { opacity: shimmerOpacity }
-            ]}
+            style={[styles.skeletonSubTitle, { opacity: shimmerOpacity }]}
           />
         </View>
         <Animated.View
-          style={[
-            styles.skeletonDraftText,
-            { opacity: shimmerOpacity }
-          ]}
+          style={[styles.skeletonDraftText, { opacity: shimmerOpacity }]}
         />
       </View>
     );
@@ -109,7 +104,7 @@ const DraftListSection = ({ navigation }: DraftListSectionProps) => {
       <View className="flex flex-row justify-between items-center">
         <Text style={styles.heading}>Drafts</Text>
         <TouchableOpacity
-          onPress={() => navigation?.navigate('drafts')}
+          onPress={() => navigation?.navigate("drafts")}
           disabled={isLoading}
         >
           <Text style={[styles.linkText, isLoading && styles.disabledText]}>
@@ -129,16 +124,18 @@ const DraftListSection = ({ navigation }: DraftListSectionProps) => {
           title="No Drafts Yet"
           subtitle="Start creating your first draft to see it here."
         />
-      ): (
-        draftList.slice(0, 3).map((item) => (
-          <DraftCard
-            key={item.id}
-            id={item.id}
-            albumType={item.ReleaseType}
-            albumName={item.ReleaseTitle}
-            albumImage={item.CoverArt?.formats?.small?.url ?? ""}
-          />
-        ))
+      ) : (
+        draftList
+          .slice(0, 3)
+          .map((item) => (
+            <DraftCard
+              key={item.id}
+              id={item.id}
+              albumType={item.ReleaseType}
+              albumName={item.ReleaseTitle}
+              albumImage={item.CoverArt?.formats?.small?.url ?? ""}
+            />
+          ))
       )}
     </View>
   );
@@ -149,18 +146,18 @@ export default DraftListSection;
 const styles = StyleSheet.create({
   section: {
     flex: 1,
-    marginBottom: 16,
+    marginBottom: verticalScale(16),
     flexDirection: "column",
     rowGap: 10,
   },
   heading: {
-    fontSize: 20,
+    fontSize: moderateScale(20),
     fontFamily: "PlusJakartaSans_700Bold",
     color: Colors.black,
   },
   linkText: {
     color: Colors.primary,
-    fontSize: 12,
+    fontSize: moderateScale(12),
     fontFamily: "PlusJakartaSans_700Bold",
   },
   disabledText: {
@@ -170,21 +167,21 @@ const styles = StyleSheet.create({
     display: "flex",
     backgroundColor: Colors.white,
     padding: 6,
-    paddingRight: 12,
+    paddingRight: horizontalScale(12),
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     borderRadius: 16,
-    marginBottom: 10,
+    marginBottom: moderateScale(10),
   },
   draftContent: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: horizontalScale(12),
   },
   // Skeleton styles
   skeletonImage: {
-    width: 78,
-    height: 60,
+    width: horizontalScale(78),
+    height: verticalScale(60),
     backgroundColor: Colors.gray,
     borderRadius: 8,
   },
