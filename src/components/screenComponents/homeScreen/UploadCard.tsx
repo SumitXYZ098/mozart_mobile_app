@@ -70,16 +70,17 @@ export default UploadCard;
 
 const styles = StyleSheet.create({
   cardSection: {
+    flexGrow:1,
     overflow: "hidden",
     borderRadius: 12,
-    width: 160, // Fixed width for horizontal scrolling
+    width: 160,
     height: 130,
     position: "relative",
   },
 
   albumImage: {
     width: "auto",
-    height: "100%",
+    height: 130,
   },
   overlay: {
     position: "absolute",

@@ -5,6 +5,7 @@ import React from "react";
 import {
   FlatList,
   Image,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -108,11 +109,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     columnGap: 12,
     alignItems: "flex-start",
+    borderBottomWidth: 2,
+    borderColor:'#FAFAFA',
+    borderStyle: 'solid'
   },
   // 👇 Highlight style for first card
   highlightCard: {
     backgroundColor: Colors.lightPrimary,
-    borderRadius: 12,
   },
   iconContainor: {
     width: 40,

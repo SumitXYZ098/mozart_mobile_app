@@ -14,64 +14,67 @@ export default function AppNavigator() {
   const [activeTab, setActiveTab] = useState("home");
   const [currentScreen, setCurrentScreen] = useState("home");
 
+  // Handle tab switching
   const handleTabPress = (tab: string) => {
     setActiveTab(tab);
-    // Reset to home screen when switching tabs, unless it's a modal screen
-    if (tab !== "drafts") {
+    if (tab !== "drafts" && tab !== "uploads" && tab !== "notification") {
       setCurrentScreen("home");
     }
   };
 
+  // Handle navigation between screens
   const handleScreenNavigation = (screen: string) => {
+    // When navigating to Draft or Upload, automatically activate Music tab
+    if (screen === "drafts" || screen === "uploads") {
+      setActiveTab("music");
+    }
     setCurrentScreen(screen);
   };
 
+  // Handle "go back" to Home screen
+  const goBackToHome = () => {
+    setCurrentScreen("home");
+    setActiveTab("home");
+  };
+
   const renderScreen = () => {
-    // If we're on a modal screen (like drafts or uploads), show that
-    if (currentScreen === "drafts") {
-      return (
-        <DraftScreen navigation={{ goBack: () => setCurrentScreen("home") }} />
-      );
-    }
+    switch (currentScreen) {
+      case "drafts":
+        return <DraftScreen navigation={{ goBack: goBackToHome }} />;
 
-    if (currentScreen === "uploads") {
-      return (
-        <UploadedListScreen
-          navigation={{ goBack: () => setCurrentScreen("home") }}
-        />
-      );
-    }
-    if (currentScreen === "notification") {
-      return (
-        <NotificationScreen
-          navigation={{ goBack: () => setCurrentScreen("home") }}
-        />
-      );
-    }
+      case "uploads":
+        return <UploadedListScreen navigation={{ goBack: goBackToHome }} />;
 
-    // Otherwise, show the tab-based screen
-    switch (activeTab) {
-      case "home":
-        return <HomeScreen navigation={{ navigate: handleScreenNavigation }} />;
-      case "analytics":
-        return <AnalyticsScreen />;
-      case "wallet":
-        return <WalletScreen />;
-      case "music":
-        return <MusicScreen />;
-      case "profile":
-        return <ProfileScreen />;
+      case "notification":
+        return <NotificationScreen navigation={{ goBack: goBackToHome }} />;
+
       default:
-        return <HomeScreen navigation={{ navigate: handleScreenNavigation }} />;
+        switch (activeTab) {
+          case "home":
+            return <HomeScreen navigation={{ navigate: handleScreenNavigation }} />;
+          case "analytics":
+            return <AnalyticsScreen />;
+          case "wallet":
+            return <WalletScreen />;
+          case "music":
+            return <DraftScreen navigation={{ goBack: goBackToHome }}/>;
+          case "profile":
+            return <ProfileScreen />;
+          default:
+            return <HomeScreen navigation={{ navigate: handleScreenNavigation }} />;
+        }
     }
   };
+
+  // Hide tab bar on Notification screen
+  const shouldShowTabBar = currentScreen !== "notification";
 
   return (
     <View className="flex-1">
       {renderScreen()}
-      <View className="px-6 bg-transparent">
+      {shouldShowTabBar && (
         <TabNavigation activeTab={activeTab} onTabPress={handleTabPress} />
-      </View>
+      )}
     </View>
   );
 }

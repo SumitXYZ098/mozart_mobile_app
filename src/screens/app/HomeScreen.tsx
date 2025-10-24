@@ -48,6 +48,7 @@ export default function HomeScreen({ navigation }: any) {
                 source={require("../../../assets/images/notification.png")}
                 resizeMode="contain"
                 style={styles.menuIcon}
+                
               />
             </TouchableOpacity>
           </View>
@@ -153,74 +154,6 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontFamily: "Poppins_400Regular",
     opacity: 0.7,
-  },
-  draftSection: {},
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: Colors.black,
-    marginBottom: 16,
-    fontFamily: "PlusJakartaSans_600SemiBold",
-  },
-  actionsGrid: {
-    gap: 12,
-  },
-  actionCard: {
-    backgroundColor: Colors.white,
-    borderRadius: 12,
-    padding: 16,
-    borderLeftWidth: 4,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  actionContent: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  actionText: {
-    flex: 1,
-    marginLeft: 16,
-  },
-  actionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: Colors.black,
-    marginBottom: 4,
-    fontFamily: "PlusJakartaSans_600SemiBold",
-  },
-  actionSubtitle: {
-    fontSize: 14,
-    color: Colors.gray,
-    fontFamily: "Poppins_400Regular",
-  },
-  activityCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: Colors.lightGray + "30",
-    borderRadius: 12,
-    padding: 16,
-  },
-  activityContent: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  activityTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: Colors.black,
-    marginBottom: 4,
-    fontFamily: "PlusJakartaSans_600SemiBold",
-  },
-  activitySubtitle: {
-    fontSize: 14,
-    color: Colors.gray,
-    fontFamily: "Poppins_400Regular",
   },
   logoutButton: {
     flexDirection: "row",

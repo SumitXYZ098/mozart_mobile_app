@@ -44,7 +44,14 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
   const profileImg = user?.Profile_image?.formats?.small?.url;
 
   return (
-    <View className="sticky pb-6">
+    <View
+      style={{
+        position: "absolute",
+        bottom: 24,
+        paddingHorizontal: 24,
+        width: "100%",
+      }}
+    >
       <View
         className="flex-row items-center justify-between p-4 rounded-full shadow-lg"
         style={{

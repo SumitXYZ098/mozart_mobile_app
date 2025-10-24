@@ -8,6 +8,7 @@ import {
   View,
   Animated,
   ScrollView,
+  Platform,
 } from "react-native";
 import UploadCard from "./UploadCard";
 import EmptyState from "@/components/modules/EmptyState";
@@ -121,7 +122,7 @@ export default UploadedListSection;
 
 const styles = StyleSheet.create({
   section: {
-    marginBottom: 16,
+    marginBottom: Platform.OS === 'android'? 60 : 30,
     flexDirection: "column",
     rowGap: 10,
   },
