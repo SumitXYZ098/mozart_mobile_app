@@ -81,30 +81,18 @@ const DraftScreen = ({ navigation }: any) => {
     return (
       <View style={styles.draftCard}>
         <Animated.View
-          style={[
-            styles.skeletonImage,
-            { opacity: shimmerOpacity }
-          ]}
+          style={[styles.skeletonImage, { opacity: shimmerOpacity }]}
         />
         <View style={styles.draftContent}>
           <Animated.View
-            style={[
-              styles.skeletonTitle,
-              { opacity: shimmerOpacity }
-            ]}
+            style={[styles.skeletonTitle, { opacity: shimmerOpacity }]}
           />
           <Animated.View
-            style={[
-              styles.skeletonSubTitle,
-              { opacity: shimmerOpacity }
-            ]}
+            style={[styles.skeletonSubTitle, { opacity: shimmerOpacity }]}
           />
         </View>
         <Animated.View
-          style={[
-            styles.skeletonDraftText,
-            { opacity: shimmerOpacity }
-          ]}
+          style={[styles.skeletonDraftText, { opacity: shimmerOpacity }]}
         />
       </View>
     );
@@ -177,32 +165,31 @@ const DraftScreen = ({ navigation }: any) => {
           <View style={styles.placeholder} />
         </View>
 
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          {isLoading ? (
-            <FlatList
-              data={[1, 2, 3, 4, 5]} // Show 5 skeleton items
-              renderItem={renderSkeletonItem}
-              keyExtractor={(item) => item.toString()}
-              showsVerticalScrollIndicator={false}
-            />
-          ) : draftList.length > 0 ? (
-            <FlatList
-              data={draftList}
-              renderItem={renderDraftItem}
-              keyExtractor={(item) => item.id}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.listContainer}
-            />
-          ) : (
-            <View style={styles.emptyState}>
-              <Ionicons name="document-outline" size={64} color={Colors.gray} />
-              <Text style={styles.emptyTitle}>No Drafts Found</Text>
-              <Text style={styles.emptySubtitle}>
-                Start creating your first draft to see it here
-              </Text>
-            </View>
-          )}
-        </ScrollView>
+        {isLoading ? (
+          <FlatList
+            data={[1, 2, 3, 4, 5]} // Show 5 skeleton items
+            renderItem={renderSkeletonItem}
+            keyExtractor={(item) => item.toString()}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContainer}
+          />
+        ) : draftList.length > 0 ? (
+          <FlatList
+            data={draftList}
+            renderItem={renderDraftItem}
+            keyExtractor={(item) => item.id}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContainer}
+          />
+        ) : (
+          <View style={styles.emptyState}>
+            <Ionicons name="document-outline" size={64} color={Colors.gray} />
+            <Text style={styles.emptyTitle}>No Drafts Found</Text>
+            <Text style={styles.emptySubtitle}>
+              Start creating your first draft to see it here
+            </Text>
+          </View>
+        )}
       </SafeAreaView>
     </LinearGradient>
   );
@@ -235,12 +222,9 @@ const styles = StyleSheet.create({
   placeholder: {
     width: 40,
   },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-  },
   listContainer: {
     paddingBottom: 20,
+    paddingHorizontal: 24,
   },
   draftCard: {
     display: "flex",

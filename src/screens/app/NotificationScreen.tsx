@@ -57,15 +57,13 @@ const NotificationScreen = ({ navigation }: any) => {
         <Text style={styles.title}>Notification</Text>
         <View style={styles.placeholder} />
       </View>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <FlatList
-          data={sortedNotifications}
-          renderItem={renderNotificationItem}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContainer}
-        />
-      </ScrollView>
+      <FlatList
+        data={sortedNotifications}
+        renderItem={renderNotificationItem}
+        keyExtractor={(item) => item.id}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContainer}
+      />
     </SafeAreaView>
   );
 };
@@ -97,9 +95,6 @@ const styles = StyleSheet.create({
   placeholder: {
     width: 40,
   },
-  scrollContent: {
-    flexGrow: 1,
-  },
   listContainer: {
     paddingBottom: 20,
   },
@@ -110,8 +105,8 @@ const styles = StyleSheet.create({
     columnGap: 12,
     alignItems: "flex-start",
     borderBottomWidth: 2,
-    borderColor:'#FAFAFA',
-    borderStyle: 'solid'
+    borderColor: "#FAFAFA",
+    borderStyle: "solid",
   },
   // 👇 Highlight style for first card
   highlightCard: {

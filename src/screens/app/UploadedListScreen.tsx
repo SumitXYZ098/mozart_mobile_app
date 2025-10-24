@@ -105,7 +105,6 @@ const UploadedListScreen = ({ navigation }: any) => {
           <View style={styles.placeholder} />
         </View>
 
-        <ScrollView contentContainerStyle={styles.scrollContent}>
           {loading ? (
             <View style={styles.gridContainer}>
               {[1, 2, 3, 4, 5, 6].map((item) => (
@@ -133,7 +132,7 @@ const UploadedListScreen = ({ navigation }: any) => {
               </Text>
             </View>
           )}
-        </ScrollView>
+       
       </SafeAreaView>
     </LinearGradient>
   );
@@ -166,15 +165,12 @@ const styles = StyleSheet.create({
   placeholder: {
     width: 40,
   },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-  },
   gridContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
     paddingBottom: 20,
+    paddingHorizontal: 24,
   },
   cardSection: {
     overflow: "hidden",
