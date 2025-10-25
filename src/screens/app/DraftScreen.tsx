@@ -8,18 +8,20 @@ import {
   Image,
   FlatList,
   Animated,
+  Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { Colors } from "../../theme/colors";
 import { getUserDrafts } from "@/api/draftApi";
-import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native";
+import dayjs from "dayjs";
 
 type DraftItem = {
   id: string;
   ReleaseTitle: string;
   ReleaseType: string;
+  createdAt: Date;
   CoverArt?: {
     formats?: {
       small?: {
@@ -81,11 +83,20 @@ const DraftScreen = () => {
     });
 
     return (
-      <View style={styles.draftCard}>
+      <View
+        style={[
+          styles.draftCard,
+          {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          },
+        ]}
+      >
         <Animated.View
           style={[styles.skeletonImage, { opacity: shimmerOpacity }]}
         />
-        <View style={styles.draftContent}>
+        <View style={[styles.draftContent,{flex:1}]}>
           <Animated.View
             style={[styles.skeletonTitle, { opacity: shimmerOpacity }]}
           />
@@ -133,88 +144,107 @@ const DraftScreen = () => {
 
   const renderDraftItem = ({ item }: { item: DraftItem }) => (
     <View style={styles.draftCard}>
-      <LazyImage
-        uri={item.CoverArt?.formats?.small?.url ?? ""}
-        style={styles.albumImage}
-      />
-      <View style={styles.draftContent}>
-        <Text style={styles.albumName}>{item.ReleaseTitle}</Text>
-        <Text style={styles.albumType}>{item.ReleaseType}</Text>
+      <View style={{ flexDirection: "column", gap: 4 }}>
+        <Text style={styles.albumType}>
+          Created Date: {dayjs(item.createdAt).format("DD/MM/YYYY")}
+        </Text>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <LazyImage
+              uri={item.CoverArt?.formats?.small?.url ?? ""}
+              style={styles.albumImage}
+            />
+            <View style={styles.draftContent}>
+              <Text style={styles.albumName}>{item.ReleaseTitle}</Text>
+              <Text style={styles.albumType}>{item.ReleaseType}</Text>
+            </View>
+          </View>
+          <View style={{ flexDirection: "column", gap: 12 }}>
+            <Text style={styles.draftText}>Draft</Text>
+            <View style={styles.actionContent}>
+              <TouchableOpacity style={{ padding:4, backgroundColor:Colors.lightGray, borderRadius:8}} onPress={() => console.log("Edit")}>
+                <MaterialIcons name="edit" size={20} color={Colors.gray} />
+              </TouchableOpacity>
+              <TouchableOpacity style={{ padding:4, backgroundColor:"#E639463D", borderRadius:8}} onPress={() => console.log("Delete")}>
+                <Ionicons name="trash-bin" size={20} color={Colors.error} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       </View>
-      <Text style={styles.draftText}>Draft</Text>
     </View>
   );
 
   const renderSkeletonItem = () => <SkeletonCard />;
 
   return (
-    <LinearGradient
-      colors={["#EDE5F7", "#FFFFFF"]}
-      locations={[0.4044, 1]}
-      start={{ x: 0.5, y: 0 }}
-      end={{ x: 0.5, y: 1 }}
-      style={styles.container}
-    >
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("HomeTab")}
+          style={styles.backButton}
+        >
+          <Ionicons name="chevron-back" size={24} color={Colors.primary} />
+        </TouchableOpacity>
+        <Text style={styles.title}>Drafts</Text>
+        <View style={styles.placeholder}>
           <TouchableOpacity
-            onPress={() => navigation.navigate("HomeTab")}
-            style={styles.backButton}
+            onPress={() =>
+              navigation?.navigate("MusicTab", { screen: "CalendarEvent" })
+            }
+            style={styles.topButton}
           >
-            <Ionicons name="chevron-back" size={24} color={Colors.primary} />
+            <Image
+              source={require("../../../assets/images/solar_calendar-bold.png")}
+              resizeMode="contain"
+              style={styles.menuIcon}
+            />
           </TouchableOpacity>
-          <Text style={styles.title}>Drafts</Text>
-          <View style={styles.placeholder}>
-            <TouchableOpacity
-              onPress={() => navigation?.navigate("Notification")}
-              style={styles.topButton}
-            >
-              <Image
-                source={require("../../../assets/images/solar_calendar-bold.png")}
-                resizeMode="contain"
-                style={styles.menuIcon}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => navigation?.navigate("Notification")}
-              style={styles.topButton}
-            >
-              <Image
-                source={require("../../../assets/images/notification.png")}
-                resizeMode="contain"
-                style={styles.menuIcon}
-              />
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            onPress={() => navigation?.navigate("Notification")}
+            style={styles.topButton}
+          >
+            <Image
+              source={require("../../../assets/images/notification.png")}
+              resizeMode="contain"
+              style={styles.menuIcon}
+            />
+          </TouchableOpacity>
         </View>
+      </View>
 
-        {isLoading ? (
-          <FlatList
-            data={[1, 2, 3, 4, 5]} // Show 5 skeleton items
-            renderItem={renderSkeletonItem}
-            keyExtractor={(item) => item.toString()}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.listContainer}
-          />
-        ) : draftList.length > 0 ? (
-          <FlatList
-            data={draftList}
-            renderItem={renderDraftItem}
-            keyExtractor={(item) => item.id}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.listContainer}
-          />
-        ) : (
-          <View style={styles.emptyState}>
-            <Ionicons name="document-outline" size={64} color={Colors.gray} />
-            <Text style={styles.emptyTitle}>No Drafts Found</Text>
-            <Text style={styles.emptySubtitle}>
-              Start creating your first draft to see it here
-            </Text>
-          </View>
-        )}
-      </SafeAreaView>
-    </LinearGradient>
+      {isLoading ? (
+        <FlatList
+          data={[1, 2, 3, 4, 5]} // Show 5 skeleton items
+          renderItem={renderSkeletonItem}
+          keyExtractor={(item) => item.toString()}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContainer}
+        />
+      ) : draftList.length > 0 ? (
+        <FlatList
+          data={draftList}
+          renderItem={renderDraftItem}
+          keyExtractor={(item) => item.id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContainer}
+        />
+      ) : (
+        <View style={styles.emptyState}>
+          <Ionicons name="document-outline" size={64} color={Colors.gray} />
+          <Text style={styles.emptyTitle}>No Drafts Found</Text>
+          <Text style={styles.emptySubtitle}>
+            Start creating your first draft to see it here
+          </Text>
+        </View>
+      )}
+    </SafeAreaView>
   );
 };
 
@@ -223,6 +253,7 @@ export default DraftScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: Colors.white,
   },
   header: {
     flexDirection: "row",
@@ -265,9 +296,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     padding: 12,
     paddingRight: 16,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
     borderRadius: 16,
     marginBottom: 12,
     shadowColor: "#000",
@@ -281,11 +309,10 @@ const styles = StyleSheet.create({
   },
   albumImage: {
     width: 78,
-    height: 60,
+    height: 78,
     borderRadius: 8,
   },
   draftContent: {
-    flex: 1,
     marginLeft: 12,
   },
   albumName: {
@@ -308,6 +335,11 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 24,
+    textAlign:"center"
+  },
+  actionContent: {
+    flexDirection: "row",
+    gap: 6,
   },
   emptyState: {
     flex: 1,

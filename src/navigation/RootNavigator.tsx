@@ -11,7 +11,6 @@ export default function RootNavigator() {
     loadUserFromStorage();
   }, []);
 
-  if (!user) return null; // optionally show SplashScreen here
 
   return (
     <NavigationContainer>

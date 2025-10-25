@@ -18,14 +18,15 @@ type DraftItem = {
   ReleaseType: string;
   CoverArt?: {
     formats?: {
+      thumbnail?: {
+        url?: string;
+      };
       small?: {
         url?: string;
       };
     };
   };
 };
-
-
 
 const DraftListSection = () => {
   const [draftList, setDraftList] = useState<DraftItem[]>([]);
@@ -131,7 +132,7 @@ const DraftListSection = () => {
               id={item.id}
               albumType={item.ReleaseType}
               albumName={item.ReleaseTitle}
-              albumImage={item.CoverArt?.formats?.small?.url ?? ""}
+              albumImage={item.CoverArt?.formats?.thumbnail?.url ?? ""}
             />
           ))
       )}

@@ -105,7 +105,7 @@ const UploadedListSection = () => {
                 id={track.id.toLocaleString()}
                 albumName={track.ReleaseTitle}
                 albumType={track.ReleaseType}
-                albumImage={track.CoverArt.formats?.small?.url ?? ""}
+                albumImage={track.CoverArt.formats?.thumbnail?.url ?? ""}
               />
             ))
           )}
