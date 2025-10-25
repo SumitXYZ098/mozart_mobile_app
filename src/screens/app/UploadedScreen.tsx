@@ -7,6 +7,7 @@ import {
   ScrollView,
   FlatList,
   Animated,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -14,11 +15,12 @@ import { Colors } from "../../theme/colors";
 import { useUserPublishTracks } from "@/hooks/useUserPublishTracks";
 import { LinearGradient } from "expo-linear-gradient";
 import UploadCard from "@/components/screenComponents/homeScreen/UploadCard";
+import { useNavigation } from "@react-navigation/native";
 
-const UploadedListScreen = ({ navigation }: any) => {
+const UploadedScreen = () => {
   const { tracks, loading } = useUserPublishTracks();
   const shimmerAnimation = new Animated.Value(0);
-
+  const navigation = useNavigation<any>();
   // Shimmer animation effect
   useEffect(() => {
     if (loading) {
@@ -51,23 +53,14 @@ const UploadedListScreen = ({ navigation }: any) => {
     return (
       <View style={styles.cardSection}>
         <Animated.View
-          style={[
-            styles.skeletonImage,
-            { opacity: shimmerOpacity }
-          ]}
+          style={[styles.skeletonImage, { opacity: shimmerOpacity }]}
         />
         <View style={styles.overlay}>
           <Animated.View
-            style={[
-              styles.skeletonTitle,
-              { opacity: shimmerOpacity }
-            ]}
+            style={[styles.skeletonTitle, { opacity: shimmerOpacity }]}
           />
           <Animated.View
-            style={[
-              styles.skeletonSubTitle,
-              { opacity: shimmerOpacity }
-            ]}
+            style={[styles.skeletonSubTitle, { opacity: shimmerOpacity }]}
           />
         </View>
       </View>
@@ -96,49 +89,73 @@ const UploadedListScreen = ({ navigation }: any) => {
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() => navigation.goBack()}
+            onPress={() => navigation.navigate("HomeTab")}
             style={styles.backButton}
           >
             <Ionicons name="chevron-back" size={24} color={Colors.primary} />
           </TouchableOpacity>
           <Text style={styles.title}>My Release</Text>
-          <View style={styles.placeholder} />
+          <View style={styles.placeholder}>
+            <TouchableOpacity
+              onPress={() => navigation?.navigate("Notification")}
+              style={styles.topButton}
+            >
+              <Image
+                source={require("../../../assets/images/solar_calendar-bold.png")}
+                resizeMode="contain"
+                style={styles.menuIcon}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => navigation?.navigate("Notification")}
+              style={styles.topButton}
+            >
+              <Image
+                source={require("../../../assets/images/notification.png")}
+                resizeMode="contain"
+                style={styles.menuIcon}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
 
-          {loading ? (
-            <View style={styles.gridContainer}>
-              {[1, 2, 3, 4, 5, 6].map((item) => (
-                <SkeletonCard key={item} />
-              ))}
-            </View>
-          ) : tracks.length > 0 ? (
-            <View style={styles.gridContainer}>
-              {tracks.map((track) => (
-                <UploadCard
-                  key={track.id}
-                  id={track.id.toLocaleString()}
-                  albumName={track.ReleaseTitle}
-                  albumType={track.ReleaseType}
-                  albumImage={track.CoverArt.formats?.small?.url ?? ""}
-                />
-              ))}
-            </View>
-          ) : (
-            <View style={styles.emptyState}>
-              <Ionicons name="cloud-upload-outline" size={64} color={Colors.gray} />
-              <Text style={styles.emptyTitle}>No Uploads Found</Text>
-              <Text style={styles.emptySubtitle}>
-                Start uploading your music to see it here
-              </Text>
-            </View>
-          )}
-       
+        {loading ? (
+          <View style={styles.gridContainer}>
+            {[1, 2, 3, 4, 5, 6].map((item) => (
+              <SkeletonCard key={item} />
+            ))}
+          </View>
+        ) : tracks.length > 0 ? (
+          <View style={styles.gridContainer}>
+            {tracks.map((track) => (
+              <UploadCard
+                key={track.id}
+                id={track.id.toLocaleString()}
+                albumName={track.ReleaseTitle}
+                albumType={track.ReleaseType}
+                albumImage={track.CoverArt.formats?.small?.url ?? ""}
+              />
+            ))}
+          </View>
+        ) : (
+          <View style={styles.emptyState}>
+            <Ionicons
+              name="cloud-upload-outline"
+              size={64}
+              color={Colors.gray}
+            />
+            <Text style={styles.emptyTitle}>No Uploads Found</Text>
+            <Text style={styles.emptySubtitle}>
+              Start uploading your music to see it here
+            </Text>
+          </View>
+        )}
       </SafeAreaView>
     </LinearGradient>
   );
 };
 
-export default UploadedListScreen;
+export default UploadedScreen;
 
 const styles = StyleSheet.create({
   container: {
@@ -152,18 +169,29 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   backButton: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.secondary,
     borderRadius: 8,
     padding: 8,
   },
   title: {
     fontSize: 20,
     fontWeight: "700",
-    color: Colors.black,
+    color: Colors.gray,
     fontFamily: "PlusJakartaSans_700Bold",
   },
   placeholder: {
-    width: 40,
+    flexDirection: "row",
+    alignItems: "center",
+    columnGap: 6,
+  },
+  topButton: {
+    backgroundColor: Colors.secondary,
+    borderRadius: 6,
+    padding: 6,
+  },
+  menuIcon: {
+    width: 24,
+    height: 24,
   },
   gridContainer: {
     flexDirection: "row",
@@ -171,6 +199,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingBottom: 20,
     paddingHorizontal: 24,
+    gap: 12,
   },
   cardSection: {
     overflow: "hidden",

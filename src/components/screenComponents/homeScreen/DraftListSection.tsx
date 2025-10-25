@@ -11,6 +11,7 @@ import DraftCard from "./DraftCard";
 import { getUserDrafts } from "@/api/draftApi";
 import EmptyState from "@/components/modules/EmptyState";
 import { horizontalScale, moderateScale, verticalScale } from "@/utils/metrics";
+import { useNavigation } from "@react-navigation/native";
 type DraftItem = {
   id: string;
   ReleaseTitle: string;
@@ -24,16 +25,13 @@ type DraftItem = {
   };
 };
 
-interface DraftListSectionProps {
-  navigation?: {
-    navigate: (screen: string) => void;
-  };
-}
 
-const DraftListSection = ({ navigation }: DraftListSectionProps) => {
+
+const DraftListSection = () => {
   const [draftList, setDraftList] = useState<DraftItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const shimmerAnimation = new Animated.Value(0);
+  const navigation = useNavigation<any>();
 
   useEffect(() => {
     const fetchDraftList = async () => {
@@ -104,7 +102,7 @@ const DraftListSection = ({ navigation }: DraftListSectionProps) => {
       <View className="flex flex-row justify-between items-center">
         <Text style={styles.heading}>Drafts</Text>
         <TouchableOpacity
-          onPress={() => navigation?.navigate("drafts")}
+          onPress={() => navigation.navigate("MusicTab", { screen: "Draft" })}
           disabled={isLoading}
         >
           <Text style={[styles.linkText, isLoading && styles.disabledText]}>

@@ -14,6 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../theme/colors";
 import { getUserDrafts } from "@/api/draftApi";
 import { LinearGradient } from "expo-linear-gradient";
+import { useNavigation } from "@react-navigation/native";
 
 type DraftItem = {
   id: string;
@@ -28,10 +29,11 @@ type DraftItem = {
   };
 };
 
-const DraftScreen = ({ navigation }: any) => {
+const DraftScreen = () => {
   const [draftList, setDraftList] = useState<DraftItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const shimmerAnimation = new Animated.Value(0);
+  const navigation = useNavigation<any>();
 
   useEffect(() => {
     const fetchDraftList = async () => {
@@ -156,13 +158,34 @@ const DraftScreen = ({ navigation }: any) => {
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() => navigation.goBack()}
+            onPress={() => navigation.navigate("HomeTab")}
             style={styles.backButton}
           >
             <Ionicons name="chevron-back" size={24} color={Colors.primary} />
           </TouchableOpacity>
           <Text style={styles.title}>Drafts</Text>
-          <View style={styles.placeholder} />
+          <View style={styles.placeholder}>
+            <TouchableOpacity
+              onPress={() => navigation?.navigate("Notification")}
+              style={styles.topButton}
+            >
+              <Image
+                source={require("../../../assets/images/solar_calendar-bold.png")}
+                resizeMode="contain"
+                style={styles.menuIcon}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => navigation?.navigate("Notification")}
+              style={styles.topButton}
+            >
+              <Image
+                source={require("../../../assets/images/notification.png")}
+                resizeMode="contain"
+                style={styles.menuIcon}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {isLoading ? (
@@ -209,7 +232,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   backButton: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.secondary,
     borderRadius: 8,
     padding: 8,
   },
@@ -220,7 +243,18 @@ const styles = StyleSheet.create({
     fontFamily: "PlusJakartaSans_700Bold",
   },
   placeholder: {
-    width: 40,
+    flexDirection: "row",
+    alignItems: "center",
+    columnGap: 6,
+  },
+  topButton: {
+    backgroundColor: Colors.secondary,
+    borderRadius: 6,
+    padding: 6,
+  },
+  menuIcon: {
+    width: 24,
+    height: 24,
   },
   listContainer: {
     paddingBottom: 20,

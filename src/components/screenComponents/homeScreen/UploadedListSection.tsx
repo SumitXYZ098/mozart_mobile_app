@@ -13,16 +13,12 @@ import {
 import UploadCard from "./UploadCard";
 import EmptyState from "@/components/modules/EmptyState";
 import { horizontalScale, moderateScale, verticalScale } from "@/utils/metrics";
+import { useNavigation } from "@react-navigation/native";
 
-interface UploadedListSectionProps {
-  navigation?: {
-    navigate: (screen: string) => void;
-  };
-}
-
-const UploadedListSection = ({ navigation }: UploadedListSectionProps) => {
+const UploadedListSection = () => {
   const { tracks, loading } = useUserPublishTracks();
   const shimmerAnimation = new Animated.Value(0);
+  const navigation = useNavigation<any>();
 
   // Shimmer animation effect
   useEffect(() => {
@@ -75,7 +71,7 @@ const UploadedListSection = ({ navigation }: UploadedListSectionProps) => {
       <View className="flex flex-row justify-between items-center">
         <Text style={styles.heading}>My Uploads</Text>
         <TouchableOpacity
-          onPress={() => navigation?.navigate("uploads")}
+          onPress={() => navigation.navigate("MusicTab", { screen: "Upload" })}
           disabled={loading}
         >
           <Text style={[styles.linkText, loading && styles.disabledText]}>

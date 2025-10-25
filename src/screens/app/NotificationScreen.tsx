@@ -1,6 +1,7 @@
 import { notifications } from "@/mock/mockData";
 import { Colors } from "@/theme/colors";
 import { Entypo, Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 import React from "react";
 import {
   FlatList,
@@ -14,7 +15,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const NotificationScreen = ({ navigation }: any) => {
+const NotificationScreen = () => {
+  const navigation = useNavigation<any>();
+
   const renderNotificationItem = ({ item, index }: any) => (
     <View style={[styles.notifyCard, index === 0 && styles.highlightCard]}>
       <View style={styles.iconContainor}>

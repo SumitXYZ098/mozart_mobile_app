@@ -15,15 +15,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import CounterCardSection from "@/components/screenComponents/homeScreen/CounterCardSection";
 import DraftListSection from "@/components/screenComponents/homeScreen/DraftListSection";
 import UploadedListSection from "@/components/screenComponents/homeScreen/UploadedListSection";
+import { useNavigation } from "@react-navigation/native";
 
-export default function HomeScreen({ navigation }: any) {
+export default function HomeScreen() {
   const { user } = useAuthStore();
-  // navigation is sometimes passed as a function (handleScreenNavigation)
-  // and sometimes as an object with navigate(). Handle both.
-  const navigateTo = (screen: string) => {
-    if (typeof navigation === "function") return navigation(screen);
-    return navigation?.navigate?.(screen);
-  };
+  const navigation = useNavigation<any>();
+
   return (
     <LinearGradient
       colors={["#EDE5F7", "#FFFFFF"]}
@@ -46,7 +43,7 @@ export default function HomeScreen({ navigation }: any) {
               />
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => navigateTo("notification")}
+              onPress={() => navigation.navigate("Notification")}
               style={styles.topButton}
             >
               <Image
@@ -80,8 +77,8 @@ export default function HomeScreen({ navigation }: any) {
             <View className="w-[64px] h-[64px] rounded-full bg-white opacity-[0.1] absolute -right-6 -top-[42px] z-10" />
           </View>
           <CounterCardSection />
-          <DraftListSection navigation={navigation} />
-          <UploadedListSection navigation={navigation} />
+          <DraftListSection />
+          <UploadedListSection />
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>
