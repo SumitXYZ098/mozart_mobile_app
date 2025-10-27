@@ -26,7 +26,7 @@ const TabNavigator = () => {
           position: "absolute",
           bottom: 24,
           borderRadius: 40,
-          marginHorizontal: horizontalScale(24),
+          marginHorizontal: 24,
           backgroundColor: "#E8D5FF",
           shadowColor: "#000",
           shadowOffset: { width: 0, height: 4 },

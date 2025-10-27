@@ -1,3 +1,5 @@
+import "react-native-reanimated";
+import "react-native-gesture-handler";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -17,6 +19,7 @@ import {
 import "./global.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import RootNavigator from "@/navigation/RootNavigator";
+import { PortalProvider } from "@gorhom/portal";
 
 const queryClient = new QueryClient();
 
@@ -40,11 +43,13 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       {/* Wrap with view to enforce SafeAreaProvider taking flex:1 */}
-      <QueryClientProvider client={queryClient}>
+      <PortalProvider>
         <SafeAreaProvider style={{ flex: 1 }}>
-          <RootNavigator />
+          <QueryClientProvider client={queryClient}>
+            <RootNavigator />
+          </QueryClientProvider>
         </SafeAreaProvider>
-      </QueryClientProvider>
+      </PortalProvider>
     </GestureHandlerRootView>
   );
 }

@@ -1,14 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
   Image,
   FlatList,
   Animated,
-  Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
@@ -16,6 +14,13 @@ import { Colors } from "../../theme/colors";
 import { getUserDrafts } from "@/api/draftApi";
 import { useNavigation } from "@react-navigation/native";
 import dayjs from "dayjs";
+import BaseBottomSheet, {
+  BaseBottomSheetRef,
+} from "@/components/modules/baseBottomSheet/BaseBottomSheet";
+import AwesomeAlert from "react-native-awesome-alerts";
+import DynamicModal from "@/components/modules/modal/DynamicModal";
+import { useDraftStore } from "@/stores/draftStore";
+import { useDraftFlow } from "@/hooks/useDraft";
 
 type DraftItem = {
   id: string;
@@ -36,20 +41,30 @@ const DraftScreen = () => {
   const [isLoading, setIsLoading] = useState(true);
   const shimmerAnimation = new Animated.Value(0);
   const navigation = useNavigation<any>();
+  const bottomSheetRef = useRef<BaseBottomSheetRef>(null);
+  const [modalData, setModalData] = useState<any>({
+    visible: false,
+  });
+  const { setDraftId, clearDraft, draftId } = useDraftStore();
+  const { deleteDraftMutation } = useDraftFlow();
+
+  const showModal = (config: any) => setModalData({ ...config, visible: true });
+  const hideModal = () => setModalData((p: any) => ({ ...p, visible: false }));
+
+  const fetchDraftList = async () => {
+    setIsLoading(true);
+    try {
+      const response = await getUserDrafts();
+      setDraftList(response.data || []);
+    } catch (err) {
+      console.log("Error fetching draft list:", err);
+      setDraftList([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchDraftList = async () => {
-      setIsLoading(true);
-      try {
-        const response = await getUserDrafts();
-        setDraftList(response.data || []);
-      } catch (err) {
-        console.log("Error fetching draft list:", err);
-        setDraftList([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchDraftList();
   }, []);
 
@@ -96,7 +111,7 @@ const DraftScreen = () => {
         <Animated.View
           style={[styles.skeletonImage, { opacity: shimmerOpacity }]}
         />
-        <View style={[styles.draftContent,{flex:1}]}>
+        <View style={[styles.draftContent, { flex: 1 }]}>
           <Animated.View
             style={[styles.skeletonTitle, { opacity: shimmerOpacity }]}
           />
@@ -165,16 +180,19 @@ const DraftScreen = () => {
               <Text style={styles.albumType}>{item.ReleaseType}</Text>
             </View>
           </View>
-          <View style={{ flexDirection: "column", gap: 12 }}>
-            <Text style={styles.draftText}>Draft</Text>
-            <View style={styles.actionContent}>
-              <TouchableOpacity style={{ padding:4, backgroundColor:Colors.lightGray, borderRadius:8}} onPress={() => console.log("Edit")}>
-                <MaterialIcons name="edit" size={20} color={Colors.gray} />
-              </TouchableOpacity>
-              <TouchableOpacity style={{ padding:4, backgroundColor:"#E639463D", borderRadius:8}} onPress={() => console.log("Delete")}>
-                <Ionicons name="trash-bin" size={20} color={Colors.error} />
-              </TouchableOpacity>
-            </View>
+          <View style={{ flexDirection: "row", gap: 6, alignItems: "center" }}>
+            <TouchableOpacity
+              onPress={() => {
+                bottomSheetRef.current?.present();
+                setDraftId(Number(item.id));
+              }}
+            >
+              <Ionicons
+                name="ellipsis-vertical"
+                size={20}
+                color={Colors.gray}
+              />
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -182,6 +200,58 @@ const DraftScreen = () => {
   );
 
   const renderSkeletonItem = () => <SkeletonCard />;
+
+  const handleDeleteDraft = (id: string) => {
+    bottomSheetRef.current?.dismiss();
+
+    showModal({
+      type: "warning",
+      title: "Are you sure?",
+      message: "You won't be able to revert this!",
+      confirmText: "Yes, delete it!",
+      cancelText: "Cancel",
+      onConfirm: async () => {
+        hideModal();
+
+        try {
+          // 🟢 Run your async mutation
+          await deleteDraftMutation.mutateAsync();
+
+          // 🟢 Refetch draft list from API instead of local filtering
+          await fetchDraftList();
+
+          // 🟢 Show success modal
+          showModal({
+            type: "success",
+            title: "Deleted!",
+            message: "Your file has been deleted.",
+            confirmText: "OK",
+            onConfirm: hideModal,
+          });
+        } catch (error) {
+          console.error("Error deleting draft:", error);
+
+          // 🔴 Show error modal
+          showModal({
+            type: "error",
+            title: "Failed!",
+            message: "Something went wrong while deleting the draft.",
+            confirmText: "OK",
+            onConfirm: hideModal,
+          });
+        } finally {
+          clearDraft();
+        }
+      },
+      onCancel: hideModal,
+    });
+  };
+
+  const handleEditDraft = () => {
+    console.log("Edit draft:", draftId);
+    bottomSheetRef.current?.dismiss();
+    // Navigate to edit screen with draft id
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -244,6 +314,49 @@ const DraftScreen = () => {
           </Text>
         </View>
       )}
+      <BaseBottomSheet ref={bottomSheetRef} title="Actions">
+        <View style={styles.actionContent}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => {
+              console.log("Edit Draft Id:", draftId);
+              handleEditDraft();
+            }}
+          >
+            <MaterialIcons name="edit" size={20} color={Colors.primary} />
+            <Text
+              style={{
+                color: Colors.primary,
+                marginVertical: 20,
+                fontWeight: 600,
+                fontSize: 18,
+              }}
+            >
+              Edit Draft
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => {
+              console.log("Delete Draft Id:", draftId);
+              handleDeleteDraft(draftId?.toString() || "");
+            }}
+          >
+            <Ionicons name="trash-bin" size={20} color={Colors.error} />
+            <Text
+              style={{
+                color: Colors.error,
+                marginVertical: 20,
+                fontWeight: 600,
+                fontSize: 18,
+              }}
+            >
+              Delete Draft
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </BaseBottomSheet>
+      <DynamicModal {...modalData} />
     </SafeAreaView>
   );
 };
@@ -288,6 +401,7 @@ const styles = StyleSheet.create({
     height: 24,
   },
   listContainer: {
+    paddingTop: 8,
     paddingBottom: 20,
     paddingHorizontal: 24,
   },
@@ -335,11 +449,22 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 24,
-    textAlign:"center"
+    textAlign: "center",
   },
   actionContent: {
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  actionButton: {
+    width: "100%",
+    alignItems: "center",
+    borderBottomWidth: 1,
+    borderColor: Colors.secondary,
     flexDirection: "row",
-    gap: 6,
+    justifyContent: "center",
+    gap: 8,
   },
   emptyState: {
     flex: 1,
