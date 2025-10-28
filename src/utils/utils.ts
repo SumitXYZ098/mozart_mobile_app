@@ -89,3 +89,12 @@ export const getSystemTimeZone = (): string => {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
 };
 
+export const today = new Date();
+today.setDate(today.getDate());
+
+export const tomorrow = new Date();
+tomorrow.setDate(tomorrow.getDate() + 1);
+
+// Get date one month from today
+export const oneMonthFromNow = new Date();
+oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);

@@ -1,6 +1,6 @@
 import { notifications } from "@/mock/mockData";
 import { Colors } from "@/theme/colors";
-import { Entypo, Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import React from "react";
 import {
@@ -76,6 +76,7 @@ export default NotificationScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: Colors.white
   },
   header: {
     flexDirection: "row",

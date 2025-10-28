@@ -14,7 +14,7 @@ export default function RootNavigator() {
 
   return (
     <NavigationContainer>
-      {user && user.token ? <TabNavigator/> : <AuthNavigator />}
+      {user && user.token ? <TabNavigator /> : <AuthNavigator />}
     </NavigationContainer>
   );
 }
