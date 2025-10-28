@@ -314,3 +314,219 @@ export const notifications = [
       status: "Scheduled",
     },
   ];
+
+  type Priority = "Priority" | "Standard";
+
+export interface UploadCardProps {
+  id: string;
+  albumName: string;
+  albumType: string;
+  albumImage: string;
+  totalTrack: number;
+  releaseDate: string;
+  status: string;
+  priority: Priority;
+}
+
+  export const uploadCards: UploadCardProps[] = [
+  {
+    id: "1",
+    albumName: "Midnight Mirage",
+    albumType: "Studio",
+    albumImage: "https://picsum.photos/200?random=1",
+    totalTrack: 10,
+    releaseDate: "2023-11-15",
+    status: "In-Progress",
+    priority: "Priority"
+  },
+  {
+    id: "2",
+    albumName: "Neon Dreams",
+    albumType: "EP",
+    albumImage: "https://picsum.photos/200?random=2",
+    totalTrack: 5,
+    releaseDate: "2024-01-10",
+    status: "Complete",
+    priority: "Standard"
+  },
+  {
+    id: "3",
+    albumName: "Echo Valley",
+    albumType: "Single",
+    albumImage: "https://picsum.photos/200?random=3",
+    totalTrack: 1,
+    releaseDate: "2024-05-22",
+    status: "In-Progress",
+    priority: "Standard"
+  },
+  {
+    id: "4",
+    albumName: "Golden Lights",
+    albumType: "Studio",
+    albumImage: "https://picsum.photos/200?random=4",
+    totalTrack: 12,
+    releaseDate: "2023-09-30",
+    status: "In-Progress",
+    priority: "Priority"
+  },
+  {
+    id: "5",
+    albumName: "Velvet Horizon",
+    albumType: "EP",
+    albumImage: "https://picsum.photos/200?random=5",
+    totalTrack: 4,
+    releaseDate: "2024-03-05",
+    status: "Inactive",
+    priority: "Standard"
+  },
+  {
+    id: "6",
+    albumName: "Crimson Waves",
+    albumType: "Studio",
+    albumImage: "https://picsum.photos/200?random=6",
+    totalTrack: 9,
+    releaseDate: "2023-07-14",
+    status: "In-Progress",
+    priority: "Priority"
+  },
+  {
+    id: "7",
+    albumName: "Frozen Lines",
+    albumType: "Compilation",
+    albumImage: "https://picsum.photos/200?random=7",
+    totalTrack: 14,
+    releaseDate: "2022-12-20",
+    status: "Archived",
+    priority: "Standard"
+  },
+  {
+    id: "8",
+    albumName: "Sunset Drifters",
+    albumType: "EP",
+    albumImage: "https://picsum.photos/200?random=8",
+    totalTrack: 5,
+    releaseDate: "2024-04-25",
+    status: "In-Progress",
+    priority: "Priority"
+  },
+  {
+    id: "9",
+    albumName: "Electric Bloom",
+    albumType: "Studio",
+    albumImage: "https://picsum.photos/200?random=9",
+    totalTrack: 11,
+    releaseDate: "2023-10-18",
+    status: "Inactive",
+    priority: "Standard"
+  },
+  {
+    id: "10",
+    albumName: "Parallel Nights",
+    albumType: "Single",
+    albumImage: "https://picsum.photos/200?random=10",
+    totalTrack: 1,
+    releaseDate: "2024-06-07",
+    status: "Complete",
+    priority: "Priority"
+  },
+  {
+    id: "11",
+    albumName: "Whispered Dreams",
+    albumType: "Studio",
+    albumImage: "https://picsum.photos/200?random=11",
+    totalTrack: 8,
+    releaseDate: "2022-11-03",
+    status: "Archived",
+    priority: "Standard"
+  },
+  {
+    id: "12",
+    albumName: "Skybound Stories",
+    albumType: "EP",
+    albumImage: "https://picsum.photos/200?random=12",
+    totalTrack: 6,
+    releaseDate: "2023-03-25",
+    status: "In-Progress",
+    priority: "Priority"
+  },
+  {
+    id: "13",
+    albumName: "Broken Mirrors",
+    albumType: "Studio",
+    albumImage: "https://picsum.photos/200?random=13",
+    totalTrack: 10,
+    releaseDate: "2024-02-15",
+    status: "Inactive",
+    priority: "Standard"
+  },
+  {
+    id: "14",
+    albumName: "Ocean Tides",
+    albumType: "Compilation",
+    albumImage: "https://picsum.photos/200?random=14",
+    totalTrack: 13,
+    releaseDate: "2021-09-09",
+    status: "Archived",
+    priority: "Standard"
+  },
+  {
+    id: "15",
+    albumName: "Shadow City",
+    albumType: "Studio",
+    albumImage: "https://picsum.photos/200?random=15",
+    totalTrack: 9,
+    releaseDate: "2024-05-11",
+    status: "Complete",
+    priority: "Priority"
+  },
+  {
+    id: "16",
+    albumName: "Glass Heart",
+    albumType: "EP",
+    albumImage: "https://picsum.photos/200?random=16",
+    totalTrack: 4,
+    releaseDate: "2023-08-23",
+    status: "Inactive",
+    priority: "Standard"
+  },
+  {
+    id: "17",
+    albumName: "Infinite Loop",
+    albumType: "Studio",
+    albumImage: "https://picsum.photos/200?random=17",
+    totalTrack: 12,
+    releaseDate: "2024-10-02",
+    status: "In-Progress",
+    priority: "Priority"
+  },
+  {
+    id: "18",
+    albumName: "Silent Motion",
+    albumType: "Single",
+    albumImage: "https://picsum.photos/200?random=18",
+    totalTrack: 1,
+    releaseDate: "2024-07-15",
+    status: "Complete",
+    priority: "Standard"
+  },
+  {
+    id: "19",
+    albumName: "Crystal Veins",
+    albumType: "EP",
+    albumImage: "https://picsum.photos/200?random=19",
+    totalTrack: 5,
+    releaseDate: "2023-06-06",
+    status: "Inactive",
+    priority: "Standard"
+  },
+  {
+    id: "20",
+    albumName: "Echoes of Dawn",
+    albumType: "Studio",
+    albumImage: "https://picsum.photos/200?random=20",
+    totalTrack: 10,
+    releaseDate: "2024-12-01",
+    status: "Complete",
+    priority: "Priority"
+  }
+];

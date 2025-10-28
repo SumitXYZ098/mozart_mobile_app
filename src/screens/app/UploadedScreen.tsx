@@ -7,6 +7,7 @@ import {
   Animated,
   Image,
   Dimensions,
+  FlatList,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -15,12 +16,15 @@ import { useUserPublishTracks } from "@/hooks/useUserPublishTracks";
 import UploadCard from "@/components/screenComponents/homeScreen/UploadCard";
 import { useNavigation } from "@react-navigation/native";
 import { TabView, SceneMap, TabBar } from "react-native-tab-view";
+import { UploadCardProps, uploadCards } from "@/mock/mockData";
+import dayjs from "dayjs";
 
 const { width } = Dimensions.get("window");
 
 export default function UploadedScreen() {
   const { tracks, loading } = useUserPublishTracks();
   const shimmerAnimation = new Animated.Value(0);
+  const [isLoading, setIsLoading] = useState(true);
   const navigation = useNavigation<any>();
 
   const [index, setIndex] = useState(0);
@@ -32,7 +36,7 @@ export default function UploadedScreen() {
 
   // Shimmer animation effect
   useEffect(() => {
-    if (loading) {
+    if (isLoading) {
       const shimmer = Animated.loop(
         Animated.sequence([
           Animated.timing(shimmerAnimation, {
@@ -50,17 +54,46 @@ export default function UploadedScreen() {
       shimmer.start();
       return () => shimmer.stop();
     }
-  }, [loading]);
+  }, [isLoading, shimmerAnimation]);
 
+  useEffect(() => {
+    // simulate API
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 1500);
+  }, []);
+
+  // Skeleton component
   const SkeletonCard = () => {
     const shimmerOpacity = shimmerAnimation.interpolate({
       inputRange: [0, 1],
       outputRange: [0.3, 0.7],
     });
+
     return (
-      <View style={styles.cardSection}>
+      <View
+        style={[
+          styles.updateCard,
+          {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          },
+        ]}
+      >
         <Animated.View
           style={[styles.skeletonImage, { opacity: shimmerOpacity }]}
+        />
+        <View style={[styles.updateContent, { flex: 1 }]}>
+          <Animated.View
+            style={[styles.skeletonTitle, { opacity: shimmerOpacity }]}
+          />
+          <Animated.View
+            style={[styles.skeletonSubTitle, { opacity: shimmerOpacity }]}
+          />
+        </View>
+        <Animated.View
+          style={[styles.skeletonDraftText, { opacity: shimmerOpacity }]}
         />
       </View>
     );
@@ -104,13 +137,137 @@ export default function UploadedScreen() {
     );
   };
 
+  const renderUpdateItem = ({ item }: { item: UploadCardProps }) => (
+    <View style={styles.updateCard}>
+      <View style={{ flexDirection: "column", gap: 4 }}>
+        <Text style={styles.albumType}>
+          Release Date: {dayjs(item.releaseDate).format("DD/MM/YYYY")}
+        </Text>
+
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <Image
+              source={{ uri: item.albumImage }}
+              style={styles.albumImage}
+              resizeMode="cover"
+            />
+            <View style={styles.updateContent}>
+              <Text style={styles.albumName}>{item.albumName}</Text>
+              <Text style={styles.albumType}>{item.albumType}</Text>
+              <Text style={styles.totalTrack}>Tracks: {item.totalTrack}</Text>
+            </View>
+          </View>
+
+          <View style={{ alignItems: "flex-end" }}>
+            <Text
+              style={[
+                styles.statusText,
+                {
+                  backgroundColor:
+                    item.status === "Published"
+                      ? "#D6F5E6"
+                      : item.status === "Pending"
+                      ? "#FFF3CD"
+                      : "#F8D7DA",
+                  color:
+                    item.status === "Published"
+                      ? "#198754"
+                      : item.status === "Pending"
+                      ? "#856404"
+                      : "#842029",
+                },
+              ]}
+            >
+              {item.status}
+            </Text>
+            <Text
+              style={[
+                styles.priorityText,
+                {
+                  color:
+                    item.priority === "Priority" ? Colors.primary : Colors.gray,
+                },
+              ]}
+            >
+              {item.priority}
+            </Text>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+
+  const renderSkeletonItem = () => <SkeletonCard />;
+
+  const renderUploadItems = (
+    data: UploadCardProps[],
+    isLoading: boolean,
+    emptyMessage: string
+  ) => {
+    if (isLoading) {
+      // ⏳ Skeletons while loading
+      return (
+        <FlatList
+          data={[1, 2, 3, 4, 5]} // Show 5 skeleton items
+          renderItem={renderSkeletonItem}
+          keyExtractor={(item) => item.toString()}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContainer}
+        />
+      );
+    }
+
+    if (data.length === 0) {
+      // ❌ Empty state message
+      return (
+        <View style={styles.emptyState}>
+          <Ionicons name="cloud-upload-outline" size={64} color={Colors.gray} />
+          <Text style={styles.emptyTitle}>{emptyMessage}</Text>
+          <Text style={styles.emptySubtitle}>
+            Start uploading your music to see it here
+          </Text>
+        </View>
+      );
+    }
+
+    // ✅ Normal data render
+    return (
+      <FlatList
+        data={data}
+        renderItem={renderUpdateItem}
+        keyExtractor={(item) => item.id}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContainer}
+      />
+    );
+  };
+
   // You can filter tracks by status here
   const InProgressRoute = () =>
-    renderUploadList(tracks.filter((t) => t.Status === "In-Progress"));
+    renderUploadItems(
+      uploadCards.filter((t) => t.status === "In-Progress"),
+      isLoading,
+      "No uploads in progress yet."
+    );
   const CompleteRoute = () =>
-    renderUploadList(tracks.filter((t) => t.Status === "Complete"));
+    renderUploadItems(
+      uploadCards.filter((t) => t.status === "Complete"),
+      isLoading,
+      "No completed uploads yet."
+    );
+
   const InactiveRoute = () =>
-    renderUploadList(tracks.filter((t) => t.Status === "Inactive"));
+    renderUploadItems(
+      uploadCards.filter((t) => t.status === "Inactive"),
+      isLoading,
+      "No inactive uploads found."
+    );
 
   const renderScene = SceneMap({
     inProgress: InProgressRoute,
@@ -242,11 +399,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   skeletonImage: {
-    width: "100%",
-    height: 130,
+    width: 78,
+    height: 78,
     backgroundColor: Colors.gray,
     borderRadius: 12,
-    marginBottom: 12,
   },
   cardSection: {
     width: "48%",
@@ -282,5 +438,79 @@ const styles = StyleSheet.create({
   },
   inactiveTabText: {
     color: "#A0A0A0", // gray for inactive
+  },
+  skeletonTitle: {
+    width: "80%",
+    height: 18,
+    backgroundColor: Colors.gray,
+    borderRadius: 4,
+    marginBottom: 8,
+  },
+  skeletonSubTitle: {
+    width: "60%",
+    height: 12,
+    backgroundColor: Colors.gray,
+    borderRadius: 4,
+  },
+  skeletonDraftText: {
+    width: 60,
+    height: 24,
+    backgroundColor: Colors.gray,
+    borderRadius: 12,
+  },
+  updateCard: {
+    display: "flex",
+    backgroundColor: Colors.white,
+    padding: 12,
+    paddingRight: 16,
+    borderRadius: 16,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  updateContent: { marginLeft: 12 },
+  albumImage: {
+    width: 78,
+    height: 78,
+    borderRadius: 8,
+  },
+  albumName: {
+    fontSize: 18,
+    fontFamily: "PlusJakartaSans_700Bold",
+    color: Colors.black,
+    textTransform: "capitalize",
+    marginBottom: 4,
+  },
+  albumType: {
+    fontSize: 12,
+    fontFamily: "PlusJakartaSans_600SemiBold",
+    color: Colors.gray,
+  },
+  totalTrack: {
+    fontSize: 12,
+    fontFamily: "Poppins_400Regular",
+    color: Colors.gray,
+  },
+  statusText: {
+    fontSize: 12,
+    fontFamily: "Poppins_600SemiBold",
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 24,
+    textAlign: "center",
+    overflow: "hidden",
+    marginBottom: 4,
+  },
+  priorityText: {
+    fontSize: 12,
+    fontFamily: "Poppins_600SemiBold",
+  },
+  listContainer: {
+    paddingHorizontal: 24,
+    paddingTop: 8,
+    paddingBottom: 80, // 👈 ensures scroll space at bottom
   },
 });
