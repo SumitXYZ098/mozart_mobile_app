@@ -106,6 +106,23 @@ export interface Track {
   Status: string; // Adjust based on your backend
 }
 
+export interface TrackResponse {
+  id: number;
+  TrackName: string;
+  PrimaryGenre?: string;
+  SecondaryGenre?: string;
+  RoleCredits: RoleCredit[];
+  LyricsAvailable?: boolean;
+  AppropriateForAllAudiences?: boolean;
+  ContainsExplicitContent?: boolean;
+  CleanVersionAvailable?: boolean;
+  ISRC?: string;
+  ISWC?: string;
+  RequestANewISRC?: boolean;
+  TrackUpload: string | null; // Assuming this is a file URL or null
+  Status: string; // Adjust based on your backend
+}
+
 export interface DraftData {
   ReleaseTitle: string;
   ReleaseType: string;

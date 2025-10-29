@@ -21,6 +21,7 @@ import AwesomeAlert from "react-native-awesome-alerts";
 import DynamicModal from "@/components/modules/modal/DynamicModal";
 import { useDraftStore } from "@/stores/draftStore";
 import { useDraftFlow } from "@/hooks/useDraft";
+import { LazyImage } from "@/components/modules/LazyImage";
 
 type DraftItem = {
   id: string;
@@ -126,43 +127,9 @@ const DraftScreen = () => {
     );
   };
 
-  // Lazy loading image component
-  const LazyImage = ({ uri, style }: { uri: string; style: any }) => {
-    const [imageLoaded, setImageLoaded] = useState(false);
-    const [imageError, setImageError] = useState(false);
-
-    if (imageError) {
-      return (
-        <View style={[style, styles.errorImage]}>
-          <Ionicons name="musical-notes" size={24} color={Colors.gray} />
-        </View>
-      );
-    }
-
-    return (
-      <View style={style}>
-        {!imageLoaded && (
-          <View style={[style, styles.placeholderImage]}>
-            <Ionicons name="musical-notes" size={24} color={Colors.gray} />
-          </View>
-        )}
-        <Image
-          source={{ uri: `${process.env.EXPO_PUBLIC_API_URL}${uri}` }}
-          style={[style, { opacity: imageLoaded ? 1 : 0 }]}
-          resizeMode="cover"
-          onLoad={() => setImageLoaded(true)}
-          onError={() => setImageError(true)}
-        />
-      </View>
-    );
-  };
-
   const renderDraftItem = ({ item }: { item: DraftItem }) => (
     <View style={styles.draftCard}>
       <View style={{ flexDirection: "column", gap: 4 }}>
-        <Text style={styles.albumType}>
-          Created Date: {dayjs(item.createdAt).format("DD/MM/YYYY")}
-        </Text>
         <View
           style={{
             flexDirection: "row",
@@ -176,8 +143,20 @@ const DraftScreen = () => {
               style={styles.albumImage}
             />
             <View style={styles.draftContent}>
-              <Text style={styles.albumName}>{item.ReleaseTitle}</Text>
-              <Text style={styles.albumType}>{item.ReleaseType}</Text>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  columnGap: 6,
+                }}
+              >
+                <Text style={styles.albumName}>{item.ReleaseTitle}</Text>
+                <Text style={styles.albumType}>{item.ReleaseType}</Text>
+              </View>
+
+              <Text style={styles.createdDate}>
+                Created Date: {dayjs(item.createdAt).format("DD/MM/YYYY")}
+              </Text>
             </View>
           </View>
           <View style={{ flexDirection: "row", gap: 6, alignItems: "center" }}>
@@ -408,10 +387,10 @@ const styles = StyleSheet.create({
   draftCard: {
     display: "flex",
     backgroundColor: Colors.white,
-    padding: 12,
+    padding: 6,
     paddingRight: 16,
     borderRadius: 16,
-    marginBottom: 12,
+    marginBottom: 10,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -420,36 +399,32 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    borderWidth: 1,
+    borderColor: Colors.secondary,
   },
   albumImage: {
-    width: 78,
-    height: 78,
+    width: 60,
+    height: 60,
     borderRadius: 8,
   },
   draftContent: {
-    marginLeft: 12,
+    marginLeft: 10,
   },
   albumName: {
     fontSize: 18,
     fontFamily: "PlusJakartaSans_700Bold",
     color: Colors.black,
     textTransform: "capitalize",
-    marginBottom: 4,
   },
   albumType: {
     fontSize: 12,
     fontFamily: "PlusJakartaSans_600SemiBold",
-    color: Colors.gray,
+    color: Colors.primary,
   },
-  draftText: {
-    backgroundColor: "#E8A3003D",
-    color: "#F49F00",
-    fontSize: 12,
-    fontFamily: "Poppins_400Regular",
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 24,
-    textAlign: "center",
+  createdDate: {
+    fontSize: 14,
+    fontFamily: "PlusJakartaSans_600SemiBold",
+    color: Colors.gray,
   },
   actionContent: {
     flexDirection: "column",
@@ -511,17 +486,5 @@ const styles = StyleSheet.create({
     height: 24,
     backgroundColor: Colors.gray,
     borderRadius: 12,
-  },
-  // Lazy loading styles
-  placeholderImage: {
-    position: "absolute",
-    backgroundColor: Colors.lightGray,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  errorImage: {
-    backgroundColor: Colors.lightGray,
-    justifyContent: "center",
-    alignItems: "center",
   },
 });

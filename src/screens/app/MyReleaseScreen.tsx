@@ -8,6 +8,9 @@ import {
   Image,
   Dimensions,
   FlatList,
+  TouchableHighlight,
+  TouchableWithoutFeedback,
+  Touchable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -18,13 +21,14 @@ import { useNavigation } from "@react-navigation/native";
 import { TabView, SceneMap, TabBar } from "react-native-tab-view";
 import { UploadCardProps, uploadCards } from "@/mock/mockData";
 import dayjs from "dayjs";
+import StatusBadge from "@/components/modules/StatusBadge";
+import { LazyImage } from "@/components/modules/LazyImage";
 
 const { width } = Dimensions.get("window");
 
-export default function UploadedScreen() {
+export default function MyReleaseScreen() {
   const { tracks, loading } = useUserPublishTracks();
   const shimmerAnimation = new Animated.Value(0);
-  const [isLoading, setIsLoading] = useState(true);
   const navigation = useNavigation<any>();
 
   const [index, setIndex] = useState(0);
@@ -36,7 +40,7 @@ export default function UploadedScreen() {
 
   // Shimmer animation effect
   useEffect(() => {
-    if (isLoading) {
+    if (loading) {
       const shimmer = Animated.loop(
         Animated.sequence([
           Animated.timing(shimmerAnimation, {
@@ -54,14 +58,7 @@ export default function UploadedScreen() {
       shimmer.start();
       return () => shimmer.stop();
     }
-  }, [isLoading, shimmerAnimation]);
-
-  useEffect(() => {
-    // simulate API
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 1500);
-  }, []);
+  }, [loading, shimmerAnimation]);
 
   // Skeleton component
   const SkeletonCard = () => {
@@ -99,114 +96,85 @@ export default function UploadedScreen() {
     );
   };
 
-  const renderUploadList = (data: any[]) => {
-    if (loading) {
-      return (
-        <View style={styles.gridContainer}>
-          {[1, 2, 3, 4].map((item) => (
-            <SkeletonCard key={item} />
-          ))}
-        </View>
-      );
-    }
+  const renderUpdateItem = ({ item }: { item: any }) => (
+    <TouchableOpacity
+      onPress={() =>
+        navigation.navigate("MusicTab", {
+          screen: "Track",
+          params: { routeId: item.id },
+        })
+      }
+      focusable={false}
+    >
+      <View style={styles.updateCard}>
+        <View style={{ flexDirection: "column", gap: 4 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <LazyImage
+                uri={item.CoverArt?.formats?.small?.url ?? ""}
+                style={styles.albumImage}
+              />
+              <View style={styles.updateContent}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    columnGap: 6,
+                  }}
+                >
+                  <Text style={styles.albumName}>{item.ReleaseTitle}</Text>
+                  <Text style={styles.albumType}>{item.ReleaseType}</Text>
+                </View>
+                <Text style={styles.totalTrack}>
+                  Tracks: {item.TrackList?.length}
+                </Text>
+                <Text style={styles.createdDate}>
+                  Release Date: {dayjs(item.releaseDate).format("DD/MM/YYYY")}
+                </Text>
+              </View>
+            </View>
 
-    if (data.length === 0) {
-      return (
-        <View style={styles.emptyState}>
-          <Ionicons name="cloud-upload-outline" size={64} color={Colors.gray} />
-          <Text style={styles.emptyTitle}>No Uploads Found</Text>
-          <Text style={styles.emptySubtitle}>
-            Start uploading your music to see it here
-          </Text>
-        </View>
-      );
-    }
-
-    return (
-      <View style={styles.gridContainer}>
-        {data.map((track) => (
-          <UploadCard
-            key={track.id}
-            id={track.id.toLocaleString()}
-            albumName={track.ReleaseTitle}
-            albumType={track.ReleaseType}
-            albumImage={track.CoverArt.formats?.thumbnail?.url ?? ""}
-          />
-        ))}
-      </View>
-    );
-  };
-
-  const renderUpdateItem = ({ item }: { item: UploadCardProps }) => (
-    <View style={styles.updateCard}>
-      <View style={{ flexDirection: "column", gap: 4 }}>
-        <Text style={styles.albumType}>
-          Release Date: {dayjs(item.releaseDate).format("DD/MM/YYYY")}
-        </Text>
-
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Image
-              source={{ uri: item.albumImage }}
-              style={styles.albumImage}
-              resizeMode="cover"
-            />
-            <View style={styles.updateContent}>
-              <Text style={styles.albumName}>{item.albumName}</Text>
-              <Text style={styles.albumType}>{item.albumType}</Text>
-              <Text style={styles.totalTrack}>Tracks: {item.totalTrack}</Text>
+            <View style={{ alignItems: "flex-end" }}>
+              {item.Priority === "Priority" ? (
+                <Ionicons
+                  name="star"
+                  size={20}
+                  color={Colors.primary}
+                  style={{
+                    backgroundColor: Colors.lightPrimary,
+                    padding: 3,
+                    borderRadius: 4,
+                  }}
+                />
+              ) : (
+                <Ionicons
+                  name="star"
+                  size={20}
+                  color={Colors.gray}
+                  style={{
+                    backgroundColor: Colors.secondary,
+                    padding: 3,
+                    borderRadius: 4,
+                  }}
+                />
+              )}
             </View>
           </View>
-
-          <View style={{ alignItems: "flex-end" }}>
-            <Text
-              style={[
-                styles.statusText,
-                {
-                  backgroundColor:
-                    item.status === "Published"
-                      ? "#D6F5E6"
-                      : item.status === "Pending"
-                      ? "#FFF3CD"
-                      : "#F8D7DA",
-                  color:
-                    item.status === "Published"
-                      ? "#198754"
-                      : item.status === "Pending"
-                      ? "#856404"
-                      : "#842029",
-                },
-              ]}
-            >
-              {item.status}
-            </Text>
-            <Text
-              style={[
-                styles.priorityText,
-                {
-                  color:
-                    item.priority === "Priority" ? Colors.primary : Colors.gray,
-                },
-              ]}
-            >
-              {item.priority}
-            </Text>
-          </View>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   const renderSkeletonItem = () => <SkeletonCard />;
 
   const renderUploadItems = (
-    data: UploadCardProps[],
+    data: any[],
     isLoading: boolean,
     emptyMessage: string
   ) => {
@@ -251,21 +219,21 @@ export default function UploadedScreen() {
   // You can filter tracks by status here
   const InProgressRoute = () =>
     renderUploadItems(
-      uploadCards.filter((t) => t.status === "In-Progress"),
-      isLoading,
+      tracks.filter((t) => t.Status === "In-Progress"),
+      loading,
       "No uploads in progress yet."
     );
   const CompleteRoute = () =>
     renderUploadItems(
-      uploadCards.filter((t) => t.status === "Complete"),
-      isLoading,
+      tracks.filter((t) => t.Status === "Complete"),
+      loading,
       "No completed uploads yet."
     );
 
   const InactiveRoute = () =>
     renderUploadItems(
-      uploadCards.filter((t) => t.status === "Inactive"),
-      isLoading,
+      tracks.filter((t) => t.Status === "Inactive"),
+      loading,
       "No inactive uploads found."
     );
 
@@ -461,48 +429,45 @@ const styles = StyleSheet.create({
   updateCard: {
     display: "flex",
     backgroundColor: Colors.white,
-    padding: 12,
+    padding: 6,
     paddingRight: 16,
     borderRadius: 16,
-    marginBottom: 12,
+    marginBottom: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    borderWidth: 1,
+    borderColor: Colors.secondary,
   },
-  updateContent: { marginLeft: 12 },
+  updateContent: { marginLeft: 10 },
   albumImage: {
-    width: 78,
-    height: 78,
+    width: 60,
+    height: 60,
     borderRadius: 8,
   },
   albumName: {
-    fontSize: 18,
+    fontSize: 16,
     fontFamily: "PlusJakartaSans_700Bold",
     color: Colors.black,
     textTransform: "capitalize",
     marginBottom: 4,
   },
   albumType: {
-    fontSize: 12,
+    fontSize: 13,
+    fontFamily: "PlusJakartaSans_600SemiBold",
+    color: Colors.primary,
+  },
+  createdDate: {
+    fontSize: 10,
     fontFamily: "PlusJakartaSans_600SemiBold",
     color: Colors.gray,
   },
   totalTrack: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: "Poppins_400Regular",
-    color: Colors.gray,
-  },
-  statusText: {
-    fontSize: 12,
-    fontFamily: "Poppins_600SemiBold",
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 24,
-    textAlign: "center",
-    overflow: "hidden",
-    marginBottom: 4,
+    color: Colors.black,
   },
   priorityText: {
     fontSize: 12,

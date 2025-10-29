@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { getCalenderEvents, getPublishReleaseList, getTrackListByPublishedId, getUserPublishTrack, publishTrackById, updatePublishRelease } from "@/api/publishApi";
-import { CalendarEvent, CoverArt, IPublishRelease, RoleCredit } from "@/api/type";
+import { CalendarEvent, CoverArt, IPublishRelease, RoleCredit, TrackResponse } from "@/api/type";
 import { create } from "zustand";
 
 // Types
@@ -57,7 +57,7 @@ interface PublishTrack {
   Status: string | null;
   Countries: string[];
   MusicStores: string[];
-  TrackList: Track[];
+  TrackList: TrackResponse[];
   CoverArt: CoverArt;
 }
 

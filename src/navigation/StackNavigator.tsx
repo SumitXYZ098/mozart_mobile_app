@@ -6,14 +6,18 @@ import HomeScreen from "@/screens/app/HomeScreen";
 import AnalyticsScreen from "@/screens/app/AnalyticsScreen";
 import WalletScreen from "@/screens/app/WalletScreen";
 import ProfileScreen from "@/screens/app/ProfileScreen";
-import UploadedScreen from "@/screens/app/UploadedScreen";
 import CalendarEventScreen from "@/screens/app/CalendarEventScreen";
+import MyTrackScreen from "@/screens/app/MyTrackScreen";
+import MyReleaseScreen from "@/screens/app/MyReleaseScreen";
 
 const Stack = createNativeStackNavigator();
 
 export function HomeStackNavigator() {
   return (
-    <Stack.Navigator initialRouteName="HomeMain" screenOptions={{ headerShown: false }}>
+    <Stack.Navigator
+      initialRouteName="HomeMain"
+      screenOptions={{ headerShown: false }}
+    >
       <Stack.Screen name="HomeMain" component={HomeScreen} />
       <Stack.Screen name="Notification" component={NotificationScreen} />
     </Stack.Navigator>
@@ -38,18 +42,25 @@ export function WalletStackNavigator() {
 
 export function MusicStackNavigator() {
   return (
-    <Stack.Navigator initialRouteName="Draft" screenOptions={{ headerShown: false }}>
+    <Stack.Navigator
+      initialRouteName="Draft"
+      screenOptions={{ headerShown: false }}
+    >
       <Stack.Screen name="Draft" component={DraftScreen} />
-      <Stack.Screen name="Upload" component={UploadedScreen} />
+      <Stack.Screen name="Upload" component={MyReleaseScreen} />
       <Stack.Screen name="Notification" component={NotificationScreen} />
       <Stack.Screen name="CalendarEvent" component={CalendarEventScreen} />
+      <Stack.Screen name="Track" component={MyTrackScreen} />
     </Stack.Navigator>
   );
 }
 
 export function ProfileStackNavigator() {
   return (
-    <Stack.Navigator initialRouteName="ProfileMain" screenOptions={{ headerShown: false }}>
+    <Stack.Navigator
+      initialRouteName="ProfileMain"
+      screenOptions={{ headerShown: false }}
+    >
       <Stack.Screen name="ProfileMain" component={ProfileScreen} />
     </Stack.Navigator>
   );

@@ -1,4 +1,5 @@
 import React from "react";
+import { Text } from "react-native";
 
 interface StatusBadgeProps {
   status: string;
@@ -17,7 +18,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
     "px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap";
   const style = statusStyles[status] || "bg-gray-100 text-gray-500";
 
-  return <span className={`${baseClasses} ${style}`}>{status}</span>;
+  return <Text className={`${baseClasses} ${style}`}>{status}</Text>;
 };
 
 export default StatusBadge;
