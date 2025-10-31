@@ -9,6 +9,7 @@ import {
   Animated,
   ScrollView,
   Platform,
+  Pressable,
 } from "react-native";
 import UploadCard from "./UploadCard";
 import EmptyState from "@/components/modules/EmptyState";
@@ -100,13 +101,22 @@ const UploadedListSection = () => {
             </>
           ) : (
             tracks.map((track) => (
-              <UploadCard
+              <Pressable
                 key={track.id}
-                id={track.id.toLocaleString()}
-                albumName={track.ReleaseTitle}
-                albumType={track.ReleaseType}
-                albumImage={track.CoverArt.formats?.thumbnail?.url ?? ""}
-              />
+                onPress={() =>
+                  navigation.navigate("MusicTab", {
+                    screen: "Track",
+                    params: { routeId: track.id },
+                  })
+                }
+              >
+                <UploadCard
+                  id={track.id.toLocaleString()}
+                  albumName={track.ReleaseTitle}
+                  albumType={track.ReleaseType}
+                  albumImage={track.CoverArt.formats?.thumbnail?.url ?? ""}
+                />
+              </Pressable>
             ))
           )}
         </ScrollView>
@@ -119,7 +129,7 @@ export default UploadedListSection;
 
 const styles = StyleSheet.create({
   section: {
-    marginBottom: moderateScale(40),
+    marginBottom: Platform.OS === "android" ? 60 : 40,
     flexDirection: "column",
     rowGap: 10,
   },

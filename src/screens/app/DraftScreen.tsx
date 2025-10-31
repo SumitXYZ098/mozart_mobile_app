@@ -17,7 +17,6 @@ import dayjs from "dayjs";
 import BaseBottomSheet, {
   BaseBottomSheetRef,
 } from "@/components/modules/baseBottomSheet/BaseBottomSheet";
-import AwesomeAlert from "react-native-awesome-alerts";
 import DynamicModal from "@/components/modules/modal/DynamicModal";
 import { useDraftStore } from "@/stores/draftStore";
 import { useDraftFlow } from "@/hooks/useDraft";
@@ -180,7 +179,7 @@ const DraftScreen = () => {
 
   const renderSkeletonItem = () => <SkeletonCard />;
 
-  const handleDeleteDraft = (id: string) => {
+  const handleDeleteDraft = () => {
     bottomSheetRef.current?.dismiss();
 
     showModal({
@@ -230,6 +229,10 @@ const DraftScreen = () => {
     console.log("Edit draft:", draftId);
     bottomSheetRef.current?.dismiss();
     // Navigate to edit screen with draft id
+    navigation.navigate("MusicTab", {
+      screen: "NewRelease",
+      params: { routeId: draftId, step: 1 },
+    });
   };
 
   return (
@@ -318,7 +321,7 @@ const DraftScreen = () => {
             style={styles.actionButton}
             onPress={() => {
               console.log("Delete Draft Id:", draftId);
-              handleDeleteDraft(draftId?.toString() || "");
+              handleDeleteDraft();
             }}
           >
             <Ionicons name="trash-bin" size={20} color={Colors.error} />

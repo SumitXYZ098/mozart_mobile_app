@@ -9,6 +9,8 @@ import ProfileScreen from "@/screens/app/ProfileScreen";
 import CalendarEventScreen from "@/screens/app/CalendarEventScreen";
 import MyTrackScreen from "@/screens/app/MyTrackScreen";
 import MyReleaseScreen from "@/screens/app/MyReleaseScreen";
+import NewReleaseScreen from "@/screens/app/NewReleaseScreen";
+import WelcomeNewReleaseScreen from "@/components/screenComponents/newReleaseScreen/WelcomeNewReleaseScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -51,6 +53,7 @@ export function MusicStackNavigator() {
       <Stack.Screen name="Notification" component={NotificationScreen} />
       <Stack.Screen name="CalendarEvent" component={CalendarEventScreen} />
       <Stack.Screen name="Track" component={MyTrackScreen} />
+      <Stack.Screen name="NewRelease" component={NewReleaseScreen} />
     </Stack.Navigator>
   );
 }

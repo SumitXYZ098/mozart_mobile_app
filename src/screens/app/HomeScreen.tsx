@@ -69,7 +69,15 @@ export default function HomeScreen() {
                   Start a new single, EP, or album
                 </Text>
               </View>
-              <TouchableOpacity style={styles.topButton}>
+              <TouchableOpacity
+                style={styles.topButton}
+                onPress={() =>
+                  navigation.navigate("MusicTab", {
+                    screen: "NewRelease",
+                    params: { step: 0 },
+                  })
+                }
+              >
                 <MaterialIcons name="add" color={Colors.primary} size={24} />
               </TouchableOpacity>
             </View>

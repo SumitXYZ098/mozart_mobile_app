@@ -8,20 +8,14 @@ import {
   Image,
   Dimensions,
   FlatList,
-  TouchableHighlight,
-  TouchableWithoutFeedback,
-  Touchable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../theme/colors";
 import { useUserPublishTracks } from "@/hooks/useUserPublishTracks";
-import UploadCard from "@/components/screenComponents/homeScreen/UploadCard";
 import { useNavigation } from "@react-navigation/native";
-import { TabView, SceneMap, TabBar } from "react-native-tab-view";
-import { UploadCardProps, uploadCards } from "@/mock/mockData";
+import { TabView, SceneMap} from "react-native-tab-view";
 import dayjs from "dayjs";
-import StatusBadge from "@/components/modules/StatusBadge";
 import { LazyImage } from "@/components/modules/LazyImage";
 
 const { width } = Dimensions.get("window");

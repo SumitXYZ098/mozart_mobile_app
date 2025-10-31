@@ -7,7 +7,7 @@ import React, {
   useMemo,
   useEffect,
 } from "react";
-import { View, Text, StyleSheet, Pressable } from "react-native";
+import { View, Text, StyleSheet, Pressable, Platform } from "react-native";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import { Portal } from "@gorhom/portal";
 import Animated, {
@@ -42,6 +42,7 @@ const BaseBottomSheet = forwardRef<BaseBottomSheetRef, Props>(
 
     const memoizedSnapPoints = useMemo(() => snapPoints || [], [snapPoints]);
 
+    // Expose controls
     useImperativeHandle(ref, () => ({
       present: () => {
         setIsOpen(true);
@@ -70,12 +71,11 @@ const BaseBottomSheet = forwardRef<BaseBottomSheetRef, Props>(
       opacity.value = withTiming(open ? 1 : 0, { duration: 250 });
     };
 
-    // Fade style for overlay
+    // Fade overlay animation
     const animatedOverlayStyle = useAnimatedStyle(() => ({
       opacity: opacity.value,
     }));
 
-    // Keep overlay visible while animation plays out
     useEffect(() => {
       if (isOpen) opacity.value = withTiming(1, { duration: 250 });
       else opacity.value = withTiming(0, { duration: 250 });
@@ -83,11 +83,9 @@ const BaseBottomSheet = forwardRef<BaseBottomSheetRef, Props>(
 
     return (
       <Portal>
-        {/* 🩵 Animated overlay with fade effect */}
+        {/* Dimmed background overlay */}
         {isOpen && (
-          <Animated.View
-            style={[styles.overlay, animatedOverlayStyle]}
-          >
+          <Animated.View style={[styles.overlay, animatedOverlayStyle]}>
             <Pressable
               style={StyleSheet.absoluteFill}
               onPress={() => {
@@ -101,11 +99,17 @@ const BaseBottomSheet = forwardRef<BaseBottomSheetRef, Props>(
         <BottomSheet
           ref={bottomSheetRef}
           index={initialIndex}
-          snapPoints={memoizedSnapPoints.length > 0 ? memoizedSnapPoints : undefined}
+          snapPoints={
+            memoizedSnapPoints.length > 0 ? memoizedSnapPoints : undefined
+          }
           enableDynamicSizing={memoizedSnapPoints.length === 0}
           enablePanDownToClose
           onChange={handleSheetChange}
           backgroundStyle={styles.sheetBackground}
+          // 🧩 👇 Keyboard-safe configuration
+          keyboardBehavior={Platform.OS === "ios" ? "interactive" : "extend"}
+          keyboardBlurBehavior="restore"
+          android_keyboardInputMode="adjustResize"
         >
           <BottomSheetView style={styles.contentContainer}>
             {title && <Text style={styles.title}>{title}</Text>}
@@ -132,8 +136,8 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: "600",
-    marginBottom: 2,
-    color: Colors.gray
+    marginBottom: 6,
+    color: Colors.gray,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,

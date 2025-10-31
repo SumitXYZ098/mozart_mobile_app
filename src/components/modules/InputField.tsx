@@ -75,7 +75,7 @@ export default function InputField({ label, type, error, ...props }: Props) {
   return (
     <View
       style={{
-        marginBottom: error ? 8 : 16,
+        marginBottom: error ? 8 : 10,
         flex: 1,
       }}
     >

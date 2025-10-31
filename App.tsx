@@ -42,7 +42,6 @@ export default function App() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      {/* Wrap with view to enforce SafeAreaProvider taking flex:1 */}
       <PortalProvider>
         <SafeAreaProvider style={{ flex: 1 }}>
           <QueryClientProvider client={queryClient}>

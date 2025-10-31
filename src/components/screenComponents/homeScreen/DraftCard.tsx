@@ -1,7 +1,8 @@
 import { Colors } from "@/theme/colors";
 import React, { useState } from "react";
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 
 interface DraftCardProps {
   id: string;
@@ -18,6 +19,7 @@ const DraftCard: React.FC<DraftCardProps> = ({
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const navigation = useNavigation<any>();
 
   // Lazy loading image component
   const LazyImage = () => {
@@ -48,16 +50,26 @@ const DraftCard: React.FC<DraftCardProps> = ({
   };
 
   return (
-    <View style={styles.section}>
-      <View className="flex flex-row gap-x-2 items-center">
-        <LazyImage />
-        <View className="flex flex-col">
-          <Text style={styles.albumName}>{albumName}</Text>
-          <Text style={styles.albumType}>{albumType}</Text>
+    <TouchableOpacity
+      onPress={() =>
+        navigation.navigate("MusicTab", {
+          screen: "NewRelease",
+          params: { routeId: id, step: 1 },
+        })
+      }
+      focusable={false}
+    >
+      <View style={styles.section}>
+        <View className="flex flex-row gap-x-2 items-center">
+          <LazyImage />
+          <View className="flex flex-col">
+            <Text style={styles.albumName}>{albumName}</Text>
+            <Text style={styles.albumType}>{albumType}</Text>
+          </View>
         </View>
+        <Text style={styles.draftText}>Draft</Text>
       </View>
-      <Text style={styles.draftText}>Draft</Text>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -83,7 +95,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: "PlusJakartaSans_700Bold",
     color: Colors.black,
-    textTransform: 'capitalize'
+    textTransform: "capitalize",
   },
   albumType: {
     fontSize: 12,
