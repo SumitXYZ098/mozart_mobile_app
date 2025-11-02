@@ -16,7 +16,6 @@ import WelcomeNewReleaseScreen from "@/components/screenComponents/newReleaseScr
 import StepperScreen from "@/components/screenComponents/newReleaseScreen/StepperScreen";
 import { useDraftStore } from "@/stores/draftStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import KeyboardWrapper from "@/components/modules/KeyboardWrapper";
 
 const NewReleaseScreen = (route: any) => {
   console.log("Route:", route?.route?.params);
@@ -99,9 +98,8 @@ const NewReleaseScreen = (route: any) => {
       </View>
 
       {/* Step Content */}
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={{
+      <View
+        style={{
           paddingHorizontal: 24,
           paddingBottom: 80,
           justifyContent: activeStep === 0 ? "center" : "flex-start",
@@ -109,7 +107,7 @@ const NewReleaseScreen = (route: any) => {
         }}
       >
         {stepData.find((item) => item.activeStep === activeStep)?.component}
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 };
@@ -117,7 +115,7 @@ const NewReleaseScreen = (route: any) => {
 export default NewReleaseScreen;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.white },
+  container: { flex: 1, backgroundColor:Colors.white},
   header: {
     flexDirection: "row",
     alignItems: "center",

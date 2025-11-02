@@ -64,9 +64,13 @@ const SelectInputField: React.FC<ISelectInputFieldProps> = ({
         placeholderStyle={styles.placeholder}
         selectedTextStyle={styles.text}
         inputSearchStyle={styles.searchInput}
+        iconColor={Colors.primary}
         data={dropdownItems}
         search
         maxHeight={250}
+        flatListProps={{
+          nestedScrollEnabled: true, // ✅ prevents scroll ref warning
+        }}
         labelField="label"
         valueField="value"
         placeholder={placeholder}
@@ -83,7 +87,6 @@ const SelectInputField: React.FC<ISelectInputFieldProps> = ({
             <Text style={styles.itemText}>{item.label}</Text>
           </View>
         )}
-        
       />
 
       {error && <Text style={styles.errorText}>{helperText}</Text>}

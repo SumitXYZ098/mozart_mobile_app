@@ -9,6 +9,7 @@ import SelectInputField from "@/components/common/SelectInputField";
 import { genresList, languagesList } from ".";
 import LabelSelector from "../LabelSelector";
 import DatePickerInput from "@/components/common/DatePickerInput";
+import KeyboardWrapper from "@/components/modules/KeyboardWrapper";
 
 interface ReleaseInformationProps {
   goNext: (data: any) => void;
@@ -112,7 +113,7 @@ const ReleaseInformation: React.FC<ReleaseInformationProps> = ({
       )}
 
       {subStep === 1 && (
-        <>
+        <KeyboardWrapper>
           <SelectInputField
             label="Version (optional)"
             placeholder="e.g. Remix, Live, Remaster"
@@ -231,6 +232,7 @@ const ReleaseInformation: React.FC<ReleaseInformationProps> = ({
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
+                  keyboardType="default"
                   error={fieldState.error?.message}
                 />
               )}
@@ -241,7 +243,7 @@ const ReleaseInformation: React.FC<ReleaseInformationProps> = ({
             in this release. Make sure the name matches the legal documents
             exactly.
           </Text>
-        </>
+        </KeyboardWrapper>
       )}
 
       {/* Step Navigation */}
@@ -257,7 +259,12 @@ const ReleaseInformation: React.FC<ReleaseInformationProps> = ({
             label="Back"
             buttonType="disable"
             onPress={() => setSubStep(subStep - 1)}
-            customClasses={{ display: "flex", width: "100%" }}
+            customClasses={{
+              display: "flex",
+              width: "100%",
+              borderWidth: 1,
+              borderColor: Colors.lightGray,
+            }}
           />
         )}
       </View>

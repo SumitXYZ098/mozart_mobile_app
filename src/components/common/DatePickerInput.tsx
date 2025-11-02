@@ -36,26 +36,29 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
   const [show, setShow] = useState(false);
   const [tempDate, setTempDate] = useState<Date>(new Date());
 
-  // ✅ Always return a valid date (default: now)
+  // ✅ Safely get Date for modes other than 'year'
   const getSafeDate = (val: any): Date => {
+    if (mode === "year") return new Date();
     if (val instanceof Date && !isNaN(val.getTime())) return val;
-    return new Date(); // default current date/time/year
+    return new Date();
   };
 
-  const formatDisplayValue = (value: Date | undefined) => {
-    if (!value) return placeholder;
-    if (mode === "year") return dayjs(value).format("YYYY");
+  // ✅ Format display text
+  const formatDisplayValue = (value: any) => {
+    if (value == null) return placeholder;
+    if (mode === "year") return value.toString();
     if (mode === "time") return dayjs(value).format("hh:mm A");
     return dayjs(value).format("DD-MM-YYYY");
   };
 
-  // 👇 Generate year list dynamically
+  // ✅ Dynamic year list
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 70 }, (_, i) => currentYear - i);
 
+  // ✅ Custom year picker modal
   const renderYearPicker = (
-    value: Date | undefined,
-    onChange: (date: Date) => void
+    value: number | undefined,
+    onChange: (year: number) => void
   ) => (
     <Modal visible={show} transparent animationType="slide">
       <View style={styles.modalOverlay}>
@@ -68,23 +71,18 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
             renderItem={({ item }) => (
               <TouchableOpacity
                 onPress={() => {
-                  const newDate = new Date(item, 0, 1);
-                  onChange(newDate);
+                  onChange(item); // ✅ return just the year number
                   setShow(false);
                 }}
                 style={[
                   styles.yearItem,
-                  value && dayjs(value).year() === item && {
-                    backgroundColor: Colors.primary,
-                  },
+                  value === item && { backgroundColor: Colors.primary },
                 ]}
               >
                 <Text
                   style={[
                     styles.yearText,
-                    value && dayjs(value).year() === item && {
-                      color: Colors.white,
-                    },
+                    value === item && { color: Colors.white },
                   ]}
                 >
                   {item}
@@ -92,7 +90,10 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
               </TouchableOpacity>
             )}
           />
-          <TouchableOpacity onPress={() => setShow(false)} style={styles.closeButton}>
+          <TouchableOpacity
+            onPress={() => setShow(false)}
+            style={styles.closeButton}
+          >
             <Text style={styles.closeText}>Cancel</Text>
           </TouchableOpacity>
         </View>
@@ -106,7 +107,7 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
       control={control}
       rules={rules}
       render={({ field: { value, onChange }, fieldState }) => {
-        const safeValue = getSafeDate(value);
+        const safeValue = mode === "year" ? value : getSafeDate(value);
 
         return (
           <View style={styles.container}>
@@ -114,7 +115,7 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
 
             <TouchableOpacity
               onPress={() => {
-                setTempDate(safeValue);
+                setTempDate(getSafeDate(value));
                 setShow(true);
               }}
               style={[
@@ -132,11 +133,9 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
               </Text>
             </TouchableOpacity>
 
-            {/* Year picker modal */}
+            {/* ✅ Year Picker Mode */}
             {mode === "year"
-              ? renderYearPicker(safeValue, (date) => {
-                  onChange(getSafeDate(date));
-                })
+              ? renderYearPicker(value, onChange)
               : Platform.OS === "ios"
               ? (
                 <Modal
@@ -194,7 +193,6 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
                         onChange(getSafeDate(selectedDate));
                       } else if (event.type === "dismissed") {
                         setShow(false);
-                        // ✅ Ensure default current date if dismissed with no selection
                         onChange(getSafeDate(value));
                       }
                     }}

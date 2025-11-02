@@ -6,8 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   FlatList,
-  KeyboardAvoidingView,
-  Platform,
   Keyboard,
 } from "react-native";
 import { useFormContext } from "react-hook-form";
@@ -18,11 +16,6 @@ import BaseBottomSheet, {
   BaseBottomSheetRef,
 } from "@/components/modules/baseBottomSheet/BaseBottomSheet";
 import InputField from "@/components/modules/InputField";
-import KeyboardWrapper from "@/components/modules/KeyboardWrapper";
-import {
-  BottomSheetScrollView,
-  BottomSheetTextInput,
-} from "@gorhom/bottom-sheet";
 
 const LabelSelector = ({ controllerName }: { controllerName: string }) => {
   const { control, setValue, watch } = useFormContext();
@@ -146,7 +139,7 @@ const LabelSelector = ({ controllerName }: { controllerName: string }) => {
       {/* Add Label Sheet */}
       <BaseBottomSheet ref={addLabelSheetRef} title="Add New Label">
           <View style={styles.sheetContent}>
-            <BottomSheetTextInput
+            <InputField
               placeholder="Enter label name"
               style={styles.input}
               placeholderTextColor={Colors.gray}

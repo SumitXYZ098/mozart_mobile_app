@@ -31,5 +31,3 @@ export const getUserDetail = async (
 
   return transformUser(response.data);
 };
-
-
