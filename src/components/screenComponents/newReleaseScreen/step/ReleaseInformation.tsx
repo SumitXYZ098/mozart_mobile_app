@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, StyleSheet, ScrollView } from "react-native";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { Controller, useFormContext } from "react-hook-form";
 import CustomButton from "@/components/common/CustomButton";
 import { Colors } from "@/theme/colors";

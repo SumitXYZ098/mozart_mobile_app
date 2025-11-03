@@ -18,13 +18,16 @@ import { toast } from "@/stores/useToastStore";
 import { LoadingOverlay } from "@/components/common/LoadingOverlay";
 import Step3 from "./step/TrackList";
 import Step4 from "./step/DeliveryOption";
-import Step5 from "./step/Review";
+import Step5 from "./step/ReviewScreen";
 import CustomButton from "@/components/common/CustomButton";
 import { StyleSheet, View } from "react-native";
 import ReleaseInformation from "./step/ReleaseInformation";
 import CoverArtStep from "./step/CoverArt";
 import { Colors } from "@/theme/colors";
 import TrackList from "./step/TrackList";
+import DeliveryOption from "./step/DeliveryOption";
+import ReviewScreen from "./step/ReviewScreen";
+import { ScrollView } from "react-native-gesture-handler";
 
 const STORAGE_KEY = "releaseFormDraft";
 
@@ -197,61 +200,72 @@ const StepperScreen = () => {
     <ReleaseInformation goNext={handleNext} draftFormData={data} />,
     <CoverArtStep draftFormData={data} />,
     <TrackList draftFormData={data} />,
-    <Step4 onNext={handleNext} onBack={handlePrev} />,
-    <Step5 onNext={methods.handleSubmit(onSubmit)} onBack={handlePrev} />,
+    <DeliveryOption draftFormData={data} />,
+    <ReviewScreen />,
   ];
 
   return (
     <FormProvider {...methods}>
-      {steps[activeStep]}
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      >
+        {steps[activeStep]}
 
-      {/* Navigation Buttons */}
-      <View style={styles.gridContainer}>
-        {activeStep < steps.length - 1 ? (
-          activeStep === 0 ? null : (
+        {/* Navigation Buttons */}
+        <View style={styles.gridContainer}>
+          {activeStep < steps.length - 1 ? (
+            activeStep === 0 ? null : (
+              <CustomButton
+                customClasses={{ display: "flex", width: "100%" }}
+                label="Next step"
+                buttonType="primary"
+                onPress={handleNext}
+              />
+            )
+          ) : (
+            <View style={styles.gridContainer}>
+              <CustomButton
+                customClasses={{ display: "flex", width: "48%" }}
+                label="Distribute"
+                buttonType="primary"
+                onPress={methods.handleSubmit(onSubmit)}
+              />
+              <CustomButton
+                customClasses={{ display: "flex", width: "48%" }}
+                label="Edit"
+                buttonType="secondary"
+                onPress={handlePrev}
+              />
+              <CustomButton
+                customClasses={{ display: "flex", width: "100%" }}
+                label="Delete"
+                buttonType="disable"
+              />
+            </View>
+          )}
+          {activeStep > 0 && activeStep < steps.length - 1 && (
             <CustomButton
-              customClasses={{ display: "flex", width: "100%" }}
-              label="Next step"
-              buttonType="primary"
-              onPress={handleNext}
-            />
-          )
-        ) : (
-          <View style={styles.gridContainer}>
-            <CustomButton
-              customClasses={{ display: "flex", width: "48%" }}
-              label="Distribute"
-              buttonType="primary"
-              onPress={methods.handleSubmit(onSubmit)}
-            />
-            <CustomButton
-              customClasses={{ display: "flex", width: "48%" }}
-              label="Edit"
-              buttonType="secondary"
+              customClasses={{
+                display: "flex",
+                width: "100%",
+                borderWidth: 1,
+                borderColor: Colors.lightGray,
+              }}
+              label={"Back"}
+              buttonType="disable"
               onPress={handlePrev}
             />
-            <CustomButton
-              customClasses={{ display: "flex", width: "100%" }}
-              label="Delete"
-              buttonType="disable"
-            />
-          </View>
-        )}
-        {activeStep > 0 && activeStep < steps.length - 1 && (
-          <CustomButton
-            customClasses={{ display: "flex", width: "100%", borderWidth:1, borderColor:Colors.lightGray }}
-            label={"Back"}
-            buttonType="disable"
-            onPress={handlePrev}
-          />
-        )}
-      </View>
-      {/* Loading Overlay */}
-      <LoadingOverlay
-        visible={loading}
-        message={uploadProgress > 0 ? "Uploading..." : "Processing..."}
-        progress={uploadProgress}
-      />
+          )}
+        </View>
+
+        {/* Loading Overlay */}
+        <LoadingOverlay
+          visible={loading}
+          message={uploadProgress > 0 ? "Uploading..." : "Processing..."}
+          progress={uploadProgress}
+        />
+      </ScrollView>
     </FormProvider>
   );
 };

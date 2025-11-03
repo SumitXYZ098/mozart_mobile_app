@@ -47,7 +47,6 @@ const TrackEditModalExpo: React.FC<TrackEditModalProps> = ({
   const releaseType = watch("ReleaseType");
   // trackIndex is a numeric index into TrackList; read the actual trackId from the form state
   const trackId = watch(`TrackList.${trackIndex}.trackId`);
-  console.log(trackId, "Id");
   const { data: trackData } = useTrack(trackId);
 
   const {
@@ -80,7 +79,6 @@ const TrackEditModalExpo: React.FC<TrackEditModalProps> = ({
   }, [artists]);
 
   useEffect(() => {
-    console.log(trackData, trackId, "Data");
     if (trackId && trackData) {
       setValue(`TrackList.${trackIndex}.TrackName`, trackData.TrackName || "");
       setValue(
@@ -803,38 +801,6 @@ const styles = StyleSheet.create({
   errorText: { color: Colors.error, fontSize: 12, marginTop: 4 },
   createArtistRow: { flexDirection: "row", alignItems: "center", padding: 10 },
   createArtistText: { marginLeft: 8, color: "#6739B7", fontWeight: "600" },
-  pickerWrapper: {
-    borderWidth: 1,
-    borderColor: "#eee",
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 6,
-    backgroundColor: "#fafafa",
-  },
-  rolePill: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 20,
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#eee",
-    marginRight: 8,
-  },
-  rolePillActive: { backgroundColor: "#6739B7", borderColor: "#6739B7" },
-  rolePillText: { color: "#444" },
-  rolePillTextActive: { color: "#fff" },
-  genrePill: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 20,
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#eee",
-    marginRight: 8,
-  },
-  genrePillActive: { backgroundColor: "#6739B7", borderColor: "#6739B7" },
-  genrePillText: { color: "#444" },
-  genrePillTextActive: { color: "#fff" },
   switchRow: {
     flexDirection: "row",
     justifyContent: "space-between",

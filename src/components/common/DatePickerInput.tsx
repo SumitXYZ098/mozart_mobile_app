@@ -134,71 +134,69 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
             </TouchableOpacity>
 
             {/* ✅ Year Picker Mode */}
-            {mode === "year"
-              ? renderYearPicker(value, onChange)
-              : Platform.OS === "ios"
-              ? (
-                <Modal
-                  visible={show}
-                  transparent
-                  animationType="slide"
-                  onRequestClose={() => setShow(false)}
-                >
-                  <View style={styles.modalOverlay}>
-                    <View style={styles.iosPickerContainer}>
-                      <View style={styles.iosHeader}>
-                        <TouchableOpacity onPress={() => setShow(false)}>
-                          <Text style={styles.iosCancel}>Cancel</Text>
-                        </TouchableOpacity>
-                        <Text style={styles.iosTitle}>
-                          Select {mode === "time" ? "Time" : "Date"}
-                        </Text>
-                        <TouchableOpacity
-                          onPress={() => {
-                            setShow(false);
-                            onChange(getSafeDate(tempDate));
-                          }}
-                        >
-                          <Text style={styles.iosDone}>Done</Text>
-                        </TouchableOpacity>
-                      </View>
-                      <DateTimePicker
-                        value={tempDate}
-                        mode={mode}
-                        display="spinner"
-                        onChange={(
-                          event: DateTimePickerEvent,
-                          selectedDate?: Date
-                        ) => {
-                          if (selectedDate) setTempDate(selectedDate);
+            {mode === "year" ? (
+              renderYearPicker(value, onChange)
+            ) : Platform.OS === "ios" ? (
+              <Modal
+                visible={show}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setShow(false)}
+              >
+                <View style={styles.modalOverlay}>
+                  <View style={styles.iosPickerContainer}>
+                    <View style={styles.iosHeader}>
+                      <TouchableOpacity onPress={() => setShow(false)}>
+                        <Text style={styles.iosCancel}>Cancel</Text>
+                      </TouchableOpacity>
+                      <Text style={styles.iosTitle}>
+                        Select {mode === "time" ? "Time" : "Date"}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setShow(false);
+                          onChange(getSafeDate(tempDate));
                         }}
-                        style={{ backgroundColor: Colors.white }}
-                      />
+                      >
+                        <Text style={styles.iosDone}>Done</Text>
+                      </TouchableOpacity>
                     </View>
+                    <DateTimePicker
+                      value={tempDate}
+                      mode={mode}
+                      display="spinner"
+                      onChange={(
+                        event: DateTimePickerEvent,
+                        selectedDate?: Date
+                      ) => {
+                        if (selectedDate) setTempDate(selectedDate);
+                      }}
+                      style={{ backgroundColor: Colors.white }}
+                    />
                   </View>
-                </Modal>
+                </View>
+              </Modal>
+            ) : (
+              show && (
+                <DateTimePicker
+                  value={safeValue}
+                  mode={mode}
+                  display="default"
+                  onChange={(
+                    event: DateTimePickerEvent,
+                    selectedDate?: Date
+                  ) => {
+                    if (Platform.OS === "android") setShow(false);
+                    if (selectedDate) {
+                      onChange(getSafeDate(selectedDate));
+                    } else if (event.type === "dismissed") {
+                      setShow(false);
+                      onChange(getSafeDate(value));
+                    }
+                  }}
+                />
               )
-              : (
-                show && (
-                  <DateTimePicker
-                    value={safeValue}
-                    mode={mode}
-                    display="default"
-                    onChange={(
-                      event: DateTimePickerEvent,
-                      selectedDate?: Date
-                    ) => {
-                      if (Platform.OS === "android") setShow(false);
-                      if (selectedDate) {
-                        onChange(getSafeDate(selectedDate));
-                      } else if (event.type === "dismissed") {
-                        setShow(false);
-                        onChange(getSafeDate(value));
-                      }
-                    }}
-                  />
-                )
-              )}
+            )}
 
             {fieldState.error && (
               <Text style={styles.errorText}>{fieldState.error.message}</Text>
@@ -214,7 +212,12 @@ export default DatePickerInput;
 
 const styles = StyleSheet.create({
   container: { marginBottom: 12 },
-  label: { marginBottom: 6, color: Colors.gray, fontWeight: "500", fontSize: 14 },
+  label: {
+    marginBottom: 6,
+    color: Colors.gray,
+    fontWeight: "500",
+    fontSize: 14,
+  },
   input: {
     borderWidth: 1,
     borderColor: Colors.gray,

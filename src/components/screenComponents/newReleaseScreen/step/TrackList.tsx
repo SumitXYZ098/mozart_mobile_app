@@ -214,7 +214,6 @@ const TrackList = ({ draftFormData }: { draftFormData?: any }) => {
       setUploadProgress(0);
       if (releaseId) {
         await deleteTrack(releaseId);
-        // console.log("Release Track delete successfully", releaseId);
         setUploadProgress(100);
       }
       remove(index);
@@ -228,8 +227,6 @@ const TrackList = ({ draftFormData }: { draftFormData?: any }) => {
 
   // Validation for Track metadata fields
   const validateTrackFields = (trackData: any, trackUpload: any) => {
-    console.log(trackData, "Track Data");
-    console.log(trackUpload, "Track Upload");
     const { TrackName, PrimaryGenre, RoleCredits, stepCompleted } = trackData;
 
     const allFieldsEmpty =
@@ -448,7 +445,7 @@ const TrackList = ({ draftFormData }: { draftFormData?: any }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {},
+  container: { flex: 1, paddingBottom: 40 },
   heading: {
     fontSize: 20,
     fontWeight: "700",

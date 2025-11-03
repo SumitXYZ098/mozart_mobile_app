@@ -71,8 +71,6 @@ const CoverArtStep: React.FC<CoverArtStepProps> = ({ draftFormData }) => {
       if (result.canceled || !result.assets?.length) return;
 
       const selected = result.assets[0];
-      // console.log("📸 Picked image:", selected);
-      console.log("📸 Picked image:", selected.file);
       let file: any;
       if (Platform.OS === "web" && selected.file) {
         file = selected.file;
@@ -116,7 +114,6 @@ const CoverArtStep: React.FC<CoverArtStepProps> = ({ draftFormData }) => {
   // ✅ Clear image
   const handleClear = async () => {
     const coverArt = watch("CoverArt");
-    console.log(coverArt)
     if (!coverArt) return;
     setUploading(true);
     try {
