@@ -8,6 +8,7 @@ import {
   Alert,
   ActivityIndicator,
   ScrollView,
+  Platform,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useFormContext, Controller } from "react-hook-form";
@@ -48,63 +49,74 @@ const CoverArtStep: React.FC<CoverArtStepProps> = ({ draftFormData }) => {
   }, []);
 
   // ✅ Image picker (Expo SDK 52+)
-const handlePickImage = async () => {
-  try {
-    // Request permissions
-    const { granted } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!granted) {
-      Alert.alert("Permission Required", "Please allow access to your photos.");
-      return;
+  const handlePickImage = async () => {
+    try {
+      // Request permissions
+      const { granted } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!granted) {
+        Alert.alert(
+          "Permission Required",
+          "Please allow access to your photos."
+        );
+        return;
+      }
+
+      // Launch picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        quality: 1,
+      });
+
+      if (result.canceled || !result.assets?.length) return;
+
+      const selected = result.assets[0];
+      // console.log("📸 Picked image:", selected);
+      console.log("📸 Picked image:", selected.file);
+      let file: any;
+      if (Platform.OS === "web" && selected.file) {
+        file = selected.file;
+      } else {
+        const localUri = selected.uri;
+        const filename =
+          selected.fileName || localUri.split("/").pop() || "cover-art.jpg";
+        const type = selected.mimeType || "image/jpeg";
+        file = { uri: localUri, name: filename, type };
+      }
+
+      // --- Upload process ---
+      setUploading(true);
+      setUploadProgress(0);
+
+      const uploaded = await uploadFile(file, (progress) =>
+        setUploadProgress(progress)
+      );
+
+      const imageId = uploaded?.[0]?.id;
+      if (imageId) {
+        setValue("CoverArt", imageId, { shouldValidate: true });
+        const fileInfo = await getUploadFileById(imageId);
+        setPreviewUrl(fileInfo?.formats?.thumbnail?.url || fileInfo?.url);
+        Alert.alert("✅ Success", "Cover art uploaded successfully.");
+      }
+    } catch (err: any) {
+      console.error("❌ Upload failed:", err);
+
+      Alert.alert(
+        "Upload Error",
+        err?.response?.data?.error?.message ||
+          err?.message ||
+          "Failed to upload image."
+      );
+    } finally {
+      setUploading(false);
     }
-
-    // Launch picker
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      quality: 1,
-    });
-
-    if (result.canceled || !result.assets?.length) return;
-
-    const selected = result.assets[0];
-    console.log("📸 Picked image:", selected);
-
-    const localUri = selected.uri;
-    const filename = selected.fileName || localUri.split("/").pop() || "cover-art.jpg";
-    const type = selected.mimeType || "image/jpeg";
-
-    const file = { uri: localUri, name: filename, type };
-
-    // --- Upload process ---
-    setUploading(true);
-    setUploadProgress(0);
-
-    const uploaded = await uploadFile(file, (progress) => setUploadProgress(progress));
-
-    const imageId = uploaded?.[0]?.id;
-    if (imageId) {
-      setValue("CoverArt", imageId, { shouldValidate: true });
-      const fileInfo = await getUploadFileById(imageId);
-      setPreviewUrl(fileInfo?.formats?.thumbnail?.url || fileInfo?.url);
-      Alert.alert("✅ Success", "Cover art uploaded successfully.");
-    }
-  } catch (err: any) {
-    console.error("❌ Upload failed:", err);
-
-    Alert.alert(
-      "Upload Error",
-      err?.response?.data?.error?.message ||
-        err?.message ||
-        "Failed to upload image."
-    );
-  } finally {
-    setUploading(false);
-  }
-};
-
+  };
 
   // ✅ Clear image
   const handleClear = async () => {
     const coverArt = watch("CoverArt");
+    console.log(coverArt)
     if (!coverArt) return;
     setUploading(true);
     try {
@@ -123,75 +135,77 @@ const handlePickImage = async () => {
   };
 
   return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Cover Art</Text>
-        <Text style={styles.subtitle}>
-          Upload your album or single cover art.
-        </Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>Cover Art</Text>
+      <Text style={styles.subtitle}>
+        Upload your album or single cover art.
+      </Text>
 
-        <Controller
-          control={control}
-          name="CoverArt"
-          rules={{ required: "Cover art is required." }}
-          render={({ fieldState }) => (
-            <View style={{
-              padding: 24
-            }}>
-              <TouchableOpacity
-                style={[
-                  styles.uploadBox,
-                  (previewUrl || coverArtId) && { borderColor: Colors.primary },
-                ]}
-                onPress={handlePickImage}
-                disabled={uploading}
-              >
-                {uploading ? (
-                  <View style={styles.uploading}>
-                    <ActivityIndicator size="large" color={Colors.primary} />
-                    <Text style={styles.progressText}>
-                      Uploading... {uploadProgress}%
-                    </Text>
-                  </View>
-                ) : previewUrl ? (
-                  <View style={styles.previewContainer}>
-                    <Image
-                      source={{
-                        uri: `${process.env.EXPO_PUBLIC_API_URL}${previewUrl}`,
-                      }}
-                      style={styles.imagePreview}
-                    />
-                    <TouchableOpacity
-                      style={styles.clearButton}
-                      onPress={handleClear}
-                    >
-                      <Text style={styles.clearText}>Clear Cover Art</Text>
-                    </TouchableOpacity>
-                  </View>
-                ) : (
-                  <>
-                    <Text style={styles.uploadText}>Tap to select image</Text>
-                    <Text style={styles.hintText}>
-                      Supported: JPEG, PNG, TIFF (max 36MB)
-                    </Text>
-                    <Text style={styles.hintText}>
-                      Recommended size: 3000 × 3000 pixels
-                    </Text>
-                  </>
-                )}
-              </TouchableOpacity>
-
-              {fieldState.error && (
-                <Text style={styles.errorText}>{fieldState.error.message}</Text>
+      <Controller
+        control={control}
+        name="CoverArt"
+        rules={{ required: "Cover art is required." }}
+        render={({ fieldState }) => (
+          <View
+            style={{
+              padding: 24,
+            }}
+          >
+            <TouchableOpacity
+              style={[
+                styles.uploadBox,
+                (previewUrl || coverArtId) && { borderColor: Colors.primary },
+              ]}
+              onPress={handlePickImage}
+              disabled={uploading}
+            >
+              {uploading ? (
+                <View style={styles.uploading}>
+                  <ActivityIndicator size="large" color={Colors.primary} />
+                  <Text style={styles.progressText}>
+                    Uploading... {uploadProgress}%
+                  </Text>
+                </View>
+              ) : previewUrl ? (
+                <View style={styles.previewContainer}>
+                  <Image
+                    source={{
+                      uri: `${process.env.EXPO_PUBLIC_API_URL}${previewUrl}`,
+                    }}
+                    style={styles.imagePreview}
+                  />
+                  <TouchableOpacity
+                    style={styles.clearButton}
+                    onPress={handleClear}
+                  >
+                    <Text style={styles.clearText}>Clear Cover Art</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <>
+                  <Text style={styles.uploadText}>Tap to select image</Text>
+                  <Text style={styles.hintText}>
+                    Supported: JPEG, PNG, TIFF (max 36MB)
+                  </Text>
+                  <Text style={styles.hintText}>
+                    Recommended size: 3000 × 3000 pixels
+                  </Text>
+                </>
               )}
-            </View>
-          )}
-        />
+            </TouchableOpacity>
 
-        <Text style={styles.warning}>
-          ⚠️ If your cover art doesn’t meet requirements, your release may be
-          rejected.
-        </Text>
-      </View>
+            {fieldState.error && (
+              <Text style={styles.errorText}>{fieldState.error.message}</Text>
+            )}
+          </View>
+        )}
+      />
+
+      <Text style={styles.warning}>
+        ⚠️ If your cover art doesn’t meet requirements, your release may be
+        rejected.
+      </Text>
+    </View>
   );
 };
 
@@ -199,7 +213,6 @@ export default CoverArtStep;
 
 const styles = StyleSheet.create({
   container: {
-    
     backgroundColor: "#fff",
   },
   title: { fontSize: 22, fontWeight: "700", marginBottom: 6 },

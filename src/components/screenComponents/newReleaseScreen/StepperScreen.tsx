@@ -24,6 +24,7 @@ import { StyleSheet, View } from "react-native";
 import ReleaseInformation from "./step/ReleaseInformation";
 import CoverArtStep from "./step/CoverArt";
 import { Colors } from "@/theme/colors";
+import TrackList from "./step/TrackList";
 
 const STORAGE_KEY = "releaseFormDraft";
 
@@ -195,7 +196,7 @@ const StepperScreen = () => {
   const steps = [
     <ReleaseInformation goNext={handleNext} draftFormData={data} />,
     <CoverArtStep draftFormData={data} />,
-    <Step3 onNext={handleNext} onBack={handlePrev} />,
+    <TrackList draftFormData={data} />,
     <Step4 onNext={handleNext} onBack={handlePrev} />,
     <Step5 onNext={methods.handleSubmit(onSubmit)} onBack={handlePrev} />,
   ];

@@ -76,7 +76,7 @@ export function displayValue(value?: string | null, fallback: string = "NA") {
   return value.trim();
 }
 
-export const limitText = (text: string = "", limit: number = 25): string => {
+export const limitText = (text: string = "", limit: number = 15): string => {
   if (!text) return "";
   return text.length > limit ? `${text.slice(0, limit)}...` : text;
 };

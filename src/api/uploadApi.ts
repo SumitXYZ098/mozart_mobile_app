@@ -9,27 +9,12 @@ import { Platform } from "react-native";
  * Supports Android, iOS, and Web
  */
 export const uploadFile = async (
-  file: { uri: string; name: string; type: string },
+  file: File,
   onProgress: (progress: number) => void
 ) => {
   const { user } = useAuthStore.getState();
   const formData = new FormData();
-
-  let fileToUpload: any;
-
-  if (Platform.OS === "web" && file.uri.startsWith("data:")) {
-    const res = await fetch(file.uri);
-    const blob = await res.blob();
-    fileToUpload = new File([blob], file.name, { type: file.type });
-  } else {
-    fileToUpload = {
-      uri: file.uri,
-      name: file.name,
-      type: file.type,
-    };
-  }
-
-  formData.append("files", fileToUpload);
+  formData.append("files", file);
 
   const response = await axios.post(ENDPOINTS.UPLOAD_FILES, formData, {
     headers: {
