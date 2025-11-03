@@ -29,7 +29,7 @@ interface TrackEditModalProps {
   trackIndex: number;
   onClose: (
     trackIndex: number,
-    updated: boolean,
+    stepCompleted: boolean,
     currentStep: number,
     trackId: number | null,
     formData: any
@@ -128,7 +128,7 @@ const TrackEditModalExpo: React.FC<TrackEditModalProps> = ({
         }
       }
     }
-  }, [trackData, trackId, setValue]);
+  }, [trackData, trackId, setValue, trackIndex]);
 
   const suggestions = useMemo(() => {
     const q = artistQuery.trim().toLowerCase();
@@ -156,22 +156,29 @@ const TrackEditModalExpo: React.FC<TrackEditModalProps> = ({
   };
 
   const validateRoleCredits = (roleCredits: any[]) => {
-    const hasAll = requiredRoles.every((role) =>
-      roleCredits?.some((credit: any) => credit.roleName === role)
+    // Must have all required roles
+    const hasAllRoles = requiredRoles.every((role) =>
+      roleCredits?.some(
+        (credit: any) =>
+          credit.roleName === role && credit.artistName?.trim()?.length > 0
+      )
     );
-    return hasAll;
+
+    if (!hasAllRoles) {
+      return "Each required role (Primary Artist, Composer, Lyricist, Vocals) must have an artist name.";
+    }
+
+    return true;
   };
 
   const handleNext = async () => {
-    const ok = await trigger();
+    const ok = await trigger(`TrackList.${trackIndex}.RoleCredits`);
     if (!ok) return;
 
     const roleCredits = getValues(`TrackList.${trackIndex}.RoleCredits`) || [];
-    if (!validateRoleCredits(roleCredits)) {
-      Alert.alert(
-        "Missing Credits",
-        "Credits must include Primary Artist, Composer, Lyricist, and Vocals."
-      );
+    const validation = validateRoleCredits(roleCredits);
+    if (validation !== true) {
+      Alert.alert("Validation Error", validation);
       return;
     }
 
@@ -187,7 +194,13 @@ const TrackEditModalExpo: React.FC<TrackEditModalProps> = ({
         await updateTrack({ trackId, payload: formData }, {
           onSuccess: () => {
             Alert.alert("Success", "Track updated successfully.");
-            onClose(trackIndex, true, currentStep, trackId, formData);
+            onClose(
+              trackIndex,
+              currentStep === 1,
+              currentStep,
+              trackId,
+              formData
+            );
           },
           onError: (err: any) => {
             Alert.alert("Error", err?.message || "Failed to update track.");
@@ -201,7 +214,7 @@ const TrackEditModalExpo: React.FC<TrackEditModalProps> = ({
             if (newId) setValue(`TrackList.${trackIndex}.trackId`, newId);
             onClose(
               trackIndex,
-              true,
+              currentStep === 1,
               currentStep,
               data.data.TrackList?.[trackIndex]?.id || 0,
               formData
@@ -217,7 +230,7 @@ const TrackEditModalExpo: React.FC<TrackEditModalProps> = ({
       Alert.alert("Error", err?.message || "Something went wrong.");
     }
   };
-   const handleDialogClose = () => {
+  const handleDialogClose = () => {
     const stepCompleted = currentStep === 1;
     const formData = getValues(`TrackList.${trackIndex}`);
     onClose(trackIndex, stepCompleted, currentStep, formData.trackId, formData);
@@ -227,18 +240,6 @@ const TrackEditModalExpo: React.FC<TrackEditModalProps> = ({
     if (currentStep === 0) handleDialogClose;
     else setCurrentStep((s) => s - 1);
   };
-
-//   const renderSuggestion = ({ item }: { item: any }) => (
-//     <TouchableOpacity
-//       style={styles.suggestionItem}
-//       onPress={() => {
-//         setArtistQuery(item.name);
-//         setSuggestionsVisible(false);
-//       }}
-//     >
-//       <Text style={styles.suggestionText}>{item.name}</Text>
-//     </TouchableOpacity>
-//   );
 
   const updateArtistName = (idx: number, name: string) => {
     setValue(`TrackList.${trackIndex}.RoleCredits.${idx}.artistName`, name, {
@@ -250,106 +251,143 @@ const TrackEditModalExpo: React.FC<TrackEditModalProps> = ({
   };
 
   const renderRoleRow = (idx: number) => {
-    const artistValue = getValues(
-      `TrackList.${trackIndex}.RoleCredits.${idx}.artistName`
-    );
     const roleCredits = getValues(`TrackList.${trackIndex}.RoleCredits`) || [];
     const roleName = watch(
       `TrackList.${trackIndex}.RoleCredits.${idx}.roleName`
     );
 
-    // Each row’s independent query & suggestion visibility
     const query = artistQueries[idx] || "";
     const isVisible = visibleSuggestions[idx] || false;
 
-    // Count duplicates of the same role
+    // Count duplicates of same role
     const countOfRole = (role: string) =>
       roleCredits.filter((rc: any) => rc.roleName === role).length;
-
-    // Show delete button only if there are multiple instances of the same role
     const showRemoveButton = countOfRole(roleName) > 1;
+
+    const handleArtistSelect = (
+      name: string,
+      onChange: (val: string) => void
+    ) => {
+      setValue(`TrackList.${trackIndex}.RoleCredits.${idx}.artistName`, name, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+      setArtistQueries((prev) => ({ ...prev, [idx]: "" }));
+      setVisibleSuggestions((prev) => ({ ...prev, [idx]: false }));
+      onChange(name);
+    };
 
     return (
       <View key={idx} style={styles.roleRow}>
         <View style={{ flexDirection: "column", gap: 6, flex: 1 }}>
-          <View>
-            <Text
-              style={[
-                styles.smallLabel,
-                { marginBottom: 6, color: Colors.gray, fontSize: 14 },
-              ]}
-            >
-              Artist Name
-            </Text>
-            <View>
-              <TextInput
-                style={styles.smallInput}
-                placeholder="Select or type artist"
-                value={query || artistValue || ""}
-                onChangeText={(text) => {
-                  setArtistQueries((prev) => ({ ...prev, [idx]: text }));
-                  setVisibleSuggestions((prev) => ({ ...prev, [idx]: true }));
-                }}
-              />
+          <Text
+            style={[
+              styles.smallLabel,
+              { marginBottom: 6, color: Colors.gray, fontSize: 14 },
+            ]}
+          >
+            Artist Name
+          </Text>
 
-              {isVisible && query.trim().length > 0 && (
-                <View style={styles.suggestionsBox}>
-                  <FlatList
-                    data={localArtists
-                      .filter((a) =>
-                        a.name?.toLowerCase().includes(query.toLowerCase())
-                      )
-                      .slice(0, 6)}
-                    keyExtractor={(it) => it.id?.toString() || it.name}
-                    renderItem={({ item }) => (
-                      <TouchableOpacity
-                        style={styles.suggestionItem}
-                        onPress={() => {
-                          updateArtistName(idx, item.name);
-                          setArtistQueries((prev) => ({ ...prev, [idx]: "" }));
-                          setVisibleSuggestions((prev) => ({
-                            ...prev,
-                            [idx]: false,
-                          }));
-                        }}
-                      >
-                        <Text style={styles.suggestionText}>{item.name}</Text>
-                      </TouchableOpacity>
-                    )}
-                    keyboardShouldPersistTaps="handled"
-                    ListFooterComponent={() => (
-                      <TouchableOpacity
-                        style={styles.createArtistRow}
-                        onPress={async () => {
-                          try {
-                            const newArtist = await handleCreateArtist(
-                              query.trim()
-                            );
-                            updateArtistName(idx, newArtist as string);
-                            setArtistQueries((prev) => ({
-                              ...prev,
-                              [idx]: "",
-                            }));
-                            setVisibleSuggestions((prev) => ({
-                              ...prev,
-                              [idx]: false,
-                            }));
-                          } catch {
-                            // handled in handleCreateArtist
-                          }
-                        }}
-                      >
-                        <Ionicons name="add" size={16} color="#6739B7" />
-                        <Text style={styles.createArtistText}>
-                          Add "{query.trim()}"
-                        </Text>
-                      </TouchableOpacity>
-                    )}
+          <Controller
+            control={control}
+            name={`TrackList.${trackIndex}.RoleCredits.${idx}.artistName`}
+            rules={{
+              validate: (val) => {
+                if (requiredRoles.includes(roleName)) {
+                  if (!val || val.trim().length === 0)
+                    return `${roleName} must have an artist name`;
+                }
+                return true;
+              },
+            }}
+            render={({
+              field: { value, onChange, onBlur },
+              fieldState: { error },
+            }) => {
+              const currentValue = query || value || "";
+
+              return (
+                <View>
+                  <TextInput
+                    style={[
+                      styles.smallInput,
+                      error ? { borderColor: "red" } : {},
+                    ]}
+                    placeholder="Select or type artist"
+                    value={currentValue}
+                    onChangeText={(text) => {
+                      setArtistQueries((prev) => ({ ...prev, [idx]: text }));
+                      setVisibleSuggestions((prev) => ({
+                        ...prev,
+                        [idx]: true,
+                      }));
+                      onChange(text);
+                    }}
+                    onBlur={onBlur}
                   />
+
+                  {error && (
+                    <Text style={styles.errorText}>{error.message}</Text>
+                  )}
+
+                  {isVisible && query.trim().length > 0 && (
+                    <View style={styles.suggestionsBox}>
+                      <ScrollView
+                        keyboardShouldPersistTaps="handled"
+                        contentContainerStyle={{ paddingBottom: 8 }}
+                        style={{ maxHeight: 160 }}
+                      >
+                        {localArtists
+                          .filter((a) =>
+                            a.name?.toLowerCase().includes(query.toLowerCase())
+                          )
+                          .slice(0, 6)
+                          .map((item) => (
+                            <TouchableOpacity
+                              key={item.id?.toString() || item.name}
+                              style={styles.suggestionItem}
+                              onPress={() =>
+                                handleArtistSelect(item.name, onChange)
+                              }
+                            >
+                              <Text style={styles.suggestionText}>
+                                {item.name}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+
+                        {/* Add new artist option */}
+                        {query.trim().length > 0 && (
+                          <TouchableOpacity
+                            style={styles.createArtistRow}
+                            onPress={async () => {
+                              try {
+                                const newArtist = await handleCreateArtist(
+                                  query.trim()
+                                );
+                                handleArtistSelect(
+                                  newArtist as string,
+                                  onChange
+                                );
+                              } catch {
+                                // handled inside handleCreateArtist
+                              }
+                            }}
+                          >
+                            <Ionicons name="add" size={16} color="#6739B7" />
+                            <Text style={styles.createArtistText}>
+                              Add "{query.trim()}"
+                            </Text>
+                          </TouchableOpacity>
+                        )}
+                      </ScrollView>
+                    </View>
+                  )}
                 </View>
-              )}
-            </View>
-          </View>
+              );
+            }}
+          />
 
           <SelectInputField
             control={control}
@@ -358,6 +396,7 @@ const TrackEditModalExpo: React.FC<TrackEditModalProps> = ({
             name={`TrackList.${trackIndex}.RoleCredits.${idx}.roleName`}
             rules={{ required: "Role is required" }}
             label="Search Roles"
+            zIndex={2}
           />
         </View>
 
@@ -761,6 +800,7 @@ const styles = StyleSheet.create({
     borderBottomColor: "#f1f1f1",
   },
   suggestionText: { color: "#111" },
+  errorText: { color: Colors.error, fontSize: 12, marginTop: 4 },
   createArtistRow: { flexDirection: "row", alignItems: "center", padding: 10 },
   createArtistText: { marginLeft: 8, color: "#6739B7", fontWeight: "600" },
   pickerWrapper: {

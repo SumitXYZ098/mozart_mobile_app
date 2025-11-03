@@ -259,9 +259,9 @@ const TrackList = ({ draftFormData }: { draftFormData?: any }) => {
 
     if (!trackUpload) return "Track file upload is required";
 
-    if (!stepCompleted) {
-      return "Please complete the step before uploading";
-    }
+    // if (!stepCompleted) {
+    //   return "Please complete the step before uploading";
+    // }
     return true;
   };
 
@@ -305,8 +305,17 @@ const TrackList = ({ draftFormData }: { draftFormData?: any }) => {
                     setEditingIndex(index);
                   }}
                   style={styles.editButton}
+                  disabled={!getValues(`TrackList.${index}.file`)}
                 >
-                  <FontAwesome6 name="edit" size={20} color={Colors.primary} />
+                  <FontAwesome6
+                    name="edit"
+                    size={20}
+                    color={
+                      !getValues(`TrackList.${index}.file`)
+                        ? Colors.gray
+                        : Colors.primary
+                    }
+                  />
                 </TouchableOpacity>
                 {releaseType !== "Single" && (
                   <TouchableOpacity
@@ -339,20 +348,44 @@ const TrackList = ({ draftFormData }: { draftFormData?: any }) => {
                       style={styles.replaceButton}
                       onPress={() => handlePickAudio(index, field.onChange)}
                     >
-                      <Ionicons name="repeat" size={18} color="#6739B7" />
-                      <Text style={styles.replaceText}>Replace Audio</Text>
+                      <Ionicons
+                        name="repeat"
+                        size={18}
+                        color={uploading ? Colors.gray : Colors.primary}
+                      />
+                      <Text
+                        style={[
+                          styles.replaceText,
+                          { color: uploading ? Colors.gray : Colors.primary },
+                        ]}
+                      >
+                        Replace Audio
+                      </Text>
                     </TouchableOpacity>
                   ) : (
                     <TouchableOpacity
-                      style={styles.uploadButton}
+                      style={[
+                        styles.uploadButton,
+                        {
+                          borderColor: uploading ? Colors.gray : Colors.primary,
+                        },
+                      ]}
                       onPress={() => handlePickAudio(index, field.onChange)}
+                      disabled={uploading}
                     >
                       <Ionicons
                         name="cloud-upload-outline"
                         size={18}
-                        color="#6739B7"
+                        color={uploading ? Colors.gray : Colors.primary}
                       />
-                      <Text style={styles.uploadText}>Upload Audio</Text>
+                      <Text
+                        style={[
+                          styles.uploadText,
+                          { color: uploading ? Colors.gray : Colors.primary },
+                        ]}
+                      >
+                        Upload Audio
+                      </Text>
                     </TouchableOpacity>
                   )}
                   {fieldState.error && (
@@ -394,15 +427,15 @@ const TrackList = ({ draftFormData }: { draftFormData?: any }) => {
           trackIndex={editingIndex}
           onClose={(
             trackIndex,
-            updatedTrack,
+            stepCompleted,
             currentStep,
             trackId,
             formData
           ) => {
-            if (updatedTrack)
+            if (stepCompleted)
               update(trackIndex, {
-                updatedTrack,
                 ...formData,
+                stepCompleted,
                 trackId,
                 currentStep,
               });
@@ -477,7 +510,6 @@ const styles = StyleSheet.create({
   uploadButton: {
     flexDirection: "row",
     alignItems: "center",
-    borderColor: "#6739B7",
     borderWidth: 1,
     borderStyle: "dashed",
     borderRadius: 8,
@@ -486,7 +518,6 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   uploadText: {
-    color: "#6739B7",
     marginLeft: 6,
     fontSize: 14,
     fontWeight: "600",
@@ -498,7 +529,6 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   replaceText: {
-    color: "#6739B7",
     marginLeft: 6,
   },
   actions: {
