@@ -5,18 +5,21 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ScrollView,
+  Modal,
 } from "react-native";
 import { useFormContext, Controller } from "react-hook-form";
 import dayjs, { Dayjs } from "dayjs";
 import { Colors } from "@/theme/colors";
-import { formatDate, getSystemTimeZone } from "@/utils/utils";
+import { formatDate, getSystemTimeZone, timeZones } from "@/utils/utils";
 import SelectInputField from "@/components/common/SelectInputField";
-import { musicStores, priceCategories, timeZones } from ".";
+import { musicStores, priceCategories } from ".";
 import DatePickerInput from "@/components/common/DatePickerInput";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
+import SectionedMultiSelect from "react-native-sectioned-multi-select";
+import { MaterialIcons } from "@expo/vector-icons";
+import CalendarPicker from "react-native-calendar-picker";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -27,6 +30,7 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
   const [digitalReleaseDate, setDigitalReleaseDate] = useState<Dayjs | null>(
     dayjs().add(1, "day")
   );
+  const [show, setShow] = useState(false);
   useEffect(() => {
     if (draftFormData?.data) {
       const track = draftFormData.data;
@@ -125,19 +129,97 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
         label="Time Zone of Reference"
         placeholder="Select Time Zone"
         items={timeZones}
-        onChange={(val: string | number | string[] | number[]) =>
-          setSelectedZone(Array.isArray(val) ? String(val[0]) : String(val))
-        }
       />
 
       {/* Digital Release Date */}
-      <DatePickerInput
+      <Controller
         control={control}
         name="DigitalReleaseDate"
-        label="Digital Release Date"
-        placeholder="Select Date"
-        mode="date"
         rules={{ required: "Digital Release Date is required" }}
+        render={({ field: { value, onChange }, fieldState }) => {
+          const formatted = value
+            ? dayjs(value).format("DD/MM/YYYY")
+            : "Select date";
+
+          return (
+            <View style={styles.digitalContainer}>
+              <Text style={styles.digitalLabel}>Digital Release Date</Text>
+
+              {/* Touchable to open modal */}
+              <TouchableOpacity
+                style={[
+                  styles.input,
+                  fieldState.error && { borderColor: Colors.error },
+                ]}
+                onPress={() => setShow(true)}
+              >
+                <Text
+                  style={{
+                    color: value ? Colors.black : Colors.gray,
+                    fontSize: 14,
+                  }}
+                >
+                  {formatted}
+                </Text>
+              </TouchableOpacity>
+
+              {/* Calendar modal */}
+              <Modal visible={show} transparent animationType="slide">
+                <View style={styles.modalOverlay}>
+                  <View style={styles.calendarContainer}>
+                    <View style={styles.modalHeader}>
+                      <Text style={styles.modalTitle}>
+                        Select Digital Release Date
+                      </Text>
+                      <TouchableOpacity onPress={() => setShow(false)}>
+                        <Text style={styles.closeText}>Cancel</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    <CalendarPicker
+                      minDate={dayjs().add(1, "day").toDate()} // tomorrow onwards
+                      todayBackgroundColor={Colors.lightPrimary}
+                      selectedDayColor={Colors.primary}
+                      selectedDayTextColor={Colors.white}
+                      onDateChange={(date) => {
+                        if (date) {
+                          const formattedDate =
+                            dayjs(date).format("YYYY-MM-DD");
+                          onChange(formattedDate);
+                          setDigitalReleaseDate(dayjs(date));
+                          setShow(false);
+                        }
+                      }}
+                      customDatesStyles={Array.from({ length: 10 }).map(
+                        (_, i) => {
+                          const d = dayjs().add(i + 1, "day");
+                          return {
+                            date: d.toDate(),
+                            style: {
+                              backgroundColor: Colors.lightPrimary,
+                              borderRadius: 8,
+                            },
+                            textStyle: { color: Colors.black },
+                            allowDisabled: true,
+                          };
+                        }
+                      )}
+                    />
+
+                    <Text style={styles.note}>
+                      ⚡ Dates within next 10 days are highlighted
+                    </Text>
+                  </View>
+                </View>
+              </Modal>
+
+              {/* Validation error */}
+              {fieldState.error && (
+                <Text style={styles.errorText}>{fieldState.error.message}</Text>
+              )}
+            </View>
+          );
+        }}
       />
 
       {/* Release Time */}
@@ -154,59 +236,174 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
       <Controller
         name="Priority"
         control={control}
-        render={({ field }) => (
-          <View style={styles.priorityContainer}>
-            <TouchableOpacity
-              onPress={() => field.onChange("Priority")}
-              style={[
-                styles.priorityCard,
-                field.value === "Priority" && styles.priorityActive,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.priorityTitle,
-                  field.value === "Priority" && styles.priorityTextActive,
-                ]}
-              >
-                Priority
-              </Text>
-              <Text style={styles.priorityDesc}>
-                Get your music out extra fast (+₹1699)
-              </Text>
-            </TouchableOpacity>
+        render={({ field }) => {
+          const date = digitalReleaseDate ? dayjs(digitalReleaseDate) : null;
+          const disableStandard = date && isWithinNext10Days(date);
+          const disablePriority = date && !isWithinNext10Days(date);
 
-            <TouchableOpacity
-              onPress={() => field.onChange("Standard")}
-              style={[
-                styles.priorityCard,
-                field.value === "Standard" && styles.priorityActive,
-              ]}
-            >
-              <Text
+          // ✅ Auto-fix invalid state
+          if (disableStandard && field.value === "Standard") {
+            field.onChange("Priority");
+          } else if (disablePriority && field.value === "Priority") {
+            field.onChange("Standard");
+          }
+
+          return (
+            <View style={styles.row}>
+              {/* Priority Card */}
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => !disablePriority && field.onChange("Priority")}
                 style={[
-                  styles.priorityTitle,
-                  field.value === "Standard" && styles.priorityTextActive,
+                  styles.card,
+                  field.value === "Priority" && styles.selectedCard,
+                  disablePriority && styles.disabledCard,
                 ]}
               >
-                Standard
-              </Text>
-              <Text style={styles.priorityDesc}>
-                10 days or more (Included)
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
+                <Text
+                  style={[
+                    styles.title,
+                    field.value === "Priority" && styles.selectedText,
+                  ]}
+                >
+                  Priority
+                </Text>
+
+                <Text style={styles.subText}>Any Date within 24 hours</Text>
+                <Text style={styles.desc}>
+                  Skip the queue to get your music out extra fast or give
+                  yourself more time to pitch for playlists.
+                </Text>
+
+                <View style={styles.footer}>
+                  <Text
+                    style={[
+                      styles.price,
+                      field.value === "Priority" && styles.selectedText,
+                    ]}
+                  >
+                    +₹1699
+                  </Text>
+                </View>
+              </TouchableOpacity>
+
+              {/* Standard Card */}
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => !disableStandard && field.onChange("Standard")}
+                style={[
+                  styles.card,
+                  field.value === "Standard" && styles.selectedCard,
+                  disableStandard && styles.disabledCard,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.title,
+                    field.value === "Standard" && styles.selectedText,
+                  ]}
+                >
+                  Standard
+                </Text>
+
+                <Text style={styles.subText}>10 Days+ from Current Date</Text>
+                <Text style={styles.desc}>
+                  We'll let you know when your music has been processed and sent
+                  to stores.
+                </Text>
+
+                <View style={styles.footer}>
+                  <Text
+                    style={[
+                      styles.price,
+                      field.value === "Standard" && styles.selectedText,
+                    ]}
+                  >
+                    Included
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          );
+        }}
       />
 
       {/* Original Release Date */}
-      <DatePickerInput
-        control={control}
+      <Controller
         name="OriginalReleaseDate"
-        label="Original Release Date"
-        placeholder="Select Date"
-        mode="date"
+        control={control}
         rules={{ required: "Original Release Date is required" }}
+        render={({ field: { value, onChange }, fieldState }) => {
+          const formatted = value
+            ? dayjs(value).format("DD/MM/YYYY")
+            : "Select date";
+
+          // 🗓 Maximum date = DigitalReleaseDate
+          const digitalReleaseDate = getValues("DigitalReleaseDate");
+          const maxDate = digitalReleaseDate
+            ? dayjs(digitalReleaseDate).toDate()
+            : undefined;
+
+          return (
+            <View style={styles.digitalContainer}>
+              <Text style={styles.digitalLabel}>Original Release Date</Text>
+
+              {/* Touchable Input */}
+              <TouchableOpacity
+                style={[
+                  styles.input,
+                  fieldState.error && { borderColor: Colors.error },
+                ]}
+                onPress={() => setShow(true)}
+              >
+                <Text
+                  style={{
+                    color: value ? Colors.black : Colors.gray,
+                    fontSize: 14,
+                  }}
+                >
+                  {formatted}
+                </Text>
+              </TouchableOpacity>
+
+              {/* Calendar Modal */}
+              <Modal visible={show} transparent animationType="slide">
+                <View style={styles.modalOverlay}>
+                  <View style={styles.calendarContainer}>
+                    <View style={styles.modalHeader}>
+                      <Text style={styles.modalTitle}>
+                        Select Original Release Date
+                      </Text>
+                      <TouchableOpacity onPress={() => setShow(false)}>
+                        <Text style={styles.closeText}>Cancel</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    <CalendarPicker
+                      maxDate={maxDate}
+                      todayBackgroundColor={Colors.lightPrimary}
+                      selectedDayColor={Colors.primary}
+                      selectedDayTextColor={Colors.white}
+                      onDateChange={(date) => {
+                        if (date) {
+                          const formattedDate =
+                            dayjs(date).format("YYYY-MM-DD");
+                          onChange(formattedDate);
+                          setShow(false);
+                        }
+                      }}
+                    />
+                  </View>
+                </View>
+              </Modal>
+
+              {/* Validation Error */}
+              {fieldState.error && (
+                <Text style={styles.errorText}>{fieldState.error.message}</Text>
+              )}
+            </View>
+          );
+        }}
       />
 
       {/* Countries */}
@@ -215,7 +412,6 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
         name="Countries"
         label="Countries (optional)"
         placeholder="Entire World"
-        multiple
         items={["Entire World", "India", "Canada"]}
       />
 
@@ -225,7 +421,6 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
         name="MusicStores"
         label="Music Stores"
         placeholder="All available"
-        multiple
         rules={{ required: "Please select at least one store" }}
         items={musicStores}
       />
@@ -292,31 +487,97 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
   },
-  priorityContainer: {
-    flexDirection: "row",
-    gap: 12,
-    marginVertical: 20,
+  digitalContainer: { marginBottom: 16 },
+  digitalLabel: {
+    fontSize: 14,
+    color: Colors.gray,
+    marginBottom: 6,
+    fontWeight: "500",
   },
-  priorityCard: {
+  input: {
+    borderWidth: 1,
+    borderColor: Colors.gray,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    backgroundColor: Colors.white,
+  },
+  modalOverlay: {
     flex: 1,
-    padding: 16,
-    borderRadius: 16,
-    backgroundColor: "#F8F8F8",
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0,0,0,0.4)",
   },
-  priorityActive: {
-    backgroundColor: Colors.primary,
+  calendarContainer: {
+    backgroundColor: Colors.white,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 20,
   },
-  priorityTitle: {
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  modalTitle: {
     fontSize: 16,
     fontWeight: "600",
     color: Colors.black,
   },
-  priorityDesc: {
+  closeText: { color: Colors.primary, fontWeight: "500" },
+  note: {
+    textAlign: "center",
+    marginTop: 8,
     fontSize: 13,
     color: Colors.gray,
-    marginTop: 6,
   },
-  priorityTextActive: {
+  row: {
+    flexDirection: "column",
+    gap: 10,
+    width: "100%",
+    marginBottom: 12,
+  },
+  card: {
+    flex: 1,
+    borderRadius: 16,
+    padding: 20,
+    backgroundColor: "#F8F8F8",
+    justifyContent: "space-between",
+  },
+  selectedCard: {
+    backgroundColor: Colors.primary,
+  },
+  disabledCard: {
+    opacity: 0.5,
+    borderWidth: 1,
+    borderColor: Colors.gray,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: Colors.black,
+  },
+  subText: {
+    marginTop: 6,
+    fontSize: 14,
+    color: Colors.gray,
+  },
+  desc: {
+    marginTop: 10,
+    fontSize: 12,
+    color: Colors.gray,
+  },
+  footer: {
+    marginTop: 10,
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  price: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: Colors.black,
+  },
+  selectedText: {
     color: Colors.white,
   },
   priceContainer: {
@@ -325,14 +586,16 @@ const styles = StyleSheet.create({
   priceRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: 8,
     marginTop: 8,
   },
   priceButton: {
-    flex: 1,
     borderWidth: 1,
     borderColor: Colors.gray,
     borderRadius: 8,
-    padding: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
     alignItems: "center",
     marginHorizontal: 4,
   },

@@ -16,9 +16,6 @@ import { useLoadingStore } from "@/stores/loadingStore";
 import { formatDate, getSystemTimeZone } from "@/utils/utils";
 import { toast } from "@/stores/useToastStore";
 import { LoadingOverlay } from "@/components/common/LoadingOverlay";
-import Step3 from "./step/TrackList";
-import Step4 from "./step/DeliveryOption";
-import Step5 from "./step/ReviewScreen";
 import CustomButton from "@/components/common/CustomButton";
 import { StyleSheet, View } from "react-native";
 import ReleaseInformation from "./step/ReleaseInformation";
@@ -154,7 +151,7 @@ const StepperScreen = () => {
       } else if (activeStep === 2) {
         if (!draftId) throw new Error("Draft ID missing for step 3");
         await step3Mutation.mutateAsync(formData);
-      } else if (activeStep === 4) {
+      } else if (activeStep === 3) {
         if (!draftId) throw new Error("Draft ID missing for step 4");
         await step4Mutation.mutateAsync(formData);
       }

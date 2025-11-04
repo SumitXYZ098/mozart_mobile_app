@@ -459,15 +459,6 @@ export const languagesList = [
 
 export const priceCategories = ["Budget", "Mid", "Full", "Premium"];
 
-export const timeZones = [
-  "UTC",
-  "IST (India Standard Time)",
-  "EST (Eastern Standard Time)",
-  "PST (Pacific Standard Time)",
-  "CET (Central European Time)",
-  "GMT (Greenwich Mean Time)",
-];
-
 export const musicStores = [
   "Spotify",
   "Youtube Music",
