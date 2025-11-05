@@ -20,6 +20,7 @@ import utc from "dayjs/plugin/utc";
 import SectionedMultiSelect from "react-native-sectioned-multi-select";
 import { MaterialIcons } from "@expo/vector-icons";
 import CalendarPicker from "react-native-calendar-picker";
+import ReleaseTimeField from "../ReleaseTimeField";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -30,6 +31,7 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
   const [digitalReleaseDate, setDigitalReleaseDate] = useState<Dayjs | null>(
     dayjs().add(1, "day")
   );
+  const [digitalShow, setDigitalShow] = useState(false);
   const [show, setShow] = useState(false);
   useEffect(() => {
     if (draftFormData?.data) {
@@ -80,37 +82,49 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
     }
   }, [draftFormData, setValue]);
 
-  // Update time when timezone changes
+  // ✅ Update release time when timezone changes
   useEffect(() => {
     const currentTime = getValues("ReleaseTime");
     const currentZone = getValues("TimeZoneOfReference");
 
-    if (
-      currentTime &&
-      currentZone &&
-      selectedZone &&
-      selectedZone !== currentZone
-    ) {
-      const todayDate = dayjs(
+    if (!currentTime || !selectedZone) return;
+
+    // 🧭 Normalize zones (handles "Asia/Kolkata (UTC+05:30)" → "Asia/Kolkata")
+    const normalize = (tz: string | undefined) =>
+      tz ? tz.split(" ")[0].trim() : "UTC";
+
+    const oldZone = normalize(currentZone);
+    const newZone = normalize(selectedZone);
+
+    // If same zone, do nothing
+    if (oldZone === newZone) return;
+
+    try {
+      // Get the digital release date (to combine with time)
+      const date = dayjs(
         getValues("DigitalReleaseDate") || dayjs().format("YYYY-MM-DD")
       );
 
-      // Parse current time in current timezone
-      const dateTimeInCurrentZone = dayjs.tz(
-        `${todayDate.format("YYYY-MM-DD")} ${currentTime}`,
-        "YYYY-MM-DD HH:mm:ss.SSS",
-        currentZone
-      );
+      // Create datetime in the old zone using current stored UTC time
+      const utcTime = dayjs.utc(currentTime, "HH:mm:ss.SSS");
+      const localTimeInOldZone = utcTime.tz(oldZone);
 
-      // Convert to new timezone
-      const convertedTime = dateTimeInCurrentZone
-        .tz(selectedZone)
-        .format("HH:mm:ss.SSS");
+      // Convert that time into the new timezone
+      const converted = localTimeInOldZone.tz(newZone);
 
-      setValue("ReleaseTime", convertedTime);
+      // Store back to form as UTC time string
+      setValue("ReleaseTime", converted.utc().format("HH:mm:ss.SSS"));
       setValue("TimeZoneOfReference", selectedZone);
+    } catch (err) {
+      console.warn("Time zone conversion failed:", err);
     }
-  }, [selectedZone, setValue, getValues]);
+  }, [selectedZone]);
+
+  console.log(
+    getValues("ReleaseTime"),
+    getValues("TimeZoneOfReference"),
+    "ReleaseTime"
+  );
 
   const isWithinNext10Days = (date: any) => {
     const today = dayjs();
@@ -151,7 +165,7 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
                   styles.input,
                   fieldState.error && { borderColor: Colors.error },
                 ]}
-                onPress={() => setShow(true)}
+                onPress={() => setDigitalShow(true)}
               >
                 <Text
                   style={{
@@ -164,14 +178,14 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
               </TouchableOpacity>
 
               {/* Calendar modal */}
-              <Modal visible={show} transparent animationType="slide">
+              <Modal visible={digitalShow} transparent animationType="slide">
                 <View style={styles.modalOverlay}>
                   <View style={styles.calendarContainer}>
                     <View style={styles.modalHeader}>
                       <Text style={styles.modalTitle}>
                         Select Digital Release Date
                       </Text>
-                      <TouchableOpacity onPress={() => setShow(false)}>
+                      <TouchableOpacity onPress={() => setDigitalShow(false)}>
                         <Text style={styles.closeText}>Cancel</Text>
                       </TouchableOpacity>
                     </View>
@@ -181,13 +195,14 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
                       todayBackgroundColor={Colors.lightPrimary}
                       selectedDayColor={Colors.primary}
                       selectedDayTextColor={Colors.white}
+                      selectedDayStyle={{ backgroundColor: Colors.primary }}
                       onDateChange={(date) => {
                         if (date) {
                           const formattedDate =
                             dayjs(date).format("YYYY-MM-DD");
                           onChange(formattedDate);
                           setDigitalReleaseDate(dayjs(date));
-                          setShow(false);
+                          setDigitalShow(false);
                         }
                       }}
                       customDatesStyles={Array.from({ length: 10 }).map(
@@ -223,13 +238,10 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
       />
 
       {/* Release Time */}
-      <DatePickerInput
+      <ReleaseTimeField
         control={control}
-        name="ReleaseTime"
-        label="Release Time"
-        placeholder="Select Time"
-        mode="time"
-        rules={{ required: "Release Time is required" }}
+        setValue={setValue}
+        getValues={getValues}
       />
 
       {/* Priority / Standard cards */}
@@ -384,6 +396,7 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
                       todayBackgroundColor={Colors.lightPrimary}
                       selectedDayColor={Colors.primary}
                       selectedDayTextColor={Colors.white}
+                      selectedDayStyle={{ backgroundColor: Colors.primary }}
                       onDateChange={(date) => {
                         if (date) {
                           const formattedDate =
@@ -412,6 +425,7 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
         name="Countries"
         label="Countries (optional)"
         placeholder="Entire World"
+        multiple
         items={["Entire World", "India", "Canada"]}
       />
 
@@ -420,7 +434,8 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
         control={control}
         name="MusicStores"
         label="Music Stores"
-        placeholder="All available"
+        placeholder="Select Stores"
+        multiple
         rules={{ required: "Please select at least one store" }}
         items={musicStores}
       />
@@ -512,8 +527,11 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     padding: 20,
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalHeader: {
+    width: "100%",
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",

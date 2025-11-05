@@ -1,14 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ViewProps } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Controller, type Control } from "react-hook-form";
 import { Dropdown } from "react-native-element-dropdown";
 import { Colors } from "@/theme/colors";
 
-interface ISelectInputFieldProps extends ViewProps {
+interface ISelectInputFieldProps {
   label?: string;
   placeholder: string;
-  customClassesOuter?: string;
   items: (string | number)[];
   multiple?: boolean;
   value?: string | string[] | number | number[];
@@ -18,12 +17,12 @@ interface ISelectInputFieldProps extends ViewProps {
   rules?: any;
   errorMessage?: string;
   zIndex?: number;
+  style?: any;
 }
 
 const SelectInputField: React.FC<ISelectInputFieldProps> = ({
   label,
   placeholder,
-  customClassesOuter,
   items,
   multiple = false,
   value,
@@ -35,9 +34,10 @@ const SelectInputField: React.FC<ISelectInputFieldProps> = ({
   zIndex = 10,
   style,
 }) => {
-  const [dropdownItems, setDropdownItems] = useState(
+  const [dropdownItems] = useState(
     items.map((item) => ({ label: String(item), value: item }))
   );
+
   const [internalValue, setInternalValue] = useState<
     string | string[] | number | number[] | null
   >(value ?? (multiple ? [] : null));
@@ -46,61 +46,120 @@ const SelectInputField: React.FC<ISelectInputFieldProps> = ({
     if (value !== undefined) setInternalValue(value);
   }, [value]);
 
+  const handleSelect = (item: any, fieldOnChange: (val: any) => void) => {
+    if (multiple) {
+      let updated: any[] = Array.isArray(internalValue)
+        ? [...internalValue]
+        : [];
+      if (updated.includes(item.value)) {
+        updated = updated.filter((v) => v !== item.value);
+      } else {
+        updated.push(item.value);
+      }
+      setInternalValue(updated);
+      fieldOnChange(updated);
+      onChange?.(updated);
+    } else {
+      setInternalValue(item.value);
+      fieldOnChange(item.value);
+      onChange?.(item.value);
+    }
+  };
+
+  const renderPills = (selected: any[], fieldOnChange: (val: any) => void) => (
+    <View style={styles.pillsContainer}>
+      {selected.map((val) => (
+        <View key={val.toString()} style={styles.pill}>
+          <Text style={styles.pillText}>
+            {dropdownItems.find((i) => i.value === val)?.label || val}
+          </Text>
+          <TouchableOpacity
+            onPress={() => {
+              const updated = selected.filter((v) => v !== val);
+              setInternalValue(updated);
+              fieldOnChange(updated);
+              onChange?.(updated);
+            }}
+          >
+            <Text style={styles.pillRemove}>×</Text>
+          </TouchableOpacity>
+        </View>
+      ))}
+    </View>
+  );
+
   const renderDropdown = (
     fieldValue: any,
     fieldOnChange: (val: any) => void,
     error?: boolean,
     helperText?: string
-  ) => (
-    <View style={[styles.dropdownContainer, { zIndex }]}>
-      {label && <Text style={styles.label}>{label}</Text>}
+  ) => {
+  const displayValue =
+      multiple 
+        ? `${fieldValue.length} selected`
+        : fieldValue;
+    return (
+      <View style={[styles.dropdownContainer, { zIndex }]}>
+        {label && <Text style={styles.label}>{label}</Text>}
 
-      <Dropdown
-        style={[
-          styles.dropdown,
-          error ? { borderColor: "#FF5A5F" } : { borderColor: Colors.gray },
-        ]}
-        containerStyle={styles.dropdownList}
-        placeholderStyle={styles.placeholder}
-        selectedTextStyle={styles.text}
-        inputSearchStyle={styles.searchInput}
-        iconColor={Colors.primary}
-        data={dropdownItems}
-        search
-        maxHeight={250}
-        flatListProps={{
-          nestedScrollEnabled: true, // ✅ prevents scroll ref warning
-        }}
-        labelField="label"
-        valueField="value"
-        placeholder={placeholder}
-        searchPlaceholder="Search..."
-        value={fieldValue}
-        onChange={(item) => {
-          const newVal = multiple ? [item.value] : item.value;
-          setInternalValue(newVal);
-          fieldOnChange(newVal);
-          onChange?.(newVal);
-        }}
-        renderItem={(item) => (
-          <View style={styles.item}>
-            <Text style={styles.itemText}>{item.label}</Text>
-          </View>
-        )}
-      />
+        <Dropdown
+          style={[
+            styles.dropdown,
+            error ? { borderColor: "#FF5A5F" } : { borderColor: Colors.gray },
+          ]}
+          containerStyle={styles.dropdownList}
+          placeholderStyle={styles.placeholder}
+          selectedTextStyle={styles.text}
+          inputSearchStyle={styles.searchInput}
+          iconColor={Colors.primary}
+          data={dropdownItems}
+          search
+          maxHeight={250}
+          flatListProps={{ nestedScrollEnabled: true }}
+          labelField="label"
+          valueField="value"
+          placeholder={placeholder}
+          searchPlaceholder="Search..."
+          value={multiple ? null : displayValue}
+          onChange={(item) => handleSelect(item, fieldOnChange)}
+          renderItem={(item) => {
+            const selected = multiple
+              ? (internalValue as any[])?.includes(item.value)
+              : internalValue === item.value;
+            return (
+              <View
+                style={[
+                  styles.item,
+                  selected ? { backgroundColor: "#F3E8FF" } : {},
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.itemText,
+                    selected
+                      ? { color: Colors.primary, fontWeight: "600" }
+                      : {},
+                  ]}
+                >
+                  {item.label}
+                </Text>
+              </View>
+            );
+          }}
+        />
 
-      {error && <Text style={styles.errorText}>{helperText}</Text>}
-    </View>
-  );
+        {multiple &&
+          Array.isArray(fieldValue) &&
+          fieldValue.length > 0 &&
+          renderPills(fieldValue, fieldOnChange)}
+
+        {error && <Text style={styles.errorText}>{helperText}</Text>}
+      </View>
+    );
+  };
 
   return (
-    <View
-      style={[
-        styles.wrapper,
-        customClassesOuter ? { marginBottom: 10 } : null,
-        style,
-      ]}
-    >
+    <View style={[styles.wrapper, style]}>
       {control && name ? (
         <Controller
           name={name}
@@ -108,7 +167,7 @@ const SelectInputField: React.FC<ISelectInputFieldProps> = ({
           rules={rules}
           render={({ field, fieldState }) =>
             renderDropdown(
-              field.value,
+              field.value ?? (multiple ? [] : null),
               field.onChange,
               fieldState.invalid,
               fieldState.error?.message
@@ -139,8 +198,8 @@ const styles = StyleSheet.create({
   label: {
     marginBottom: 6,
     color: Colors.gray,
-    fontWeight: "400",
     fontSize: 14,
+    fontWeight: "500",
   },
   dropdown: {
     height: 48,
@@ -149,6 +208,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 12,
     backgroundColor: Colors.white,
+    justifyContent: "center",
   },
   dropdownList: {
     borderRadius: 8,
@@ -176,16 +236,29 @@ const styles = StyleSheet.create({
     color: Colors.black,
     fontSize: 14,
   },
-  selectedItem: {
-    backgroundColor: Colors.primary,
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    marginRight: 8,
+  pillsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginTop: 8,
   },
-  selectedItemText: {
-    color: Colors.white,
+  pill: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.primary,
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  pillText: {
+    color: "#fff",
     fontSize: 12,
+    marginRight: 6,
+  },
+  pillRemove: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "bold",
   },
   errorText: {
     color: "#FF5A5F",

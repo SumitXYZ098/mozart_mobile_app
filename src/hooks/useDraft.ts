@@ -10,6 +10,7 @@ import {
   draftStep3,
   draftStep4,
   getDraftById,
+  getUserDrafts,
   publishDraft,
   updateDraft,
 } from "@/api/draftApi";
@@ -118,6 +119,19 @@ export function usePublishDraft() {
     onError: (error: any) => {
       console.error("Publish draft failed", error);
       setError(error.message || "Failed to publish draft");
+    },
+  });
+}
+
+export function useUserDrafts() {
+  const { setUserDrafts } = useDraftStore();
+
+  return useQuery<DraftData[], Error>({
+    queryKey: ["userDrafts"],
+    queryFn: async () => {
+      const data = await getUserDrafts();
+      setUserDrafts(data);
+      return data;
     },
   });
 }

@@ -184,7 +184,7 @@ const StepperScreen = () => {
 
       await AsyncStorage.removeItem(STORAGE_KEY);
       toast.success("✅ Release published successfully");
-      navigation.navigate("MusicTab", { screen: "MyRelease" });
+      navigation.navigate("MusicTab", { screen: "Upload" });
     } catch (err: any) {
       console.error(err);
       toast.error("Final step failed");

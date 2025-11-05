@@ -125,7 +125,7 @@ const DraftListSection = () => {
         />
       ) : (
         draftList
-          .slice(0, 3)
+          .slice(0, 5)
           .map((item) => (
             <DraftCard
               key={item.id}
