@@ -10,7 +10,6 @@ import {
 } from "react-native";
 import { Colors } from "../../theme/colors";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import KeyboardWrapper from "@/components/modules/KeyboardWrapper";
 import Checkbox from "@/components/modules/Checkbox";
 import Divider from "@/components/modules/Divider";
 import { Controller, useForm } from "react-hook-form";
@@ -75,7 +74,6 @@ export default function LoginScreen({ navigation }: Props) {
     );
   };
   return (
-    <KeyboardWrapper scrollable>
       <AuthLayout withBackground>
         <Animated.View
           style={[styles.container, { opacity: fadeAnim }]}
@@ -181,7 +179,6 @@ export default function LoginScreen({ navigation }: Props) {
           </ScrollView>
         </Animated.View>
       </AuthLayout>
-    </KeyboardWrapper>
   );
 }
 

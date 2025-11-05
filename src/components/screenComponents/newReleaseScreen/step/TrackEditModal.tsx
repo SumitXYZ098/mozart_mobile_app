@@ -12,7 +12,6 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  FlatList,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Controller, useFieldArray, useFormContext } from "react-hook-form";
@@ -170,7 +169,7 @@ const TrackEditModalExpo: React.FC<TrackEditModalProps> = ({
   };
 
   const handleNext = async () => {
-    const ok = await trigger(`TrackList.${trackIndex}.RoleCredits`);
+    const ok = await trigger();
     if (!ok) return;
 
     const roleCredits = getValues(`TrackList.${trackIndex}.RoleCredits`) || [];
@@ -647,12 +646,12 @@ const TrackEditModalExpo: React.FC<TrackEditModalProps> = ({
                         message: "Only 12 digit alphanumeric code",
                       },
                     }}
-                    render={({ field }) => (
-                      <TextInput
-                        style={styles.input}
+                    render={({ field, fieldState }) => (
+                      <InputField
                         placeholder="Enter ISWC (12 alphanumeric)"
                         value={field.value}
                         onChangeText={field.onChange}
+                        error={fieldState.error?.message}
                       />
                     )}
                   />

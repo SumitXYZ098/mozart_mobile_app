@@ -7,7 +7,7 @@ import React, {
   useMemo,
   useEffect,
 } from "react";
-import { View, Text, StyleSheet, Pressable, Platform } from "react-native";
+import { Text, StyleSheet, Pressable, Platform } from "react-native";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import { Portal } from "@gorhom/portal";
 import Animated, {

@@ -20,6 +20,7 @@ import "./global.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import RootNavigator from "@/navigation/RootNavigator";
 import { PortalProvider } from "@gorhom/portal";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 
 const queryClient = new QueryClient();
 
@@ -45,7 +46,9 @@ export default function App() {
       <PortalProvider>
         <SafeAreaProvider style={{ flex: 1 }}>
           <QueryClientProvider client={queryClient}>
-            <RootNavigator />
+            <KeyboardProvider>
+              <RootNavigator />
+            </KeyboardProvider>
           </QueryClientProvider>
         </SafeAreaProvider>
       </PortalProvider>

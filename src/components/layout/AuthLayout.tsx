@@ -1,6 +1,7 @@
-import { Colors } from '@/theme/colors';
-import React from 'react';
-import { View, ImageBackground, StyleSheet, StatusBar } from 'react-native';
+import { Colors } from "@/theme/colors";
+import React from "react";
+import { View, ImageBackground, StyleSheet, StatusBar } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 interface Props {
   children: React.ReactNode;
@@ -9,29 +10,41 @@ interface Props {
 
 export default function AuthLayout({ children, withBackground = true }: Props) {
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
-      {withBackground ? (
-        <ImageBackground
-          source={require('../../../assets/images/background.png')}
-          style={styles.background}
-          resizeMode="cover">
-          <View style={styles.overlay}>{children}</View>
-        </ImageBackground>
-      ) : (
-        children
-      )}
-    </View>
+    <KeyboardAwareScrollView
+      bottomOffset={62}
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+    >
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
+        {withBackground ? (
+          <ImageBackground
+            source={require("../../../assets/images/background.png")}
+            style={styles.background}
+            resizeMode="cover"
+          >
+            <View style={styles.overlay}>{children}</View>
+          </ImageBackground>
+        ) : (
+          children
+        )}
+      </View>
+    </KeyboardAwareScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  background: { flex: 1, justifyContent: 'center', width:'100%', height:'100%' },
+  background: {
+    flex: 1,
+    justifyContent: "center",
+    width: "100%",
+    height: "100%",
+  },
   overlay: {
     flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
     padding: 0,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: "rgba(0,0,0,0.3)",
   },
 });

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Alert } from "react-native";
 import { Controller, useFormContext } from "react-hook-form";
 import CustomButton from "@/components/common/CustomButton";
 import { Colors } from "@/theme/colors";
@@ -9,7 +9,11 @@ import SelectInputField from "@/components/common/SelectInputField";
 import { genresList, languagesList } from ".";
 import LabelSelector from "../LabelSelector";
 import DatePickerInput from "@/components/common/DatePickerInput";
-import KeyboardWrapper from "@/components/modules/KeyboardWrapper";
+import {
+  KeyboardAvoidingView,
+  KeyboardAwareScrollView,
+  KeyboardToolbar,
+} from "react-native-keyboard-controller";
 
 interface ReleaseInformationProps {
   goNext: (data: any) => void;
@@ -50,8 +54,8 @@ const ReleaseInformation: React.FC<ReleaseInformationProps> = ({
 
   const handleNextStep = async () => {
     const isValid = await trigger(["ReleaseType", "ReleaseTitle"]);
-    // if (!isValid)
-    //   return Alert.alert("Validation", "Please fill all required fields.");
+    if (!isValid)
+      return Alert.alert("Validation", "Please fill all required fields.");
     if (isValid) {
       if (subStep < 1) {
         setSubStep((prev) => prev + 1);
@@ -113,7 +117,7 @@ const ReleaseInformation: React.FC<ReleaseInformationProps> = ({
       )}
 
       {subStep === 1 && (
-        <KeyboardWrapper>
+        <>
           <SelectInputField
             label="Version (optional)"
             placeholder="e.g. Remix, Live, Remaster"
@@ -225,7 +229,9 @@ const ReleaseInformation: React.FC<ReleaseInformationProps> = ({
             <Controller
               control={control}
               name="PhonogramRightsHolderName"
-              rules={{ required: "Phonogram rights holder name is required." }}
+              rules={{
+                required: "Phonogram rights holder name is required.",
+              }}
               render={({ field: { value, onChange, onBlur }, fieldState }) => (
                 <InputField
                   placeholder="Phonogram Rights Holder Name"
@@ -243,7 +249,7 @@ const ReleaseInformation: React.FC<ReleaseInformationProps> = ({
             in this release. Make sure the name matches the legal documents
             exactly.
           </Text>
-        </KeyboardWrapper>
+        </>
       )}
 
       {/* Step Navigation */}

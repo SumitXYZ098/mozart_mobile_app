@@ -9,7 +9,6 @@ import {
   Image,
 } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import KeyboardWrapper from "@/components/modules/KeyboardWrapper";
 import Divider from "@/components/modules/Divider";
 import { Controller, useForm } from "react-hook-form";
 import { checkEmailExists } from "@/api/userApi";
@@ -105,7 +104,6 @@ export default function SignUpScreen({ navigation }: Props) {
     }
   };
   return (
-    <KeyboardWrapper scrollable>
       <AuthLayout withBackground>
         <Animated.View
           style={[styles.container, { opacity: fadeAnim }]}
@@ -299,7 +297,6 @@ export default function SignUpScreen({ navigation }: Props) {
           </ScrollView>
         </Animated.View>
       </AuthLayout>
-    </KeyboardWrapper>
   );
 }
 

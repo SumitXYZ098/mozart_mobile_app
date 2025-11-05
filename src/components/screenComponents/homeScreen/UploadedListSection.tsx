@@ -100,7 +100,7 @@ const UploadedListSection = () => {
               <SkeletonCard />
             </>
           ) : (
-            tracks.map((track) => (
+            tracks?.slice(0.5).map((track) => (
               <Pressable
                 key={track.id}
                 onPress={() =>

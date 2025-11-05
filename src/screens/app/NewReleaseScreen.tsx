@@ -1,13 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Image,
-  ScrollView,
-} from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -16,6 +9,7 @@ import WelcomeNewReleaseScreen from "@/components/screenComponents/newReleaseScr
 import StepperScreen from "@/components/screenComponents/newReleaseScreen/StepperScreen";
 import { useDraftStore } from "@/stores/draftStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 const NewReleaseScreen = (route: any) => {
   console.log("Route:", route?.route?.params);
@@ -115,7 +109,7 @@ const NewReleaseScreen = (route: any) => {
 export default NewReleaseScreen;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor:Colors.white},
+  container: { flex: 1, backgroundColor: Colors.white },
   header: {
     flexDirection: "row",
     alignItems: "center",

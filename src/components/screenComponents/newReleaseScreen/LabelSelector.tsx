@@ -16,6 +16,7 @@ import BaseBottomSheet, {
   BaseBottomSheetRef,
 } from "@/components/modules/baseBottomSheet/BaseBottomSheet";
 import InputField from "@/components/modules/InputField";
+import BottomSheetKeyboardAwareScrollView from "@/components/modules/baseBottomSheet/BottomSheetKeyboardAwareScrollView";
 
 const LabelSelector = ({ controllerName }: { controllerName: string }) => {
   const { control, setValue, watch } = useFormContext();
@@ -145,6 +146,7 @@ const LabelSelector = ({ controllerName }: { controllerName: string }) => {
               placeholderTextColor={Colors.gray}
               value={newLabel}
               onChangeText={setNewLabel}
+              keyboardType="default"
             />
             <TouchableOpacity
               style={[styles.saveButton, isPending && { opacity: 0.7 }]}
@@ -171,7 +173,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "column",
     width: "100%",
-    marginBottom:20
+    marginBottom: 20,
   },
   title: {
     fontSize: 14,
