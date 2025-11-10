@@ -7,5 +7,6 @@ export const Colors = {
     error: "#E63946",
     secondary:'#F8F8F8',
     lightPrimary:'#EEE8FF',
+    lightBlack:'#11111180'
   };
   

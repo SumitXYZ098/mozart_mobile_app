@@ -11,6 +11,7 @@ import MyTrackScreen from "@/screens/app/MyTrackScreen";
 import MyReleaseScreen from "@/screens/app/MyReleaseScreen";
 import NewReleaseScreen from "@/screens/app/NewReleaseScreen";
 import WelcomeNewReleaseScreen from "@/components/screenComponents/newReleaseScreen/WelcomeNewReleaseScreen";
+import ArtistScreen from "@/screens/app/ArtistScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -22,6 +23,7 @@ export function HomeStackNavigator() {
     >
       <Stack.Screen name="HomeMain" component={HomeScreen} />
       <Stack.Screen name="Notification" component={NotificationScreen} />
+      <Stack.Screen name="Artist" component={ArtistScreen} />
     </Stack.Navigator>
   );
 }

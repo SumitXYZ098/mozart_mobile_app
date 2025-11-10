@@ -33,7 +33,9 @@ export default function HomeScreen() {
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.topBar}>
             <TouchableOpacity
-              onPress={() => console.log("Open Drawer")}
+              onPress={() => {
+                navigation.openDrawer();
+              }}
               style={styles.topButton}
             >
               <Image

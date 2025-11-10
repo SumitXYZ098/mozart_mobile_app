@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import AuthNavigator from "./AuthNavigator";
 import { useAuthStore } from "@/stores/useAuthStore";
-import TabNavigator from "./TabNavigator";
+import DrawerNavigator from "./DrawerNavigator";
 
 export default function RootNavigator() {
   const { user, loadUserFromStorage } = useAuthStore();
@@ -11,10 +11,9 @@ export default function RootNavigator() {
     loadUserFromStorage();
   }, []);
 
-
   return (
     <NavigationContainer>
-      {user && user.token ? <TabNavigator /> : <AuthNavigator />}
+      {user && user.token ? <DrawerNavigator /> : <AuthNavigator />}
     </NavigationContainer>
   );
 }
