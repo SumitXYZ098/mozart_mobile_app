@@ -18,6 +18,7 @@ import {
   X,
 } from "lucide-react-native";
 import { Colors } from "@/theme/colors";
+import { FontAwesome } from "@expo/vector-icons";
 
 interface Props extends TextInputProps {
   label?: string;
@@ -39,7 +40,7 @@ export default function InputField({ label, type, error, ...props }: Props) {
       case "number":
         return <Phone size={20} color={Colors.primary} />;
       case "search":
-        return <Search size={20} color={Colors.primary} />;
+        return <FontAwesome name="search" size={20} color={Colors.gray} />;
       default:
         return <User size={20} color={Colors.primary} />;
     }
@@ -87,6 +88,7 @@ export default function InputField({ label, type, error, ...props }: Props) {
           { borderColor: error ? Colors.error : Colors.gray },
         ]}
       >
+        <View style={styles.iconLeft}>{renderLeftIcon()}</View>
         <TextInput
           {...props}
           style={styles.input}

@@ -1,7 +1,7 @@
 import { Artist } from "@/api/artistApi";
 import { useArtistStore } from "@/stores/artistListStore";
 import { useLoadingStore } from "@/stores/loadingStore";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 
 export const useArtistList = (search: string = "") => {
   const { artists, error, fetchArtists, refetchTrigger, loading } =
@@ -16,17 +16,32 @@ export const useArtistList = (search: string = "") => {
 
 export const useArtistListById = (artistId: string) => {
   const { artist, error, fetchArtistById } = useArtistStore();
-  const { loading, uploadProgress } = useLoadingStore();
+  const { loading, setLoading, uploadProgress, setUploadProgress } =
+    useLoadingStore();
 
+  const refetch = useCallback(async () => {
+    if (!artistId) return;
+    try {
+      setLoading(true);
+      setUploadProgress(0);
+      await fetchArtistById(Number(artistId));
+    } catch (err) {
+      console.error("❌ Error fetching artist by ID:", err);
+    } finally {
+      setLoading(false);
+      setUploadProgress(0);
+    }
+  }, [artistId, fetchArtistById, setLoading, setUploadProgress]);
+
+  // Automatically fetch on mount or artistId change
   useEffect(() => {
     if (artistId && artistId !== "") {
-      fetchArtistById(Number(artistId));
+      refetch();
     }
-  }, [fetchArtistById, artistId]);
+  }, [artistId, refetch]);
 
-  return { artist, loading, error, uploadProgress };
+  return { artist, loading, error, uploadProgress, refetch };
 };
-
 export const useCreateArtist = () => {
   const { createArtist, error } = useArtistStore();
   const { loading, uploadProgress } = useLoadingStore();
