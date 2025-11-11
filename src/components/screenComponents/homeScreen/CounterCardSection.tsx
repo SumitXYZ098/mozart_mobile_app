@@ -7,14 +7,14 @@ import React, { useEffect, useState } from "react";
 import { Image, StyleSheet, Text, View, Animated } from "react-native";
 
 interface CountDataProps {
-  clientCount: number;
+  artistCount: number;
   totalEarnings: number;
 }
 
 const CounterCardSection = () => {
   const { user } = useAuthStore();
   const [countData, setCountData] = useState<CountDataProps>({
-    clientCount: 0,
+    artistCount: 0,
     totalEarnings: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -29,21 +29,25 @@ const CounterCardSection = () => {
 
       setIsLoading(true);
       try {
-        const response = await axios.get(ENDPOINTS.DASHBOARD_COUNTS, {
-          headers: {
-            Authorization: `Bearer ${user.token}`,
-          },
-        });
-        const data = response.data?.data ?? response.data;
-
-        setCountData({
-          clientCount: data?.clientCount,
-          totalEarnings: data?.totalEarnings ?? 0,
-        });
+        if (user.id) {
+          const response = await axios.get(
+            ENDPOINTS.TRACK_COUNT_BY_USER(user.id),
+            {
+              headers: {
+                Authorization: `Bearer ${user.token}`,
+              },
+            }
+          );
+          const data = response.data;
+          setCountData({
+            artistCount: data?.artistCount,
+            totalEarnings: data?.totalEarnings ?? 0,
+          });
+        }
       } catch (error) {
         console.error("Error fetching dashboard counts:", error);
         setCountData({
-          clientCount: 0,
+          artistCount: 0,
           totalEarnings: 0,
         });
       } finally {
@@ -108,7 +112,7 @@ const CounterCardSection = () => {
     },
     {
       id: "artists",
-      title: countData.clientCount,
+      title: countData.artistCount,
       subTitle: "Total Artists",
       imgSrc: require("../../../../assets/images/3d-multimedia-record.png"),
     },

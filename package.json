@@ -15,6 +15,7 @@
     "@expo/vector-icons": "^15.0.3",
     "@gorhom/bottom-sheet": "^5.2.6",
     "@gorhom/portal": "^1.0.14",
+    "@pietile-native-kit/keyboard-aware-scrollview": "^1.5.0",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/datetimepicker": "8.4.4",
     "@react-navigation/bottom-tabs": "^7.4.9",
