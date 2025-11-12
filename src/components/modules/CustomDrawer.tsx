@@ -120,6 +120,7 @@ export default function CustomDrawer(props: any) {
       setUploading(false);
     }
   };
+  
   // ✅ Clear image
   const handleClear = async () => {
     const attachment = watch("attachment");
@@ -181,6 +182,16 @@ export default function CustomDrawer(props: any) {
           <Text style={styles.name}>{user?.name || "Artist"}</Text>
         </View>
       </View>
+      <LinearGradient
+        colors={["rgba(17,17,17,0)", "rgba(180,186,197,1)", "rgba(17,17,17,0)"]}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        style={{
+          width: "100%",
+          height: 1,
+          marginVertical: 8,
+        }}
+      />
       {/* Drawer Items */}
       {/* Artists */}
       <TouchableOpacity
@@ -336,7 +347,7 @@ export default function CustomDrawer(props: any) {
             <LinearGradient
               colors={[
                 "rgba(17,17,17,0)",
-                "rgba(17,17,17,1)",
+                "rgba(180,186,197,1)",
                 "rgba(17,17,17,0)",
               ]}
               start={{ x: 0, y: 0.5 }}
@@ -530,7 +541,7 @@ const styles = StyleSheet.create({
     borderRadius: 40,
   },
   name: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "600",
     color: Colors.black,
     fontFamily: "PlusJakartaSans_600SemiBold",

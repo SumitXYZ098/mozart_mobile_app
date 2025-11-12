@@ -11,19 +11,6 @@ export interface ICoverArtFormats {
   sizeInBytes: number;
 }
 
-export interface ICoverArtAttributes {
-  id: number;
-  name?: string;
-  url: string;
-  width?: number;
-  height?: number;
-  formats?: {
-    large?: ICoverArtFormats;
-    medium?: ICoverArtFormats;
-    small?: ICoverArtFormats;
-    thumbnail?: ICoverArtFormats;
-  };
-}
 export interface User {
   id?: string;
   name?: string;

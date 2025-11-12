@@ -25,14 +25,16 @@ import { ArtistTransformed } from "@/api/artistApi";
 import { LazyImage } from "@/components/modules/LazyImage";
 import EmptyProfile from "../../../assets/images/emptyProfile.png";
 import ArtistDetailsDialog from "@/components/screenComponents/artistScreen/ArtistDetailsDialog";
+import ArtistDetailsForm from "@/components/screenComponents/artistScreen/ArtistDetailsForm";
 
 const ArtistScreen = () => {
   const navigation = useNavigation<any>();
   const { artists, loading, fetchArtists } = useArtistList();
   const bottomSheetRef = useRef<BaseBottomSheetRef>(null);
   const shimmerAnimation = new Animated.Value(0);
-  const [artistId, setArtistId] = useState<number | null>(null);
+  const [artistId, setArtistId] = useState<string | null>(null);
   const [showArtistDialog, setShowArtistDialog] = useState(false);
+  const [openArtistForm, setOpenArtistForm] = useState(false);
 
   // Shimmer animation effect
   useEffect(() => {
@@ -146,7 +148,7 @@ const ArtistScreen = () => {
             </View>
             <TouchableOpacity
               onPress={() => {
-                setArtistId(item.id);
+                setArtistId(item.id.toString());
                 bottomSheetRef.current?.present();
               }}
             >
@@ -187,7 +189,13 @@ const ArtistScreen = () => {
           </TouchableOpacity>
         </View>
       </View>
-      <TouchableOpacity style={styles.newArtistButton}>
+      <TouchableOpacity
+        style={styles.newArtistButton}
+        onPress={() => {
+          setArtistId("");
+          setOpenArtistForm(true);
+        }}
+      >
         <Ionicons name="add-sharp" size={20} color={Colors.white} />
         <Text style={styles.newArt}>New artist</Text>
       </TouchableOpacity>
@@ -225,7 +233,8 @@ const ArtistScreen = () => {
           <TouchableOpacity
             style={styles.actionButton}
             onPress={() => {
-              console.log("Edit Draft Id:");
+              bottomSheetRef.current?.dismiss();
+              setOpenArtistForm(true);
             }}
           >
             <FontAwesome5 name="user-edit" size={20} color={Colors.primary} />
@@ -265,10 +274,20 @@ const ArtistScreen = () => {
           </TouchableOpacity>
         </View>
       </BaseBottomSheet>
+
+      {/* Artist Profile */}
       <ArtistDetailsDialog
         visible={showArtistDialog}
         onClose={() => setShowArtistDialog(false)}
-        artistId={artistId?.toString() ?? ""}
+        artistId={artistId ?? ""}
+        onRefresh={() => fetchArtists()}
+      />
+
+      {/* New/Edit Artist Profile */}
+      <ArtistDetailsForm
+        artistId={artistId}
+        visible={openArtistForm}
+        onClose={() => setOpenArtistForm(false)}
         onRefresh={() => fetchArtists()}
       />
     </SafeAreaView>

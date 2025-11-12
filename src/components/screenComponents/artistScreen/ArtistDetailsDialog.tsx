@@ -16,6 +16,7 @@ import EmptyProfile from "../../../../assets/images/emptyProfile.png";
 import { LazyImage } from "@/components/modules/LazyImage";
 import { updateArtistById } from "@/api/artistApi";
 import { useArtistListById } from "@/hooks/useArtistList";
+import { LinearGradient } from "expo-linear-gradient";
 
 interface ArtistDetailsDialogProps {
   visible: boolean;
@@ -38,6 +39,7 @@ const ArtistDetailsDialog: React.FC<ArtistDetailsDialogProps> = ({
   const profileImage =
     artist?.Profile_image?.formats?.thumbnail?.url ||
     artist?.Profile_image?.formats?.small?.url ||
+    artist?.Profile_image?.url ||
     null;
 
   useEffect(() => {
@@ -149,7 +151,20 @@ const ArtistDetailsDialog: React.FC<ArtistDetailsDialogProps> = ({
                 </Pressable>
               )}
 
-              <View style={styles.divider} />
+              <LinearGradient
+                colors={[
+                  "rgba(17,17,17,0)",
+                  "rgba(180,186,197,1)",
+                  "rgba(17,17,17,0)",
+                ]}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+                style={{
+                  width: "100%",
+                  height: 1,
+                  marginVertical: 16,
+                }}
+              />
 
               {/* Channels */}
               <Text style={styles.sectionTitle}>Channels</Text>
@@ -161,7 +176,20 @@ const ArtistDetailsDialog: React.FC<ArtistDetailsDialogProps> = ({
               />
               <InfoRow label="SoundCloud Page" value={artist.soundcloudPage} />
 
-              <View style={styles.divider} />
+              <LinearGradient
+                colors={[
+                  "rgba(17,17,17,0)",
+                  "rgba(180,186,197,1)",
+                  "rgba(17,17,17,0)",
+                ]}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+                style={{
+                  width: "100%",
+                  height: 1,
+                  marginVertical: 16,
+                }}
+              />
 
               {/* Social Media */}
               <Text style={styles.sectionTitle}>Social Media</Text>
@@ -216,6 +244,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "700",
     color: Colors.black,
+    fontFamily: "PlusJakartaSans_700Bold",
   },
   closeButton: {
     width: 36,
@@ -243,11 +272,13 @@ const styles = StyleSheet.create({
   artistName: {
     fontSize: 18,
     fontWeight: "600",
+    fontFamily: "PlusJakartaSans_600SemiBold",
   },
   bio: {
     color: "#555",
     marginTop: 4,
     fontSize: 14,
+    fontFamily: "Poppins_400Regular",
   },
   verifyButton: {
     marginTop: 16,
@@ -260,17 +291,14 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "600",
     fontSize: 15,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#ddd",
-    marginVertical: 16,
+    fontFamily: "PlusJakartaSans_600SemiBold",
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: "600",
     color: Colors.black,
     marginBottom: 8,
+    fontFamily: "PlusJakartaSans_600SemiBold",
   },
   infoRow: {
     flexDirection: "row",
@@ -280,6 +308,7 @@ const styles = StyleSheet.create({
   label: {
     color: "#999",
     fontSize: 14,
+    fontFamily: "Poppins_400Regular",
   },
   value: {
     color: Colors.black,
@@ -287,6 +316,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     maxWidth: "60%",
     textAlign: "right",
+    fontFamily: "Poppins_400Regular",
   },
 });
 

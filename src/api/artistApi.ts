@@ -17,7 +17,7 @@ export interface Artist {
   websiteUrl?: string;
   biography?: string;
   trackCount: number;
-  Profile_image?: ICoverArtAttributes;
+  Profile_image?: ICoverArtAttributes | null        ;
   itsVerified: boolean;
   requiredVerification?: boolean | null;
 }
@@ -77,7 +77,7 @@ export const transformAllArtist = (
     verified: data.itsVerified,
     profileImage: data.Profile_image?.formats?.thumbnail
       ? data?.Profile_image?.formats?.thumbnail?.url
-      : data?.Profile_image?.formats?.small?.url || null,
+      : data?.Profile_image?.formats?.small?.url || data?.Profile_image?.url  || null,
     trackCount: data.trackCount,
     appleMusicId: data.appleMusicId,
     spotifyId: data.spotifyId,
@@ -146,7 +146,7 @@ export const transformArtist = (data: ArtistResponse): ArtistTransformed => {
     requiredVerification: data.requiredVerification ?? false,
     profileImage: data.Profile_image?.formats?.thumbnail
       ? data?.Profile_image?.formats?.thumbnail?.url
-      : data?.Profile_image?.formats?.small?.url || null,
+      : data?.Profile_image?.formats?.small?.url || data?.Profile_image?.url ||  null,
     trackCount: data.trackCount,
     appleMusicId: data.appleMusicId,
     spotifyId: data.spotifyId,
