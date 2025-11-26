@@ -219,9 +219,7 @@ export default function CustomDrawer(props: any) {
         style={styles.item}
         onPress={() =>
           props.navigation.navigate("MainTabs", {
-            screen: "HomeTab",
-
-            params: { screen: "Artist" },
+            screen: "MusicTab",
           })
         }
       >
@@ -241,8 +239,6 @@ export default function CustomDrawer(props: any) {
         onPress={() =>
           props.navigation.navigate("MainTabs", {
             screen: "HomeTab",
-
-            params: { screen: "Artist" },
           })
         }
       >
@@ -262,8 +258,6 @@ export default function CustomDrawer(props: any) {
         onPress={() =>
           props.navigation.navigate("MainTabs", {
             screen: "HomeTab",
-
-            params: { screen: "Artist" },
           })
         }
       >
@@ -283,8 +277,6 @@ export default function CustomDrawer(props: any) {
         onPress={() =>
           props.navigation.navigate("MainTabs", {
             screen: "HomeTab",
-
-            params: { screen: "Artist" },
           })
         }
       >
