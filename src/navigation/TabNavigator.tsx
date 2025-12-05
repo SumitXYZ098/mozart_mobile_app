@@ -178,7 +178,7 @@ const TabNavigator = () => {
       <Tab.Screen
         name="MusicTab"
         component={MusicStackNavigator}
-         options={({ route }) => {
+        options={({ route }) => {
           const routeName = getFocusedRouteNameFromRoute(route) ?? "HomeMain";
           const hideOnScreens = ["Notification"];
 
@@ -223,57 +223,79 @@ const TabNavigator = () => {
                 </Pressable>
               );
             },
-             tabBarIcon: ({ focused }) => {
-            const imgSrc = focused
-              ? require("../../assets/images/musicFill.png")
-              : require("../../assets/images/music.png");
-            return (
-              <Image
-                source={imgSrc}
-                style={{
-                  width: 32,
-                  height: 32,
-                  opacity: focused ? 1 : 0.5,
-                }}
-              />
-            );
-          },
+            tabBarIcon: ({ focused }) => {
+              const imgSrc = focused
+                ? require("../../assets/images/musicFill.png")
+                : require("../../assets/images/music.png");
+              return (
+                <Image
+                  source={imgSrc}
+                  style={{
+                    width: 32,
+                    height: 32,
+                    opacity: focused ? 1 : 0.5,
+                  }}
+                />
+              );
+            },
           };
         }}
       />
       <Tab.Screen
         name="ProfileTab"
         component={ProfileStackNavigator}
-        options={{
-          tabBarIcon: ({ focused }) => {
-            const { user } = useAuthStore();
-            const profileImg = user?.Profile_image?.formats?.small?.url;
-            return profileImg ? (
-              <View
-                className="w-10 h-10 rounded-full border-2 overflow-hidden"
-                style={{
-                  borderColor: focused ? Colors.primary : "#E8D5FF",
-                  backgroundColor: "#F0F0F0",
-                }}
-              >
-                <Image
-                  source={{
-                    uri: `${process.env.EXPO_PUBLIC_API_URL}${profileImg}`,
+        options={({ route }) => {
+          const routeName = getFocusedRouteNameFromRoute(route) ?? "ProfileTab";
+          const hideOnScreens = ["ProfileTab"];
+          return {
+            tabBarStyle: hideOnScreens.includes(routeName)
+              ? { display: "none" }
+              : {
+                  position: "absolute",
+                  bottom: 24,
+                  borderRadius: 40,
+                  marginHorizontal: horizontalScale(24),
+                  backgroundColor: "#E8D5FF",
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 8,
+                  elevation: 8,
+                  height: 64,
+                  paddingTop: 16,
+                  paddingBottom: 16,
+                  paddingHorizontal: 16,
+                },
+            tabBarIcon: ({ focused }) => {
+              const { user } = useAuthStore();
+              const profileImg = user?.Profile_image?.formats?.small?.url;
+              return profileImg ? (
+                <View
+                  className="w-10 h-10 rounded-full border-2 overflow-hidden"
+                  style={{
+                    borderColor: focused ? Colors.primary : "#E8D5FF",
+                    backgroundColor: "#F0F0F0",
                   }}
-                  className="w-full h-full rounded-full"
+                >
+                  <Image
+                    source={{
+                      uri: `${process.env.EXPO_PUBLIC_API_URL}${profileImg}`,
+                    }}
+                    className="w-full h-full rounded-full"
+                  />
+                </View>
+              ) : (
+                <Ionicons
+                  name="person-circle-outline"
+                  size={34}
+                  color={Colors.primary}
+                  style={{
+                    opacity: focused ? 1 : 0.5,
+                  }}
                 />
-              </View>
-            ) : (
-              <Ionicons
-                name="person-circle-outline"
-                size={34}
-                color={Colors.primary}
-                style={{
-                  opacity: focused ? 1 : 0.5,
-                }}
-              />
-            );
-          },
+              );
+            },
+          };
         }}
       />
     </Tab.Navigator>

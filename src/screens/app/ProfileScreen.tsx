@@ -1,83 +1,195 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../../theme/colors';
-import { useAuthStore } from '@/stores/useAuthStore';
-
+import React from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ImageBackground,
+  Image,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { Colors } from "../../theme/colors";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { useNavigation } from "@react-navigation/native";
+import { LazyImage } from "@/components/modules/LazyImage";
+import Creator from "../../../assets/images/creator.png";
+import CustomButton from "@/components/common/CustomButton";
 
 export default function ProfileScreen() {
-  const { logOut } = useAuthStore();
+  const { logOut, user } = useAuthStore();
+  const navigation = useNavigation<any>();
 
-  const profileActions = [
+  const menuList = [
     {
-      id: 'settings',
-      title: 'Settings',
-      subtitle: 'Manage your preferences',
-      icon: 'settings-outline',
-      color: Colors.primary,
-      onPress: ()=> console.log('Settings'),
+      title: "My Profile",
+      icon: require("../../../assets/images/profile-fill.png"),
+      onPress: () => {},
     },
     {
-      id: 'notifications',
-      title: 'Notifications',
-      subtitle: 'Manage your notifications',
-      icon: 'notifications-outline',
-      color: '#F59E0B',
-      onPress: ()=> console.log('Notifications'),
+      title: "Refer a friend",
+      icon: require("../../../assets/images/follow-us.png"),
+      onPress: () => {},
     },
     {
-      id: 'logout',
-      title: 'Log out',
-      subtitle: 'Sign out of your account',
-      icon: 'log-out-outline',
-      color: '#EF4444',
-      onPress: () => logOut(),
+      title: "Preks",
+      icon: require("../../../assets/images/prek.png"),
+      onPress: () => {},
+    },
+    {
+      title: "Language",
+      icon: require("../../../assets/images/language.png"),
+      onPress: () => {},
+    },
+    {
+      title: "Change Password",
+      icon: require("../../../assets/images/reset-password.png"),
+      onPress: () => {},
+    },
+    {
+      title: "Theme",
+      icon: require("../../../assets/images/theme.png"),
+      onPress: () => {},
     },
   ];
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Profile</Text>
-          <Text style={styles.subtitle}>Manage your account settings</Text>
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("HomeTab")}
+          style={styles.backButton}
+        >
+          <Ionicons name="chevron-back" size={24} color={Colors.primary} />
+        </TouchableOpacity>
+        <Text style={styles.title}>Settings</Text>
+        <View style={styles.placeholder}></View>
+      </View>
+      {user && (
+        <View style={styles.profileSection}>
+          <LazyImage
+            uri={`${user?.Profile_image?.formats?.small?.url}`}
+            style={{ width: 125, height: 125, borderRadius: 125 }}
+          />
+          <View style={{ alignItems: "center" }}>
+            <Text
+              style={{
+                fontWeight: "700",
+                fontFamily: "PlusJakartaSans_700Bold",
+                fontSize: 18,
+              }}
+            >
+              {user?.name}
+            </Text>
+            <Text
+              style={{
+                fontFamily: "Poppins_400Regular",
+                fontSize: 14,
+                color: Colors.gray,
+              }}
+            >
+              {user?.email}
+            </Text>
+          </View>
         </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.actionsGrid}>
-            {profileActions.map((action) => (
-              <TouchableOpacity
-                key={action.id}
-                style={[styles.actionCard, { borderLeftColor: action.color }]}
-                onPress={action.onPress}
+      )}
+      <View
+        style={{
+          paddingHorizontal: 24,
+        }}
+      >
+        <ImageBackground
+          source={Creator}
+          style={{
+            width: "auto",
+            height: "auto",
+            padding: 12,
+            gap: 6,
+          }}
+          imageStyle={{
+            borderRadius: 12,
+          }}
+        >
+          <Text
+            style={{
+              fontWeight: "700",
+              fontFamily: "PlusJakartaSans_700Bold",
+              fontSize: 20,
+              color: Colors.white,
+            }}
+          >
+            Creator Pro
+          </Text>
+          <Text
+            style={{
+              fontFamily: "Poppins_400Regular",
+              fontSize: 12,
+              color: Colors.white,
+            }}
+          >
+            You’re getting priority distribution, detailed royalty reports, and
+            unlimited uploads.
+          </Text>
+        </ImageBackground>
+      </View>
+      <View style={styles.menuSection}>
+        <View style={{ gap: 16 }}>
+          {menuList.map((menuItem, index) => (
+            <View
+              key={index}
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: "row",
+                  gap: 12,
+                  alignItems: "center",
+                }}
               >
-                <View style={styles.actionContent}>
-                  <Ionicons name={action.icon as any} size={32} color={action.color} />
-                  <View style={styles.actionText}>
-                    <Text style={styles.actionTitle}>{action.title}</Text>
-                    <Text style={styles.actionSubtitle}>{action.subtitle}</Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={20} color={Colors.gray} />
+                <View
+                  style={{
+                    width: 42,
+                    height: 42,
+                    backgroundColor: Colors.lightPrimary,
+                    borderRadius: 8,
+                    padding: 9,
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  <Image
+                    source={menuItem.icon}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                    }}
+                  />
                 </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account Information</Text>
-          <View style={styles.infoCard}>
-            <Ionicons name="person-circle" size={48} color={Colors.primary} />
-            <View style={styles.infoContent}>
-              <Text style={styles.infoTitle}>John Doe</Text>
-              <Text style={styles.infoSubtitle}>john.doe@example.com</Text>
-              <Text style={styles.infoDate}>Member since 2023</Text>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontFamily: "Poppins_400Regular",
+                    color: Colors.black,
+                  }}
+                >
+                  {menuItem.title}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={Colors.gray} />
             </View>
-          </View>
+          ))}
         </View>
-      </ScrollView>
+        <CustomButton
+          buttonType="disable"
+          label="Logout"
+          icon={<MaterialIcons name="logout" size={24} color={Colors.gray} />}
+          onPress={logOut}
+        />
+      </View>
     </SafeAreaView>
   );
 }
@@ -87,102 +199,40 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.white,
   },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 40,
-  },
   header: {
-    alignItems: 'center',
-    marginBottom: 32,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+  },
+  backButton: {
+    backgroundColor: Colors.secondary,
+    borderRadius: 8,
+    padding: 8,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: Colors.black,
-    textAlign: 'center',
-    marginBottom: 8,
-    fontFamily: 'PlusJakartaSans_700Bold',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: Colors.gray,
-    textAlign: 'center',
-    fontFamily: 'Poppins_400Regular',
-  },
-  section: {
-    marginBottom: 32,
-  },
-  sectionTitle: {
     fontSize: 20,
-    fontWeight: '600',
-    color: Colors.black,
-    marginBottom: 16,
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontWeight: 700,
+    color: Colors.gray,
+    fontFamily: "PlusJakartaSans_700Bold",
   },
-  actionsGrid: {
+  placeholder: {
+    flexDirection: "row",
+    alignItems: "center",
+    columnGap: 6,
+    width: "10%",
+  },
+  profileSection: {
+    alignItems: "center",
     gap: 12,
+    marginBottom: 12,
   },
-  actionCard: {
-    backgroundColor: Colors.white,
-    borderRadius: 12,
-    padding: 16,
-    borderLeftWidth: 4,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  actionContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  actionText: {
+  menuSection: {
+    paddingHorizontal: 24,
+    marginTop: 12,
+    marginBottom: 18,
     flex: 1,
-    marginLeft: 16,
-  },
-  actionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.black,
-    marginBottom: 4,
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-  },
-  actionSubtitle: {
-    fontSize: 14,
-    color: Colors.gray,
-    fontFamily: 'Poppins_400Regular',
-  },
-  infoCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.lightGray + '30',
-    borderRadius: 12,
-    padding: 16,
-  },
-  infoContent: {
-    marginLeft: 16,
-    flex: 1,
-  },
-  infoTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: Colors.black,
-    marginBottom: 4,
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-  },
-  infoSubtitle: {
-    fontSize: 14,
-    color: Colors.gray,
-    marginBottom: 4,
-    fontFamily: 'Poppins_400Regular',
-  },
-  infoDate: {
-    fontSize: 12,
-    color: Colors.gray,
-    fontFamily: 'Poppins_400Regular',
+    gap: 20,
   },
 });
