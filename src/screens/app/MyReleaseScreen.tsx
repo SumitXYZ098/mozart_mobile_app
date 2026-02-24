@@ -8,6 +8,7 @@ import {
   Image,
   Dimensions,
   FlatList,
+  Pressable
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -91,7 +92,7 @@ export default function MyReleaseScreen() {
   };
 
   const renderUpdateItem = ({ item }: { item: any }) => (
-    <TouchableOpacity
+    <Pressable
       onPress={() =>
         navigation.navigate("MusicTab", {
           screen: "Track",
@@ -162,7 +163,7 @@ export default function MyReleaseScreen() {
           </View>
         </View>
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 
   const renderSkeletonItem = () => <SkeletonCard />;

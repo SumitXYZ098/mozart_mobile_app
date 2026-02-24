@@ -125,7 +125,7 @@ const MyTrackScreen = (routes: any) => {
       {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => navigation?.navigate('HomeTab')}
           style={styles.backButton}
         >
           <Ionicons name="chevron-back" size={24} color={Colors.primary} />
