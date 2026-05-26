@@ -65,6 +65,7 @@ export default function SignUpScreen({ navigation }: Props) {
     value ? value.charAt(0).toUpperCase() + value.slice(1) : value;
 
   const onSubmit = async (data: FormValues) => {
+console.log(data, "Form Data");
     try {
       setLoading(true);
 
@@ -91,7 +92,7 @@ export default function SignUpScreen({ navigation }: Props) {
         const resp = await sendEmailVerification(data.email);
         const message = resp?.message || "Verification email sent";
         toast.success(message);
-        navigation.navigate("VerifyEmail");
+        navigation.navigate("VerifyEmail", { email: data.email });
       } catch (err: any) {
         const message =
           err?.response?.data?.message || "Failed to send verification email";
@@ -305,8 +306,8 @@ const styles = StyleSheet.create({
   inner: {
     display: "flex",
     justifyContent: "flex-end",
-    paddingVertical: 24,
-    paddingHorizontal: 48,
+    paddingVertical: 20,
+    paddingHorizontal: 28,
     backgroundColor: Colors.white,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,

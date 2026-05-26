@@ -1,13 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Animated,
-  Image,
-} from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, Image, ActivityIndicator } from "react-native";
 import { Colors } from "../../theme/colors";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import Checkbox from "@/components/modules/Checkbox";
@@ -22,7 +14,7 @@ import InputField from "@/components/modules/InputField";
 type Props = NativeStackScreenProps<AuthStackParamList, "Login">;
 
 type FormValues = {
-  email: string;
+  identifier: string;
   password: string;
   rememberMe: boolean;
 };
@@ -45,34 +37,42 @@ export default function LoginScreen({ navigation }: Props) {
     formState: { errors },
   } = useForm<FormValues>({
     defaultValues: {
-      email: "",
+      identifier: "",
       password: "",
       rememberMe: false,
     },
     mode: "onChange",
   });
 
-  const onSubmit = (data: FormValues) => {
-    login(
-      {
-        identifier: data.email,
-        password: data.password,
-        rememberMe: data.rememberMe,
+ const onSubmit = (data: FormValues) => {
+  login(
+    {
+      identifier: data.identifier,
+      password: data.password,
+      rememberMe: data.rememberMe,
+    },
+    {
+      onSuccess: () => {
+        toast.success("Logged in successfully");
+        console.log(
+          "Form submitted:successfull",
+          data
+        );
       },
-      {
-        onSuccess: () => {
-          toast.success("Logged in successfully");
-          console.log("Form submitted:successfull", data);
-          
-        },
-        onError: (err: unknown) => {
-          console.log("Form submitted:err", data);
-          const message = err instanceof Error ? "Invalid username and password !" : "Login failed";
-          toast.error(message);
-        },
-      }
-    );
-  };
+
+      onError: (err: unknown) => {
+        console.log("LOGIN ERROR:", err);
+
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Login failed";
+
+        toast.error(message);
+      },
+    }
+  );
+};
   return (
       <AuthLayout withBackground>
         <Animated.View
@@ -88,7 +88,7 @@ export default function LoginScreen({ navigation }: Props) {
             {/* Email Field */}
             <Controller
               control={control}
-              name="email"
+              name="identifier"
               rules={{
                 required: "Email is required",
                 pattern: {
@@ -144,13 +144,18 @@ export default function LoginScreen({ navigation }: Props) {
                   />
                 )}
               />
-              <Text style={styles.linkText}>Forgot password</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}><Text style={styles.linkText}>Forgot password</Text></TouchableOpacity>
             </View>
             <TouchableOpacity
               onPress={handleSubmit(onSubmit)}
-              style={styles.button}
+              style={[styles.button, isPending && styles.buttonDisabled]}
+              disabled={isPending}
             >
-              <Text style={styles.buttonText}>Login</Text>
+              {isPending ? (
+                <ActivityIndicator color={Colors.white} />
+              ) : (
+                <Text style={styles.buttonText}>Login</Text>
+              )}
             </TouchableOpacity>
             <Divider label="or" />
             <View className=" flex-1 flex-row items-center gap-x-4 mb-[10px]">
@@ -188,7 +193,7 @@ const styles = StyleSheet.create({
     display: "flex",
     justifyContent: "flex-end",
     paddingVertical: 24,
-    paddingHorizontal: 48,
+    paddingHorizontal: 22,
     backgroundColor: Colors.white,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
@@ -208,11 +213,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     fontFamily: "Poppins_400Regular",
   },
-  button: {
-    backgroundColor: Colors.primary,
-    paddingVertical: 14,
-    borderRadius: 32,
-  },
+  button: { backgroundColor: Colors.primary, paddingVertical: 14, borderRadius: 32 },
+  buttonDisabled: { backgroundColor: Colors.lightGray, opacity: 0.7 },
   buttonText: {
     color: Colors.white,
     textAlign: "center",

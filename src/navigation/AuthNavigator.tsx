@@ -4,14 +4,23 @@ import SignUpScreen from "@/screens/auth/SignUpScreen";
 import SplashScreen from "@/screens/SplashScreen";
 import VerifiedScreen from "@/screens/auth/VerifiedScreen";
 import VerifyEmailScreen from "@/screens/auth/VerifyEmailScreen";
+ 
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import ForgotPasswordScreen from "@/screens/auth/ForgotPasswordScreen";
+import SetNewPasswordScreen from "@/screens/auth/SetNewPasswordScreen";
+import ForgotPasswordSuccessScreen from "@/screens/auth/ForgotPasswordSuccessScreen";
+import ResetPasswordScreen from "@/screens/auth/ResetPasswordScreen";
 
 export type AuthStackParamList = {
   Splash: undefined;
   Onboarding: undefined;
   Login: undefined;
   SignUp: undefined;
-  VerifyEmail: undefined;
+  ForgotPassword: undefined;
+  ForgotPasswordSuccess: undefined;
+  ResetPassword: { email: string };
+  SetNewPassword: { email: string; otp: string };
+  VerifyEmail: { email: string };
   Verified: undefined;
 };
 
@@ -27,6 +36,9 @@ export default function AuthNavigator() {
       <Stack.Screen name="Onboarding" component={OnboardingScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="SignUp" component={SignUpScreen} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+      <Stack.Screen name="SetNewPassword" component={SetNewPasswordScreen} />
       <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} />
       <Stack.Screen name="Verified" component={VerifiedScreen} />
     </Stack.Navigator>

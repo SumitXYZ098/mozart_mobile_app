@@ -1,14 +1,20 @@
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
-
 export const ENDPOINTS = {
+
   // Login/Signup Endpoint
-  REGISTER: `${BASE_URL}/api/auth/local/register`,
-  LOGIN: `${BASE_URL}/api/auth/local`,
-  CHECK_EMAIL: (email: string) => `${BASE_URL}/api/email-exists?email=${email}`,
+  REGISTER:`${BASE_URL}/api/auth/local/register`,
+  LOGIN:`${BASE_URL}/api/auth/local`,
+  CHECK_EMAIL:(email: string) => `${BASE_URL}/api/email-exists?email=${email}`,
   EMAIL_VERIFICATION: `${BASE_URL}/api/email/send-verification`,
   EMAIL_STATUS: (email: string) =>
     `${BASE_URL}/api/email/check-status?email=${email}`,
   EMAIL_VERIFIED: `${BASE_URL}/api/email/verify`,
+
+  // Forgot Password Endpoints
+  SEND_OTP: `${BASE_URL}/api/auth/send-otp`,
+  VERIFY_OTP: `${BASE_URL}/api/auth/verify-otp`,
+  RESET_PASSWORD: `${BASE_URL}/api/auth/reset-password`,
+  RESEND_OTP: `${BASE_URL}/api/auth/resend-otp`,
 
   // Draft Endpoint
   DRAFTS_STEP1: `${BASE_URL}/api/distribute-drafts/step1`,
