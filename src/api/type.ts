@@ -11,6 +11,16 @@ export interface ICoverArtFormats {
   sizeInBytes: number;
 }
 
+export interface Plan {
+  name: string;
+}
+
+export interface Subscription {
+  id: number;
+  status: string;
+  plan: Plan;
+}
+
 export interface User {
   id?: string;
   name?: string;
@@ -28,6 +38,7 @@ export interface User {
   distribute_drafts_count?: number;
   createdAt?: string;
   updatedAt?: string;
+  latest_subscription?: Subscription | null;
 }
 
 export interface LoginPayload {

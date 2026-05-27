@@ -15,6 +15,7 @@ import { useNavigation } from "@react-navigation/native";
 import { LazyImage } from "@/components/modules/LazyImage";
 import Creator from "../../../assets/images/creator.png";
 import CustomButton from "@/components/common/CustomButton";
+import { ScrollView } from "react-native-gesture-handler";
 
 export default function ProfileScreen() {
   const { logOut, user } = useAuthStore();
@@ -25,6 +26,13 @@ export default function ProfileScreen() {
       title: "My Profile",
       icon: require("../../../assets/images/profile-fill.png"),
       onPress: () => {},
+    },
+    {
+      title: "Manage Plan",
+      icon: require("../../../assets/images/royalties.png"),
+      onPress: () => {
+        navigation.navigate("ChoosePlan");
+      },
     },
     {
       title: "Refer a friend",
@@ -103,7 +111,7 @@ export default function ProfileScreen() {
           style={{
             width: "auto",
             height: "auto",
-            padding: 12,
+            padding: 16,
             gap: 6,
           }}
           imageStyle={{
@@ -118,21 +126,29 @@ export default function ProfileScreen() {
               color: Colors.white,
             }}
           >
-            Creator Pro
+            {user?.latest_subscription?.plan?.name || "No Active Plan"}
           </Text>
           <Text
             style={{
               fontFamily: "Poppins_400Regular",
               fontSize: 12,
               color: Colors.white,
+              opacity: 0.9,
+              lineHeight: 18,
             }}
           >
-            You’re getting priority distribution, detailed royalty reports, and
-            unlimited uploads.
+            {user?.latest_subscription?.plan?.name === "Artist"
+              ? "You're building momentum with 15 track uploads/year, basic royalty tracking, and distribution."
+              : user?.latest_subscription?.plan?.name === "Artist Plus"
+              ? "You're getting unlimited uploads, advanced analytics, and collaborator royalty splits."
+              : user?.latest_subscription?.plan?.name === "Pro Label"
+              ? "You're getting priority distribution, custom label branding, and team management."
+              : "Please pick a subscription plan to start releasing your music to the world."}
           </Text>
         </ImageBackground>
       </View>
       <View style={styles.menuSection}>
+        <ScrollView style={{ gap: 20 }}>
         <View style={{ gap: 16 }}>
           {menuList.map((menuItem, index) => (
             <View
@@ -183,10 +199,12 @@ export default function ProfileScreen() {
             </View>
           ))}
         </View>
+        </ScrollView>
         <CustomButton
+        
           buttonType="disable"
           label="Logout"
-          icon={<MaterialIcons name="logout" size={24} color={Colors.gray} />}
+          icon={<MaterialIcons name="logout" size={20} color={Colors.gray} />}
           onPress={logOut}
         />
       </View>

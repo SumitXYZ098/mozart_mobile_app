@@ -8,8 +8,7 @@ import VerifyEmailScreen from "@/screens/auth/VerifyEmailScreen";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import ForgotPasswordScreen from "@/screens/auth/ForgotPasswordScreen";
 import SetNewPasswordScreen from "@/screens/auth/SetNewPasswordScreen";
-import ForgotPasswordSuccessScreen from "@/screens/auth/ForgotPasswordSuccessScreen";
-import ResetPasswordScreen from "@/screens/auth/ResetPasswordScreen";
+ import ResetPasswordScreen from "@/screens/auth/ResetPasswordScreen";
 
 export type AuthStackParamList = {
   Splash: undefined;
@@ -26,10 +25,10 @@ export type AuthStackParamList = {
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
-export default function AuthNavigator() {
+export default function AuthNavigator({ initialRoute = "Splash" }: { initialRoute?: keyof AuthStackParamList }) {
   return (
     <Stack.Navigator
-      initialRouteName="Splash"
+      initialRouteName={initialRoute}
       screenOptions={{ headerShown: false, animation: "fade" }}
     >
       <Stack.Screen name="Splash" component={SplashScreen} />

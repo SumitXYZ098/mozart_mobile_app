@@ -15,6 +15,7 @@ interface AuthStore {
   setUser: (user: User | null, rememberMe?: boolean) => Promise<void>;
   logOut: () => Promise<void>;
   loadUserFromStorage: () => Promise<void>;
+  refreshUserProfile: () => Promise<void>;
   setError: (error: string | null) => void;
 }
 
@@ -78,7 +79,13 @@ export const useAuthStore = create<AuthStore>((set) => ({
             return;
           }
 
-          set({ user: JSON.parse(savedUser), isAuthLoaded: true });
+          const updatedUser = {
+            ...parsedUser,
+            ...fullUser,
+            token: parsedUser.token, // preserve token
+          };
+          await storageAPI.setItem(STORAGE_KEY, JSON.stringify(updatedUser));
+          set({ user: updatedUser, isAuthLoaded: true });
         } catch (apiError) {
           // failed to fetch full user, fallback to stored data
           console.warn("Failed to refresh user:", apiError);
@@ -90,6 +97,23 @@ export const useAuthStore = create<AuthStore>((set) => ({
     } catch (err) {
       console.warn("loadUserFromStorage error:", err);
       set({ isAuthLoaded: true });
+    }
+  },
+
+  refreshUserProfile: async () => {
+    const { user, setUser } = useAuthStore.getState();
+    if (!user || !user.token || !user.id) return;
+    try {
+      const fullUser = await getUserDetail(user.id, user.token);
+      const updatedUser = {
+        ...user,
+        ...fullUser,
+        token: user.token, // preserve token
+      };
+      await setUser(updatedUser, true);
+    } catch (apiError) {
+      console.warn("Failed to refresh user profile:", apiError);
+      throw apiError;
     }
   },
 

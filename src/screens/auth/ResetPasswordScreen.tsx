@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Animated, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../../theme/colors';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -14,7 +14,18 @@ export default function ResetPasswordScreen({ navigation, route }: Props) {
   const { email } = route.params;
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
+ 
   const inputs = useRef<Array<TextInput | null>>([]);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      duration: 600,
+      useNativeDriver: true,
+      toValue: 1,
+    }).start();
+  }, []);
 
   const { mutateAsync: verifyOtp, isPending: verifying } = useVerifyForgotOtp();
   const { mutateAsync: resendOtp, isPending: resending } = useResendForgotOtp();
@@ -69,49 +80,66 @@ export default function ResetPasswordScreen({ navigation, route }: Props) {
 
   return (
     <AuthLayout withBackground>
-      <SafeAreaView style={styles.container}>
-        <Text style={styles.title}>Enter OTP</Text>
-        <Text style={styles.subtitle}>We sent a 6‑digit code to {email}</Text>
-        <View style={styles.otpContainer}>
-          {code.map((d, i) => (
-            <TextInput
-              ref={ref => {
-                inputs.current[i] = ref;
-              }}
-              key={i}
-              style={styles.otpInput}
-              maxLength={1}
-              keyboardType="number-pad"
-              onChangeText={v => handleChange(v, i)}
-              onKeyPress={e => handleKey(e, i)}
-              value={d}
-            />
-          ))}
-        </View>
-        <TouchableOpacity
-          style={[styles.button, disabled && styles.buttonDisabled]}
-          onPress={handleVerify}
-          disabled={disabled}
-        >
-          {disabled ? (
-            <ActivityIndicator color={Colors.white} />
-          ) : (
-            <Text style={styles.buttonText}>Verify OTP</Text>
-          )}
-        </TouchableOpacity>
-        <Text style={styles.resend}>
-          Didn't receive?{' '}
-          <Text style={[styles.link, resending && styles.linkDisabled]} onPress={handleResend}>
-            {resending ? 'Resending...' : 'Resend'}
+      <Animated.View
+        style={[styles.container, { opacity: fadeAnim }]}
+        className="h-auto"
+      >
+        <ScrollView contentContainerStyle={styles.inner}>
+          <Text style={styles.title}>Enter OTP</Text>
+          <Text style={styles.subtitle}>We sent a 6‑digit code to {email}</Text>
+          
+          <View style={styles.otpContainer}>
+            {code.map((d, i) => (
+              <TextInput
+                ref={ref => {
+                  inputs.current[i] = ref;
+                }}
+                key={i}
+                style={styles.otpInput}
+                maxLength={1}
+                keyboardType="number-pad"
+                onChangeText={v => handleChange(v, i)}
+                onKeyPress={e => handleKey(e, i)}
+                value={d}
+              />
+            ))}
+          </View>
+
+          <TouchableOpacity
+            style={[styles.button, disabled && styles.buttonDisabled]}
+            onPress={handleVerify}
+            disabled={disabled}
+          >
+            {disabled ? (
+              <ActivityIndicator color={Colors.white} />
+            ) : (
+              <Text style={styles.buttonText}>Verify OTP</Text>
+            )}
+          </TouchableOpacity>
+
+          <Text style={styles.resend}>
+            Didn't receive?{' '}
+            <Text style={[styles.link, resending && styles.linkDisabled]} onPress={handleResend}>
+              {resending ? 'Resending...' : 'Resend'}
+            </Text>
           </Text>
-        </Text>
-      </SafeAreaView>
+        </ScrollView>
+      </Animated.View>
     </AuthLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.white, justifyContent: 'center', padding: 25 },
+  container: { },
+  inner: {
+    display: "flex",
+    justifyContent: "flex-end",
+    paddingVertical: 24,
+    paddingHorizontal: 22,
+    backgroundColor: Colors.white,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+  },
   title: { fontSize: 24, fontWeight: 'bold', color: Colors.primary, textAlign: 'center' },
   subtitle: { color: Colors.gray, textAlign: 'center', marginVertical: 10 },
   otpContainer: { flexDirection: 'row', justifyContent: 'space-evenly', marginVertical: 30 },

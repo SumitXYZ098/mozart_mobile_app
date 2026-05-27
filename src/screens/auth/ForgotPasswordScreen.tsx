@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Animated, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../../theme/colors';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -8,20 +8,32 @@ import { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { toast } from '../../stores/useToastStore';
 import AuthLayout from '../../components/layout/AuthLayout';
 import { useSendForgotOtp } from '@/hooks/useForgotPassword';
+import InputField from '@/components/modules/InputField';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ForgotPassword'>;
 
 export default function ForgotPasswordScreen({ navigation }: Props) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      duration: 600,
+      useNativeDriver: true,
+      toValue: 1,
+    }).start();
+  }, []);
 
   const { mutateAsync: sendForgotOtp, isPending } = useSendForgotOtp();
 
   const handleSend = async () => {
-    if (!email) {
-      toast.error('Please enter your email');
+    if (!email.trim()) {
+      setError('Email is required');
       return;
     }
+    setError('');
     setLoading(true);
     try {
       const resp = await sendForgotOtp(email.trim().toLowerCase());
@@ -35,39 +47,60 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
     }
   };
 
+  const isButtonsDisabled = loading || isPending;
+
   return (
     <AuthLayout withBackground>
-      <SafeAreaView style={styles.container}>
-        <Text style={styles.title}>Forgot Password</Text>
-        <Text style={styles.subtitle}>Enter your email to receive a verification code</Text>
-        <View style={styles.inputWrapper}>
-          <TextInput
-            placeholder="Email"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            style={styles.input}
-            value={email}
-            onChangeText={setEmail}
-          />
-        </View>
-        <TouchableOpacity
-          style={[styles.button, (loading || isPending) && styles.buttonDisabled]}
-          onPress={handleSend}
-          disabled={loading || isPending}
-        >
-          {loading || isPending ? (
-            <ActivityIndicator color={Colors.white} />
-          ) : (
-            <Text style={styles.buttonText}>Send OTP</Text>
-          )}
-        </TouchableOpacity>
-      </SafeAreaView>
+      <Animated.View
+        style={[styles.container, { opacity: fadeAnim }]}
+        className="h-auto"
+      >
+        <ScrollView contentContainerStyle={styles.inner}>
+          <Text style={styles.title}>Forgot Password</Text>
+          <Text style={styles.subtitle}>Enter your email to receive a verification code</Text>
+          
+          <View style={styles.inputWrapper}>
+            <InputField
+              placeholder="Enter your email"
+              label="Email"
+              type="email"
+              value={email}
+              onChangeText={(text) => {
+                setEmail(text);
+                if (error) setError('');
+              }}
+              error={error}
+            />
+          </View>
+
+          <TouchableOpacity
+            style={[styles.button, isButtonsDisabled && styles.buttonDisabled]}
+            onPress={handleSend}
+            disabled={isButtonsDisabled}
+          >
+            {isButtonsDisabled ? (
+              <ActivityIndicator color={Colors.white} />
+            ) : (
+              <Text style={styles.buttonText}>Send OTP</Text>
+            )}
+          </TouchableOpacity>
+        </ScrollView>
+      </Animated.View>
     </AuthLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.white, justifyContent: 'center', padding: 25 },
+  container: { },
+  inner: {
+    display: "flex",
+    justifyContent: "flex-end",
+    paddingVertical: 24,
+    paddingHorizontal: 22,
+    backgroundColor: Colors.white,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+  },
   title: { fontSize: 24, fontWeight: 'bold', color: Colors.primary, textAlign: 'center' },
   subtitle: { color: Colors.gray, textAlign: 'center', marginVertical: 10 },
   inputWrapper: { marginVertical: 20 },

@@ -29,6 +29,7 @@ export function useLogin() {
         dob: data.user.dob,
         currency: data.user.currency,
         blocked: data.user.blocked,
+        latest_subscription: (data.user as any).latest_subscription || null,
       };
 
       setUser(userData, (variables as any)?.rememberMe);

@@ -17,6 +17,7 @@ const transformUser = (u: any): User => ({
   artist_details_count: u.artist_details_count ?? 0,
   distribute_drafts_count: u.distribute_drafts_count ?? 0,
   name: `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim(),
+  latest_subscription: u.latest_subscription ?? null,
 });
 
 export const getUserDetail = async (

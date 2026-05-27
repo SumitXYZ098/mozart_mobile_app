@@ -96,4 +96,11 @@ export const ENDPOINTS = {
 
   // Dashboard Counts
   DASHBOARD_COUNTS: `${BASE_URL}/api/admin/dashboardcounts`,
+
+  // Payment
+  CREATE_STRIPE_SESSION: `${BASE_URL}/api/subscription/create-session`,
+  CANCEL_SUBSCRIPTION: `${BASE_URL}/cancel-subscription`,
+  VERIFY_PAYMENT: `${BASE_URL}/verify-payment`,
+  PRIORITY_PAYMENT: `${BASE_URL}/api/priority-payment`,
+  VERIFY_PRIORITY_PAYMENT: `${BASE_URL}/api/priority-payment/verify`,
 };
