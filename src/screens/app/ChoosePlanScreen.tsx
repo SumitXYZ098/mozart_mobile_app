@@ -26,13 +26,17 @@ import { toast } from "@/stores/useToastStore";
 import { useNavigation } from "@react-navigation/native";
 import { TermsModal } from "@/components/common/TermsModal";
 import { ContactSalesModal } from "@/components/common/ContactSalesModal";
+import { useCurrencyPricing } from "@/hooks/useCurrencyPricing";
 import { LoadingOverlay } from "@/components/common/LoadingOverlay";
+ 
 
 interface PlanItem {
   id: string;
   name: string;
   description: string;
-  price: string;
+  indiaPrice: number;
+  canadaPrice: number;
+  usaPrice: number;
   billing: string;
   features: string[];
   isPopular?: boolean;
@@ -43,7 +47,9 @@ const PLANS: PlanItem[] = [
     id: "artist",
     name: "Artist",
     description: "For artists building momentum.",
-    price: "₹999",
+    indiaPrice: 999,
+    canadaPrice: 22,
+    usaPrice: 16,
     billing: "/Yearly",
     features: [
       "Keep 100% of your royalties",
@@ -58,7 +64,9 @@ const PLANS: PlanItem[] = [
     id: "artist-plus",
     name: "Artist Plus",
     description: "For serious independent artists.",
-    price: "₹3199",
+    indiaPrice: 3199,
+    canadaPrice: 70,
+    usaPrice: 50,
     billing: "/Yearly",
     features: [
       "Keep 100% of your royalties",
@@ -73,7 +81,9 @@ const PLANS: PlanItem[] = [
     id: "pro-label",
     name: "Pro Label",
     description: "Great Fit For Big Organizations",
-    price: "₹0",
+    indiaPrice: 0,
+    canadaPrice: 0,
+    usaPrice: 0,
     billing: "/Yearly",
     features: [
       "Keep 85% of your royalties",
@@ -89,7 +99,9 @@ const PLANS: PlanItem[] = [
     id: "custom",
     name: "Custom Distribution Plan",
     description: "Great Fit For Big Organizations",
-    price: "Custom Pricing",
+    indiaPrice: 0,
+    canadaPrice: 0,
+    usaPrice: 0,
     billing: "",
     features: [
       "Upload unlimited tracks",
@@ -339,6 +351,12 @@ export default function ChoosePlanScreen() {
               user?.latest_subscription?.plan?.name === plan.name;
             const isButtonLoading = isPending && selectedPlanId === plan.id;
 
+            const { symbol, convertedPrice } = useCurrencyPricing({
+              indiaPrice: plan.indiaPrice,
+              canadaPrice: plan.canadaPrice,
+              usaPrice: plan.usaPrice,
+            });
+
             return (
               <View
                 key={plan.id}
@@ -363,7 +381,13 @@ export default function ChoosePlanScreen() {
 
                 {/* Price Display */}
                 <View style={styles.priceContainer}>
-                  <Text style={styles.priceText}>{plan.price}</Text>
+                  <Text style={styles.priceText}>
+                    {plan.id === "custom"
+                      ? "Custom Pricing"
+                      : plan.id === "pro-label"
+                      ? "Free"
+                      : `${symbol}${convertedPrice}`}
+                  </Text>
                   {plan.billing ? (
                     <Text style={styles.billingText}>{plan.billing}</Text>
                   ) : null}
