@@ -37,9 +37,14 @@ const DraftListSection = () => {
   useEffect(() => {
     const fetchDraftList = async () => {
       setIsLoading(true);
+      
       try {
         const response = await getUserDrafts();
         setDraftList(response.data || []);
+      //   console.log(
+      //   "Draft Lst:",
+      //   JSON.stringify(response?.data, null, 2)
+      // );
       } catch (err) {
         console.log("Error fetching of draft list:", err);
         setDraftList([]);
@@ -47,8 +52,10 @@ const DraftListSection = () => {
         setIsLoading(false);
       }
     };
+    
     fetchDraftList();
   }, []);
+
 
   // Shimmer animation effect
   useEffect(() => {
@@ -65,7 +72,7 @@ const DraftListSection = () => {
             duration: 1000,
             useNativeDriver: true,
           }),
-        ])
+        ]),
       );
       shimmer.start();
       return () => shimmer.stop();

@@ -18,6 +18,7 @@ const ReviewScreen = () => {
         const savedImageId = formValues?.CoverArt;
         if (savedImageId) {
           const imgUrl = await getUploadFileById(savedImageId);
+          // console.log("imgrl =>", JSON.stringify(imgUrl, null, 2));
           setPreviewUrl(imgUrl?.formats?.small?.url || imgUrl?.url);
         }
       } catch (err) {
@@ -37,7 +38,7 @@ const ReviewScreen = () => {
       <View style={styles.row}>
         {/* Cover Art */}
         <Image
-          source={{ uri: `${process.env.EXPO_PUBLIC_API_URL}${previewUrl}` }}
+          source={{ uri: previewUrl }}
           style={styles.coverArt}
           resizeMode="cover"
         />

@@ -24,11 +24,18 @@ export const LazyImage = ({ uri, style }: { uri: string; style: any }) => {
         </View>
       )}
       <Image
-        source={{ uri: `${process.env.EXPO_PUBLIC_API_URL}${uri}` }}
+        source={{ uri }}
         style={[style, { opacity: imageLoaded ? 1 : 0 }]}
         resizeMode="cover"
-        onLoad={() => setImageLoaded(true)}
-        onError={() => setImageError(true)}
+        onLoad={() => {
+          console.log("Image Loaded:", uri);
+          setImageLoaded(true);
+        }}
+        onError={(e) => {
+          console.log("Image Error:", e.nativeEvent);
+          console.log("Failed URL:", uri);
+          setImageError(true);
+        }}
       />
     </View>
   );

@@ -39,11 +39,14 @@ const DraftCard: React.FC<DraftCardProps> = ({
           </View>
         )}
         <Image
-          source={{ uri: `${process.env.EXPO_PUBLIC_API_URL}${albumImage}` }}
+          source={{ uri: albumImage }}
           style={[styles.albumImage, { opacity: imageLoaded ? 1 : 0 }]}
           resizeMode="cover"
           onLoad={() => setImageLoaded(true)}
-          onError={() => setImageError(true)}
+          onError={(e) => {
+            console.log("Image Error:", e.nativeEvent);
+            setImageError(true);
+          }}
         />
       </View>
     );

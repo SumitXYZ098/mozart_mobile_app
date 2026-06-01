@@ -83,7 +83,7 @@ const DraftScreen = () => {
             duration: 1000,
             useNativeDriver: true,
           }),
-        ])
+        ]),
       );
       shimmer.start();
       return () => shimmer.stop();

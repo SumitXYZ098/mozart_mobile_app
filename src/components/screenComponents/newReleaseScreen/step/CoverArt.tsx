@@ -167,7 +167,7 @@ const CoverArtStep: React.FC<CoverArtStepProps> = ({ draftFormData }) => {
                 <View style={styles.previewContainer}>
                   <Image
                     source={{
-                      uri: `${process.env.EXPO_PUBLIC_API_URL}${previewUrl}`,
+                     uri: previewUrl,
                     }}
                     style={styles.imagePreview}
                   />

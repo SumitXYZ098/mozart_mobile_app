@@ -14,7 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../theme/colors";
 import { useUserPublishTracks } from "@/hooks/useUserPublishTracks";
 import { useNavigation } from "@react-navigation/native";
-import { TabView, SceneMap} from "react-native-tab-view";
+import { TabView, SceneMap } from "react-native-tab-view";
 import dayjs from "dayjs";
 import { LazyImage } from "@/components/modules/LazyImage";
 
@@ -31,7 +31,14 @@ export default function MyReleaseScreen() {
     { key: "complete", title: "Complete" },
     { key: "inactive", title: "Inactive" },
   ]);
-
+  console.log(
+    "All Tracks:",
+    tracks.map((t) => ({
+      id: t.id,
+      title: t.ReleaseTitle,
+      status: t.Status,
+    })),
+  );
   // Shimmer animation effect
   useEffect(() => {
     if (loading) {
@@ -47,7 +54,7 @@ export default function MyReleaseScreen() {
             duration: 1000,
             useNativeDriver: true,
           }),
-        ])
+        ]),
       );
       shimmer.start();
       return () => shimmer.stop();
@@ -111,7 +118,11 @@ export default function MyReleaseScreen() {
           >
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <LazyImage
-                uri={item.CoverArt?.formats?.small?.url ?? ""}
+                uri={
+                  item.CoverArt?.formats?.small?.url ||
+                  item.CoverArt?.formats?.thumbnail?.url ||
+                  ""
+                }
                 style={styles.albumImage}
               />
               <View style={styles.updateContent}>
@@ -170,7 +181,7 @@ export default function MyReleaseScreen() {
   const renderUploadItems = (
     data: any[],
     isLoading: boolean,
-    emptyMessage: string
+    emptyMessage: string,
   ) => {
     if (isLoading) {
       // ⏳ Skeletons while loading
@@ -215,20 +226,20 @@ export default function MyReleaseScreen() {
     renderUploadItems(
       tracks.filter((t) => t.Status === "In-Progress"),
       loading,
-      "No uploads in progress yet."
+      "No uploads in progress yet.",
     );
   const CompleteRoute = () =>
     renderUploadItems(
-      tracks.filter((t) => t.Status === "Complete"),
+      tracks.filter((t) => t.Status === "Completed"),
       loading,
-      "No completed uploads yet."
+      "No completed uploads yet.",
     );
 
   const InactiveRoute = () =>
     renderUploadItems(
       tracks.filter((t) => t.Status === "Inactive"),
       loading,
-      "No inactive uploads found."
+      "No inactive uploads found.",
     );
 
   const renderScene = SceneMap({
@@ -274,35 +285,58 @@ export default function MyReleaseScreen() {
         </View>
       </View>
 
-      {/* TABS */}
+      {/* TABS WITH SMOOTH SLIDING ANIMATION */}
       <TabView
         navigationState={{ index, routes }}
         renderScene={renderScene}
         onIndexChange={setIndex}
         initialLayout={{ width }}
-        renderTabBar={(props) => (
-          <View style={styles.customTabBar}>
-            {props.navigationState.routes.map((route, i) => {
-              const focused = index === i;
-              return (
-                <TouchableOpacity
-                  key={route.key}
-                  onPress={() => setIndex(i)}
-                  style={[styles.tabItem, focused && styles.activeTabItem]}
-                >
-                  <Text
-                    style={[
-                      styles.tabText,
-                      focused ? styles.activeTabText : styles.inactiveTabText,
-                    ]}
+        renderTabBar={(props) => {
+           const tabBarWidth = width - 48; 
+          const tabCount = props.navigationState.routes.length;
+          const tabWidth = tabBarWidth / tabCount;
+
+           const translateX = props.position.interpolate({
+            inputRange: props.navigationState.routes.map((_, i) => i),
+            outputRange: props.navigationState.routes.map((_, i) => i * tabWidth),
+          });
+
+          return (
+            <View style={styles.customTabBar}>
+              {/* Animated Background Slider */}
+              <Animated.View
+                style={[
+                  styles.animatedIndicator,
+                  {
+                    width: tabWidth - 8,  
+                    transform: [{ translateX }],
+                  },
+                ]}
+              />
+
+              {props.navigationState.routes.map((route, i) => {
+                const focused = index === i;
+                return (
+                  <TouchableOpacity
+                    key={route.key}
+                    onPress={() => setIndex(i)}
+                    style={styles.tabItem}
+                    activeOpacity={0.7}
                   >
-                    {route.title}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
+                    <Text
+                      style={[
+                        styles.tabText,
+                        focused ? styles.activeTabText : styles.inactiveTabText,
+                      ]}
+                    >
+                      {route.title}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          );
+        }}
       />
     </SafeAreaView>
   );
@@ -375,31 +409,37 @@ const styles = StyleSheet.create({
   },
   customTabBar: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    position: "relative",
     backgroundColor: Colors.white,
     marginHorizontal: 24,
     marginBottom: 8,
     borderRadius: 12,
+    paddingVertical: 4,
+  },
+  animatedIndicator: {
+    position: "absolute",
+    height: "100%",
+    top: 4,
+    left: 4,
+    backgroundColor: "#E8D5FF",  
+    borderRadius: 10,
   },
   tabItem: {
     flex: 1,
     alignItems: "center",
     paddingVertical: 10,
     borderRadius: 10,
-    marginHorizontal: 4,
-  },
-  activeTabItem: {
-    backgroundColor: "#E8D5FF", // light purple background
+    zIndex: 1,  
   },
   tabText: {
     fontSize: 14,
     fontWeight: "600",
   },
   activeTabText: {
-    color: Colors.primary, // purple text color
+    color: Colors.primary,  
   },
   inactiveTabText: {
-    color: "#A0A0A0", // gray for inactive
+    color: "#A0A0A0", 
   },
   skeletonTitle: {
     width: "80%",
@@ -470,6 +510,6 @@ const styles = StyleSheet.create({
   listContainer: {
     paddingHorizontal: 24,
     paddingTop: 8,
-    paddingBottom: 80, // 👈 ensures scroll space at bottom
+    paddingBottom: 80, 
   },
 });

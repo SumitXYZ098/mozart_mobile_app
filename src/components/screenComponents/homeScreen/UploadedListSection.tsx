@@ -21,6 +21,11 @@ const UploadedListSection = () => {
   const shimmerAnimation = new Animated.Value(0);
   const navigation = useNavigation<any>();
 
+  console.log(
+  "CoverArt URL:",
+  tracks[0]?.CoverArt?.formats?.thumbnail?.url
+);
+
   // Shimmer animation effect
   useEffect(() => {
     if (loading) {
@@ -110,6 +115,8 @@ const UploadedListSection = () => {
                   })
                 }
               >
+
+                
                 <UploadCard
                   id={track.id.toLocaleString()}
                   albumName={track.ReleaseTitle}

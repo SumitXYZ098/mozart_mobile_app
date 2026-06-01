@@ -269,6 +269,7 @@ const TabNavigator = () => {
             tabBarIcon: ({ focused }) => {
               const { user } = useAuthStore();
               const profileImg = user?.Profile_image?.formats?.small?.url;
+              // console.log("USER =>", profileImg);
               return profileImg ? (
                 <View
                   className="w-10 h-10 rounded-full border-2 overflow-hidden"
@@ -279,9 +280,13 @@ const TabNavigator = () => {
                 >
                   <Image
                     source={{
-                      uri: `${process.env.EXPO_PUBLIC_API_URL}${profileImg}`,
+                      uri: profileImg,
                     }}
                     className="w-full h-full rounded-full"
+                    onLoad={() => console.log("Profile image loaded")}
+                    onError={(e) =>
+                      console.log("Profile image error", e.nativeEvent)
+                    }
                   />
                 </View>
               ) : (

@@ -38,11 +38,14 @@ const UploadCard: React.FC<UploadCardProps> = ({
           </View>
         )}
         <ImageBackground
-          source={{ uri: `${process.env.EXPO_PUBLIC_API_URL}${albumImage}` }}
+          source={{ uri: albumImage }}
           style={[styles.albumImage, { opacity: imageLoaded ? 1 : 0 }]}
           resizeMode="cover"
           onLoad={() => setImageLoaded(true)}
-          onError={() => setImageError(true)}
+          onError={(e) => {
+            console.log("Image Error:", e.nativeEvent);
+            setImageError(true);
+          }}
         >
           <LinearGradient
             colors={["#ffffff03", "#00000080"]}
@@ -70,7 +73,7 @@ export default UploadCard;
 
 const styles = StyleSheet.create({
   cardSection: {
-    flexGrow:1,
+    flexGrow: 1,
     overflow: "hidden",
     borderRadius: 12,
     width: 160,
