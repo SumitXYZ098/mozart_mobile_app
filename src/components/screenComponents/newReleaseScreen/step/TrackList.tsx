@@ -65,6 +65,46 @@ const TrackList = ({ draftFormData }: { draftFormData?: any }) => {
     }
   }, [draftFormData, append, setValue]);
 
+  // ✅ Auto-fill TrackList RoleCredits with ReleaseCredits from step 1
+  const releaseCredits = watch("ReleaseCredits");
+
+  useEffect(() => {
+    if (!releaseCredits || !releaseCredits.length) return;
+
+    // Only sync if there is actually some artist name filled in step 1
+    const hasReleaseArtist = releaseCredits.some(
+      (rc: any) => rc.artistName && rc.artistName.trim()
+    );
+    if (!hasReleaseArtist) return;
+
+    const currentTracks = getValues("TrackList") || [];
+    let updated = false;
+
+    const newTracks = currentTracks.map((track: any) => {
+      const roles = track.RoleCredits || [];
+      const hasAnyArtistFilled = roles.some(
+        (rc: any) => rc.artistName && rc.artistName.trim()
+      );
+
+      if (!hasAnyArtistFilled) {
+        const newRoleCredits = releaseCredits.map((rc: any) => ({
+          artistName: rc.artistName || "",
+          roleName: rc.roleName || "",
+        }));
+        updated = true;
+        return {
+          ...track,
+          RoleCredits: newRoleCredits,
+        };
+      }
+      return track;
+    });
+
+    if (updated) {
+      setValue("TrackList", newTracks);
+    }
+  }, [releaseCredits, setValue, getValues]);
+
   // ✅ Validate that selected file is correct format and size
   const validateAudioFile = (file: {
     name: string;

@@ -22,7 +22,7 @@ import { FontAwesome } from "@expo/vector-icons";
 
 interface Props extends TextInputProps {
   label?: string;
-  type?: "text" | "email" | "password" | "number" | "search";
+  type?: "text" | "email" | "password" | "number" | "search"| "name";
   error?: string;
 }
 
@@ -41,8 +41,11 @@ export default function InputField({ label, type, error, ...props }: Props) {
         return <Phone size={20} color={Colors.primary} />;
       case "search":
         return <FontAwesome name="search" size={20} color={Colors.gray} />;
-      default:
+   
+         case "name":
         return <User size={20} color={Colors.primary} />;
+      default:
+        return null;
     }
   };
 

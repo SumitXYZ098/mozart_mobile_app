@@ -6,6 +6,7 @@ import {
   getArtistById,
   getArtistList,
   updateArtistById,
+  transformArtist,
   type Artist,
   type ArtistTransformed,
   type AllArtistTransformed,
@@ -93,8 +94,21 @@ export const useArtistStore = create<ArtistState>((set) => ({
       const response = await createArtist(payload, (progress) =>
         setUploadProgress(progress)
       );
+      
+      let rawArtist: any;
+      if (response && response.data && response.data.attributes) {
+        rawArtist = {
+          id: response.data.id,
+          ...response.data.attributes,
+        };
+      } else {
+        rawArtist = response;
+      }
+      
+      const transformed = transformArtist(rawArtist);
+
       set((state) => ({
-        artists: [...state.artists, response],
+        artists: [...state.artists, transformed],
         refetchTrigger: state.refetchTrigger + 1,
       }));
       return response;
@@ -116,9 +130,22 @@ export const useArtistStore = create<ArtistState>((set) => ({
       const response = await updateArtistById(artistId, payload, (progress) =>
         setUploadProgress(progress)
       );
+      
+      let rawArtist: any;
+      if (response && response.data && response.data.attributes) {
+        rawArtist = {
+          id: response.data.id,
+          ...response.data.attributes,
+        };
+      } else {
+        rawArtist = response;
+      }
+      
+      const transformed = transformArtist(rawArtist);
+
       set((state) => ({
         artists: state.artists.map((artist) =>
-          artist.id === artistId ? { ...artist, ...response } : artist
+          artist.id === artistId ? { ...artist, ...transformed } : artist
         ),
         artist: response,
         refetchTrigger: state.refetchTrigger + 1,

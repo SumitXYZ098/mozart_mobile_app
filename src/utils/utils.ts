@@ -98,3 +98,25 @@ tomorrow.setDate(tomorrow.getDate() + 1);
 // Get date one month from today
 export const oneMonthFromNow = new Date();
 oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
+
+export const getArtistsLimit = (user: any): number => {
+  if (!user?.latest_subscription || user.latest_subscription.status !== "active") {
+    return 0;
+  }
+  const planName = user.latest_subscription.plan?.name;
+  if (
+    planName === "Pro Label" ||
+    String(user.latest_subscription.artistsAllowed).toLowerCase() === "unlimited"
+  ) {
+    return Infinity;
+  }
+  const allowed = user.latest_subscription.artistsAllowed;
+  if (allowed !== undefined && allowed !== null) {
+    const num = Number(allowed);
+    if (!isNaN(num)) return num;
+  }
+  if (planName === "Artist") return 1;
+  if (planName === "Artist Plus") return 5;
+  return 0;
+};
+

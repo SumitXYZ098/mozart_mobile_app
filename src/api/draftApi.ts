@@ -3,6 +3,36 @@ import axios from "axios";
 import { ENDPOINTS } from "./endpoints";
 import { useAuthStore } from "@/stores/useAuthStore";
 
+// Helper to recursively flatten Strapi v4 response structure (removing attributes/data wrappers)
+const flattenStrapi = (data: any): any => {
+  if (!data) return data;
+
+  if (Array.isArray(data)) {
+    return data.map(flattenStrapi);
+  }
+
+  if (typeof data === "object") {
+    let result = { ...data };
+
+    if (data.attributes) {
+      result = { ...result, ...flattenStrapi(data.attributes) };
+      delete result.attributes;
+    }
+
+    if (data.data !== undefined) {
+      return flattenStrapi(data.data);
+    }
+
+    for (const key of Object.keys(result)) {
+      result[key] = flattenStrapi(result[key]);
+    }
+
+    return result;
+  }
+
+  return data;
+};
+
 // Step 1
 export const draftStep1 = async (
   payload: Partial<any>,
@@ -117,7 +147,7 @@ export const updateDraft = async (
       },
     }
   );
-  return response.data.data;
+  return flattenStrapi(response.data.data);
 };
 
 // Delete Draft
@@ -163,5 +193,10 @@ export const getDraftById = async (draftId: number): Promise<any> => {
       Authorization: `Bearer ${user?.token}`,
     },
   });
+  if (response.data && response.data.data) {
+    return {
+      data: flattenStrapi(response.data.data),
+    };
+  }
   return response.data;
 };

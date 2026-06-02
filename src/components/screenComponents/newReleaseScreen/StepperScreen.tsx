@@ -56,7 +56,7 @@ const StepperScreen = () => {
     LanguageOfTheTitles: "",
     PrimaryGenre: "",
     SecondaryGenre: "",
-    AddLabel: "",
+    AddLabel: "AMozart",
     ReferenceNumber: "",
     Priority: "Priority",
     TimeZoneOfReference: getSystemTimeZone(),
@@ -67,6 +67,12 @@ const StepperScreen = () => {
     DigitalReleaseDate: formatDate(
       new Date(new Date().setDate(now.getDate() + 1))
     ),
+     ReleaseCredits: [
+      { artistName: "", roleName: "Primary Artist" },
+      { artistName: "", roleName: "Composer" },
+      { artistName: "", roleName: "Lyricist" },
+      { artistName: "", roleName: "Producer" },
+    ],
     CopyrightholderName: "",
     CopyrightYear: new Date().getFullYear(),
     PhonogramRightsHolderName: "",
@@ -82,7 +88,7 @@ const StepperScreen = () => {
           { artistName: "", roleName: "Primary Artist" },
           { artistName: "", roleName: "Composer" },
           { artistName: "", roleName: "Lyricist" },
-          { artistName: "", roleName: "Vocals" },
+          { artistName: "", roleName: "Producer" },
         ],
         LyricsAvailable: false,
         AppropriateForAllAudiences: true,

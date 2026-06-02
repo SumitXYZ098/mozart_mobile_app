@@ -64,17 +64,24 @@ export function useDraftFlow() {
     onError: (error: any) => setError(error.message || "Finish step failed"),
   });
 
+  // ✅ Update Draft with proper ReleaseCredits format for Strapi
   const updateDraftMutation = useMutation({
     mutationFn: (payload: Partial<DraftData>) => {
       if (!draftId) throw new Error("Draft ID is missing");
+      // Ensure ReleaseCredits are sent in Strapi's nested format
+      if (payload.ReleaseCredits && Array.isArray(payload.ReleaseCredits)) {
+        payload = {
+          ...payload,
+          ReleaseCredits: { data: payload.ReleaseCredits  },
+        } as any;
+      }
       return updateDraft(draftId, payload);
     },
     onSuccess: (data: any) => {
-      console.log("Draft updated successfully", data);
+      console.log("Draft updated successfully", JSON.stringify(data, null, 2));
       queryClient.invalidateQueries();
     },
-    onError: (error: any) =>
-      setError(error.message || "Failed to update draft"),
+    onError: (error: any) => setError(error.message || "Failed to update draft"),
   });
 
   const deleteDraftMutation = useMutation({
@@ -113,7 +120,7 @@ export function usePublishDraft() {
       return publishDraft(draftId);
     },
     onSuccess: (data: any) => {
-      console.log("Draft published successfully", data);
+      console.log("Draft published successfully", JSON.stringify(data, null, 2));
       queryClient.invalidateQueries();
     },
     onError: (error: any) => {

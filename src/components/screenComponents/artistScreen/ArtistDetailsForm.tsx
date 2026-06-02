@@ -25,6 +25,9 @@ import {
 } from "@/api/uploadApi";
 import { createArtist, updateArtistById } from "@/api/artistApi";
 import { KeyboardAwareScrollView } from "@pietile-native-kit/keyboard-aware-scrollview";
+import { useArtistStore } from "@/stores/artistListStore";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { getArtistsLimit } from "@/utils/utils";
 
 interface ArtistDetailsFormProps {
   visible: boolean;
@@ -167,7 +170,7 @@ const ArtistDetailsForm: React.FC<ArtistDetailsFormProps> = ({
       );
 
       const imageId = uploaded?.[0]?.id;
-      
+
       if (imageId) {
         setValue("Profile_image", imageId, { shouldValidate: true });
         const fileInfo = await getUploadFileById(imageId);
@@ -179,8 +182,8 @@ const ArtistDetailsForm: React.FC<ArtistDetailsFormProps> = ({
       Alert.alert(
         "Upload Error",
         err?.response?.data?.error?.message ||
-          err?.message ||
-          "Failed to upload image."
+        err?.message ||
+        "Failed to upload image."
       );
     } finally {
       setUploading(false);
@@ -220,6 +223,23 @@ const ArtistDetailsForm: React.FC<ArtistDetailsFormProps> = ({
         );
         Alert.alert("Success", "Artist updated successfully!");
       } else {
+        const { artists } = useArtistStore.getState();
+        const { user } = useAuthStore.getState();
+        const limit = getArtistsLimit(user);
+        const primaryArtistsCount = artists.filter(
+          (a) => {
+            const r = a.role  
+            return !r || r === "Primary Artist";
+          }
+        ).length;
+        if (primaryArtistsCount >= limit) {
+          Alert.alert(
+            "Artist Limit Reached",
+            `Your current subscription plan allows only ${limit} Primary Artist(s). Please upgrade your plan to add more Primary Artists.`
+          );
+          setSubmitting(false);
+          return;
+        }
         await createArtist(formData, (progress) => setUploadProgress(progress));
         Alert.alert("Success", "Artist created successfully!");
       }

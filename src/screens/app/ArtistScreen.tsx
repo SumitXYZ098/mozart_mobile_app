@@ -6,6 +6,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Alert,
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -26,9 +27,12 @@ import { LazyImage } from "@/components/modules/LazyImage";
 import EmptyProfile from "../../../assets/images/emptyProfile.png";
 import ArtistDetailsDialog from "@/components/screenComponents/artistScreen/ArtistDetailsDialog";
 import ArtistDetailsForm from "@/components/screenComponents/artistScreen/ArtistDetailsForm";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { getArtistsLimit } from "@/utils/utils";
 
 const ArtistScreen = () => {
   const navigation = useNavigation<any>();
+  const { user } = useAuthStore();
   const { artists, loading, fetchArtists } = useArtistList();
   const bottomSheetRef = useRef<BaseBottomSheetRef>(null);
   const shimmerAnimation = new Animated.Value(0);
@@ -192,6 +196,14 @@ const ArtistScreen = () => {
       <TouchableOpacity
         style={styles.newArtistButton}
         onPress={() => {
+          const limit = getArtistsLimit(user);
+          if (artists.length >= limit) {
+            Alert.alert(
+              "Limit Reached",
+              "You have reached the maximum number of primary artists allowed for your plan. Please upgrade your subscription to add more artists."
+            );
+            return;
+          }
           setArtistId("");
           setOpenArtistForm(true);
         }}

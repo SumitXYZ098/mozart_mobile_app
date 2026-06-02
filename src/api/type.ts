@@ -144,7 +144,10 @@ export interface DraftData {
   PriceCategory: string; // Adjust options as needed
   CoverArt: string | null; // URL of cover art or null
   TrackList: Track[];
-}
+  /** Credits for the release (Primary Artist, Composer, etc.) */
+  ReleaseCredits?: RoleCredit[];
+};
+
 
 export interface RoleCredit {
   roleName: string;

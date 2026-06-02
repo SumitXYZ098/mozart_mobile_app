@@ -6,14 +6,11 @@ import { Colors } from "@/theme/colors";
 import InputField from "@/components/modules/InputField";
 import { useDraftStore } from "@/stores/draftStore";
 import SelectInputField from "@/components/common/SelectInputField";
-import { genresList, languagesList } from ".";
+import { genresList, languagesList, rolesList } from ".";
 import LabelSelector from "../LabelSelector";
 import DatePickerInput from "@/components/common/DatePickerInput";
-import {
-  KeyboardAvoidingView,
-  KeyboardAwareScrollView,
-  KeyboardToolbar,
-} from "react-native-keyboard-controller";
+import ReleaseCreditSection from "./ReleaseCreditSection";
+
 
 interface ReleaseInformationProps {
   goNext: (data: any) => void;
@@ -48,6 +45,23 @@ const ReleaseInformation: React.FC<ReleaseInformationProps> = ({
           "PhonogramRightsHolderName",
           draftFormData.data.PhonogramRightsHolderName
         );
+        // Ensure ReleaseCredits is an array; backend may return a stringified version
+        // Ensure releaseCredits is always an array for safety
+        const rc = draftFormData?.data?.ReleaseCredits;
+        const releaseCreditsArray = Array.isArray(rc)
+          ? rc
+          : [];
+        setValue(
+          "ReleaseCredits",
+          releaseCreditsArray.length
+            ? releaseCreditsArray
+            : [
+                { artistName: "", roleName: "Primary Artist" },
+                { artistName: "", roleName: "Composer" },
+                { artistName: "", roleName: "Lyricist" },
+                { artistName: "", roleName: "Producer" },
+              ],
+        );
       }
     }
   }, [draftFormData, setValue, draftId, setDraftId]);
@@ -69,6 +83,10 @@ const ReleaseInformation: React.FC<ReleaseInformationProps> = ({
     <ScrollView
       style={styles.container}
       contentContainerStyle={{ paddingBottom: 80 }}
+      bounces={true} // ✅ bounce on edges
+      alwaysBounceVertical={true} // ✅ vertical bounce
+      persistentScrollbar={true} // ✅ show scrollbar always
+
     >
       <Text style={styles.title}>Release Information</Text>
       <Text style={styles.subtitle}>
@@ -170,7 +188,7 @@ const ReleaseInformation: React.FC<ReleaseInformationProps> = ({
             />
           </View>
 
-          <LabelSelector controllerName="AddLabel" />
+          {/* <LabelSelector controllerName="AddLabel" /> */}
 
           <Text style={[styles.label]}>© Copyright Holder</Text>
           <View
@@ -203,6 +221,8 @@ const ReleaseInformation: React.FC<ReleaseInformationProps> = ({
               )}
             />
           </View>
+
+          <ReleaseCreditSection />
           <Text style={styles.helperText}>
             Enter the copyright owner name for the cover art or any written
             material (like liner notes). This name also apply to the musical
