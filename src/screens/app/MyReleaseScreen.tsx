@@ -19,7 +19,7 @@ import dayjs from "dayjs";
 import { LazyImage } from "@/components/modules/LazyImage";
 
 const { width } = Dimensions.get("window");
-
+  
 export default function MyReleaseScreen() {
   const { tracks, loading } = useUserPublishTracks();
   const shimmerAnimation = new Animated.Value(0);

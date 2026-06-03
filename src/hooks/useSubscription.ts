@@ -125,14 +125,17 @@ export function usePriorityPayment() {
   const { user } = useAuthStore();
 
   return useMutation({
-    mutationFn: async (draftId: number) => {
+    mutationFn: async ({ draftId, amount, currency }: { draftId: number; amount: number; currency: string }) => {
       if (!user || !user.token) {
         throw new Error("You must be logged in to make a payment.");
       }
-      return priorityPayment(draftId, user.token);
+      return priorityPayment(draftId, amount, currency, user.token);
     },
     onError: (error: any) => {
       console.error("Priority payment checkout error:", error);
+      if (error.response?.data) {
+        console.error("Priority payment backend error details:", JSON.stringify(error.response.data, null, 2));
+      }
       const message =
         error instanceof Error ? error.message : "Failed to initiate priority payment.";
       toast.error(message);

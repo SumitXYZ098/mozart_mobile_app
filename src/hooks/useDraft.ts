@@ -15,6 +15,20 @@ import {
   updateDraft,
 } from "@/api/draftApi";
 
+const isNotFoundError = (err: any) => {
+  if (!err) return false;
+  const status = err.response?.status ?? err.status ?? err.response?.data?.error?.status;
+  if (status === 404) return true;
+  const msg = err.message ?? err.response?.data?.error?.message;
+  if (typeof msg === "string") {
+    const lowerMsg = msg.toLowerCase();
+    if (lowerMsg.includes("404") || lowerMsg.includes("not found")) {
+      return true;
+    }
+  }
+  return false;
+};
+
 export function useDraftFlow() {
   const { draftId, setDraftId, setError, clearDraft } = useDraftStore();
   const queryClient = useQueryClient();
@@ -59,7 +73,8 @@ export function useDraftFlow() {
       return draftFinish(draftId, payload);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries();
+      queryClient.invalidateQueries({ queryKey: ["userDrafts"] });
+      queryClient.invalidateQueries({ queryKey: ["draft", draftId] });
     },
     onError: (error: any) => setError(error.message || "Finish step failed"),
   });
@@ -79,18 +94,27 @@ export function useDraftFlow() {
     },
     onSuccess: (data: any) => {
       console.log("Draft updated successfully", JSON.stringify(data, null, 2));
-      queryClient.invalidateQueries();
+      queryClient.invalidateQueries({ queryKey: ["userDrafts"] });
+      queryClient.invalidateQueries({ queryKey: ["draft", draftId] });
     },
     onError: (error: any) => setError(error.message || "Failed to update draft"),
   });
 
   const deleteDraftMutation = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       if (!draftId) throw new Error("Draft ID is missing");
-      return deleteDraft(draftId);
+      try {
+        await deleteDraft(draftId);
+      } catch (error: any) {
+        if (isNotFoundError(error)) {
+          console.log("Draft already deleted on server (404), proceeding.");
+          return;
+        }
+        throw error;
+      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries();
+      queryClient.invalidateQueries({ queryKey: ["userDrafts"] });
       // console.log("Draft deleted successfully");
       clearDraft();
     },
@@ -107,6 +131,7 @@ export function useDraftFlow() {
     updateDraftMutation,
     deleteDraftMutation,
     draftId,
+    clearDraft,
   };
 }
 
@@ -121,7 +146,7 @@ export function usePublishDraft() {
     },
     onSuccess: (data: any) => {
       console.log("Draft published successfully", JSON.stringify(data, null, 2));
-      queryClient.invalidateQueries();
+      queryClient.invalidateQueries({ queryKey: ["userDrafts"] });
     },
     onError: (error: any) => {
       console.error("Publish draft failed", error);

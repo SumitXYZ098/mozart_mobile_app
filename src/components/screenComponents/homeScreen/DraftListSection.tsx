@@ -107,7 +107,7 @@ const DraftListSection = () => {
   };
   return (
     <View style={styles.section}>
-      <View className="flex flex-row justify-between items-center">
+      <View style={styles.headerRow}>
         <Text style={styles.heading}>Drafts</Text>
         <TouchableOpacity
           onPress={() => navigation.navigate("MusicTab", { screen: "Draft" })}
@@ -155,6 +155,11 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(16),
     flexDirection: "column",
     rowGap: 10,
+  },
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   heading: {
     fontSize: moderateScale(20),

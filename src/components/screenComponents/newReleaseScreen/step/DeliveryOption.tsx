@@ -21,6 +21,7 @@ import SectionedMultiSelect from "react-native-sectioned-multi-select";
 import { MaterialIcons } from "@expo/vector-icons";
 import CalendarPicker from "react-native-calendar-picker";
 import ReleaseTimeField from "../ReleaseTimeField";
+import { useCurrencyPricing } from "@/hooks/useCurrencyPricing";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -33,6 +34,12 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
   );
   const [digitalShow, setDigitalShow] = useState(false);
   const [show, setShow] = useState(false);
+
+  const { symbol, convertedPrice, currency } = useCurrencyPricing({
+    indiaPrice: 1099,
+    canadaPrice: 12,
+    usaPrice: 9,
+  });
   useEffect(() => {
     if (draftFormData?.data) {
       const track = draftFormData.data;
@@ -294,7 +301,7 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
                       field.value === "Priority" && styles.selectedText,
                     ]}
                   >
-                    +₹1699
+                    +{symbol}{convertedPrice} {currency}
                   </Text>
                 </View>
               </TouchableOpacity>

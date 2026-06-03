@@ -62,11 +62,13 @@ export async function verifyPayment(
  */
 export async function priorityPayment(
   draftId: number,
+  amount: number,
+  currency: string,
   token: string
 ): Promise<{ url: string; sessionId?: string }> {
   const response = await axios.post(
     ENDPOINTS.PRIORITY_PAYMENT,
-    { draftId },
+    { draftId, amount, currency },
     {
       headers: {
         Authorization: `Bearer ${token}`,
