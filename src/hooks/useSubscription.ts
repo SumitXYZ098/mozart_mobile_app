@@ -7,6 +7,9 @@ import {
   verifyPayment,
   priorityPayment,
   verifyPriorityPayment,
+  addOnArtist,
+  createUpgradeSession,
+   
 } from "@/api/subscriptionApi";
 import { toast } from "@/stores/useToastStore";
 
@@ -162,6 +165,50 @@ export function useVerifyPriorityPayment() {
       console.error("Verify priority payment error:", error);
       const message =
         error instanceof Error ? error.message : "Failed to verify priority payment.";
+      toast.error(message);
+    },
+  });
+}
+
+/**
+ * Hook to create a Stripe checkout session for upgrading plan.
+ */
+export function useCreateUpgradeSession() {
+  const { user } = useAuthStore();
+
+  return useMutation({
+    mutationFn: async (planName: string) => {
+      if (!user || !user.token || !user.id) {
+        throw new Error("You must be logged in to purchase a subscription.");
+      }
+      return createUpgradeSession(user.id, planName, user.token);
+    },
+    onError: (error: any) => {
+      console.error("Create upgrade session error:", error);
+      const message =
+        error instanceof Error ? error.message : "Failed to create upgrade session.";
+      toast.error(message);
+    },
+  });
+}
+
+/**
+ * Hook to create a Stripe checkout session for artist addon.
+ */
+export function useAddOnArtist() {
+  const { user } = useAuthStore();
+
+  return useMutation({
+    mutationFn: async ({ artists, amount, currency }: { artists: number; amount: number; currency: string }) => {
+      if (!user || !user.token) {
+        throw new Error("You must be logged in to purchase an add-on.");
+      }
+      return addOnArtist(artists, amount, currency, user.token);
+    },
+    onError: (error: any) => {
+      console.error("Create artist addon session error:", error);
+      const message =
+        error instanceof Error ? error.message : "Failed to purchase artist addon.";
       toast.error(message);
     },
   });

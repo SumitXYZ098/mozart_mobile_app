@@ -135,3 +135,44 @@ export async function subscribeToPlan(
     };
   }
 }
+
+/**
+ * Creates a Stripe checkout session for a subscription plan upgrade.
+ */
+export async function createUpgradeSession(
+  userId: string,
+  planName: string,
+  token: string
+): Promise<{ url: string; sessionId?: string }> {
+  const response = await axios.post(
+    ENDPOINTS.UPGRADE_PLAN,
+    { userId, planName },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  return response.data;
+}
+
+/**
+ * Creates an artist add-on payment session.
+ */
+export async function addOnArtist(
+  artists: number,
+  amount: number,
+  currency: string,
+  token: string
+): Promise<{ url: string; sessionId?: string }> {
+  const response = await axios.post(
+    ENDPOINTS.ARTIST_ADDON,
+    { artists, amount, currency },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  return response.data;
+}

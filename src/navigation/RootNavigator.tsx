@@ -7,11 +7,13 @@ import AuthNavigator from "./AuthNavigator";
 import { useAuthStore } from "@/stores/useAuthStore";
 import DrawerNavigator from "./DrawerNavigator";
 import ChoosePlanScreen from "@/screens/app/ChoosePlanScreen";
+import UpgradePlanScreen from "@/screens/app/UpgradePlanScreen";
 
 
 export type RootStackParamList = {
   Dashboard: undefined;
   ChoosePlan: undefined;
+  UpgradePlan: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -49,11 +51,13 @@ export default function RootNavigator() {
             <>
               <Stack.Screen name="Dashboard" component={DrawerNavigator} />
               <Stack.Screen name="ChoosePlan" component={ChoosePlanScreen} />
+              <Stack.Screen name="UpgradePlan" component={UpgradePlanScreen} />
             </>
           ) : (
             <>
               <Stack.Screen name="ChoosePlan" component={ChoosePlanScreen} />
               <Stack.Screen name="Dashboard" component={DrawerNavigator} />
+              <Stack.Screen name="UpgradePlan" component={UpgradePlanScreen} />
             </>
           )}
         </Stack.Navigator>

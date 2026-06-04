@@ -19,6 +19,8 @@ import { useArtistList, useCreateArtist } from "@/hooks/useArtistList";
 import { toast } from "@/stores/useToastStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { getArtistsLimit } from "@/utils/utils";
+import { ArtistLimitModal } from "@/components/common/ArtistLimitModal";
+
 
 export default function ReleaseCreditsSection() {
   const {
@@ -32,6 +34,9 @@ export default function ReleaseCreditsSection() {
     control,
     name: "ReleaseCredits",
   });
+  
+  const [limitModalVisible, setLimitModalVisible] = useState(false);
+
   
   useEffect(() => {
     const credits = watch("ReleaseCredits");
@@ -88,10 +93,7 @@ export default function ReleaseCreditsSection() {
       ).length;
 
       if (primaryArtistsCount >= limit) {
-        Alert.alert(
-          "Artist Limit Reached",
-          `Your current subscription plan allows only ${limit} Primary Artist(s). Please upgrade your plan to add more Primary Artists.`
-        );
+        setLimitModalVisible(true);
         throw new Error("Limit reached");
       }
     }
@@ -123,6 +125,12 @@ export default function ReleaseCreditsSection() {
 
   return (
     <View style={{ marginBottom: 20 }}>
+      <ArtistLimitModal
+        visible={limitModalVisible}
+        onClose={() => setLimitModalVisible(false)}
+        planName={user?.latest_subscription?.plan?.name || "Artist Plus"}
+        limit={getArtistsLimit(user)}
+      />
       <View
         style={{
           flexDirection: "row",

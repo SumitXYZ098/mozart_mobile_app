@@ -28,6 +28,8 @@ import { KeyboardAwareScrollView } from "@pietile-native-kit/keyboard-aware-scro
 import { useArtistStore } from "@/stores/artistListStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { getArtistsLimit } from "@/utils/utils";
+import { ArtistLimitModal } from "@/components/common/ArtistLimitModal";
+
 
 interface ArtistDetailsFormProps {
   visible: boolean;
@@ -62,6 +64,11 @@ const ArtistDetailsForm: React.FC<ArtistDetailsFormProps> = ({
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const [limitModalVisible, setLimitModalVisible] = useState(false);
+  
+  const { user } = useAuthStore();
+  const { artists } = useArtistStore();
+
 
   // --- form populate from existing artist ---
   useEffect(() => {
@@ -233,10 +240,7 @@ const ArtistDetailsForm: React.FC<ArtistDetailsFormProps> = ({
           }
         ).length;
         if (primaryArtistsCount >= limit) {
-          Alert.alert(
-            "Artist Limit Reached",
-            `Your current subscription plan allows only ${limit} Primary Artist(s). Please upgrade your plan to add more Primary Artists.`
-          );
+          setLimitModalVisible(true);
           setSubmitting(false);
           return;
         }
@@ -269,6 +273,12 @@ const ArtistDetailsForm: React.FC<ArtistDetailsFormProps> = ({
 
   return (
     <Modal animationType="slide" transparent visible={visible}>
+      <ArtistLimitModal
+        visible={limitModalVisible}
+        onClose={() => setLimitModalVisible(false)}
+        planName={user?.latest_subscription?.plan?.name || "Artist Plus"}
+        limit={getArtistsLimit(user)}
+      />
       <View style={styles.overlay}>
         <View style={styles.dialog}>
           <KeyboardAwareScrollView keyboardShouldPersistTaps="handled">

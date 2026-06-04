@@ -103,4 +103,6 @@ export const ENDPOINTS = {
   VERIFY_PAYMENT: `${BASE_URL}/verify-payment`,
   PRIORITY_PAYMENT: `${BASE_URL}/api/priority-payment`,
   VERIFY_PRIORITY_PAYMENT: `${BASE_URL}/api/priority-payment/verify`,
+  UPGRADE_PLAN: `${BASE_URL}/api/subscription/create-upgrade-session`,
+  ARTIST_ADDON: `${BASE_URL}/api/artist-addon`,
 };

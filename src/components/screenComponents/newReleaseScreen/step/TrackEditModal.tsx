@@ -26,6 +26,8 @@ import { Colors } from "@/theme/colors";
 import { toast } from "@/stores/useToastStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { getArtistsLimit } from "@/utils/utils";
+import { ArtistLimitModal } from "@/components/common/ArtistLimitModal";
+
 
 interface TrackEditModalProps {
   visible: boolean;
@@ -77,6 +79,8 @@ const TrackEditModalExpo: React.FC<TrackEditModalProps> = ({
   const [visibleSuggestions, setVisibleSuggestions] = useState<
     Record<number, boolean>
   >({});
+  const [limitModalVisible, setLimitModalVisible] = useState(false);
+
 
   useEffect(() => {
     if (artists) setLocalArtists(artists);
@@ -164,10 +168,7 @@ const TrackEditModalExpo: React.FC<TrackEditModalProps> = ({
       ).length;
 
       if (primaryArtistsCount >= limit) {
-        Alert.alert(
-          "Artist Limit Reached",
-          `Your current subscription plan allows only ${limit} Primary Artist(s). Please upgrade your plan to add more Primary Artists.`
-        );
+        setLimitModalVisible(true);
         throw new Error("Limit reached");
       }
     }
@@ -503,6 +504,12 @@ const TrackEditModalExpo: React.FC<TrackEditModalProps> = ({
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
+      <ArtistLimitModal
+        visible={limitModalVisible}
+        onClose={() => setLimitModalVisible(false)}
+        planName={user?.latest_subscription?.plan?.name || "Artist Plus"}
+        limit={getArtistsLimit(user)}
+      />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.modalOuter}
