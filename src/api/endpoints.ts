@@ -63,7 +63,7 @@ export const ENDPOINTS = {
     `${BASE_URL}/api/distribute-tracks/${trackId}`,
 
   // Upload files
-  UPLOAD_FILES: `${BASE_URL}/api/upload`,
+  UPLOAD_FILES: `${BASE_URL}/api/custom-upload`,
   UPLOAD_FILES_BY_ID: (uploadId: number) =>
     `${BASE_URL}/api/upload/files/${uploadId}`,
 
@@ -105,4 +105,7 @@ export const ENDPOINTS = {
   VERIFY_PRIORITY_PAYMENT: `${BASE_URL}/api/priority-payment/verify`,
   UPGRADE_PLAN: `${BASE_URL}/api/subscription/create-upgrade-session`,
   ARTIST_ADDON: `${BASE_URL}/api/artist-addon`,
+  NOTIFICATIONS: `${BASE_URL}/api/notifications`,
+  MARK_NOTIFICATION_AS_READ: (id: number | string) => `${BASE_URL}/api/notifications/${id}/read`,
+  CHANGE_PASSWORD: `${BASE_URL}/api/change-password`,
 };

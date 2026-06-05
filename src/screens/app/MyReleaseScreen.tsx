@@ -19,7 +19,7 @@ import dayjs from "dayjs";
 import { LazyImage } from "@/components/modules/LazyImage";
 
 const { width } = Dimensions.get("window");
-  
+
 export default function MyReleaseScreen() {
   const { tracks, loading } = useUserPublishTracks();
   const shimmerAnimation = new Animated.Value(0);
@@ -31,14 +31,14 @@ export default function MyReleaseScreen() {
     { key: "complete", title: "Complete" },
     { key: "inactive", title: "Inactive" },
   ]);
-  console.log(
-    "All Tracks:",
-    tracks.map((t) => ({
-      id: t.id,
-      title: t.ReleaseTitle,
-      status: t.Status,
-    })),
-  );
+  // console.log(
+  //   "All Tracks:",
+  //   tracks.map((t) => ({
+  //     id: t.id,
+  //     title: t.ReleaseTitle,
+  //     status: t.Status,
+  //   })),
+  // );
   // Shimmer animation effect
   useEffect(() => {
     if (loading) {
@@ -135,6 +135,9 @@ export default function MyReleaseScreen() {
                 >
                   <Text style={styles.albumName}>{item.ReleaseTitle}</Text>
                   <Text style={styles.albumType}>{item.ReleaseType}</Text>
+                  {item.Status === "Cancelled" && (
+                    <Text style={styles.cancelledLabel}>Cancelled</Text>
+                  )}
                 </View>
                 <Text style={styles.totalTrack}>
                   Tracks: {item.TrackList?.length}
@@ -237,7 +240,7 @@ export default function MyReleaseScreen() {
 
   const InactiveRoute = () =>
     renderUploadItems(
-      tracks.filter((t) => t.Status === "Inactive"),
+      tracks.filter((t) => t.Status === "Inactive" || t.Status === "Cancelled"),
       loading,
       "No inactive uploads found.",
     );
@@ -292,11 +295,11 @@ export default function MyReleaseScreen() {
         onIndexChange={setIndex}
         initialLayout={{ width }}
         renderTabBar={(props) => {
-           const tabBarWidth = width - 48; 
+          const tabBarWidth = width - 48;
           const tabCount = props.navigationState.routes.length;
           const tabWidth = tabBarWidth / tabCount;
 
-           const translateX = props.position.interpolate({
+          const translateX = props.position.interpolate({
             inputRange: props.navigationState.routes.map((_, i) => i),
             outputRange: props.navigationState.routes.map((_, i) => i * tabWidth),
           });
@@ -308,7 +311,7 @@ export default function MyReleaseScreen() {
                 style={[
                   styles.animatedIndicator,
                   {
-                    width: tabWidth - 8,  
+                    width: tabWidth - 8,
                     transform: [{ translateX }],
                   },
                 ]}
@@ -421,7 +424,7 @@ const styles = StyleSheet.create({
     height: "100%",
     top: 4,
     left: 4,
-    backgroundColor: "#E8D5FF",  
+    backgroundColor: "#E8D5FF",
     borderRadius: 10,
   },
   tabItem: {
@@ -429,17 +432,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 10,
     borderRadius: 10,
-    zIndex: 1,  
+    zIndex: 1,
   },
   tabText: {
     fontSize: 14,
     fontWeight: "600",
   },
   activeTabText: {
-    color: Colors.primary,  
+    color: Colors.primary,
   },
   inactiveTabText: {
-    color: "#A0A0A0", 
+    color: "#A0A0A0",
   },
   skeletonTitle: {
     width: "80%",
@@ -507,9 +510,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "Poppins_600SemiBold",
   },
+  cancelledLabel: {
+    fontSize: 12,
+    color: "#D14343",
+    fontFamily: "Poppins_600SemiBold",
+    marginTop: 4,
+  },
   listContainer: {
     paddingHorizontal: 24,
     paddingTop: 8,
-    paddingBottom: 80, 
+    paddingBottom: 80,
   },
 });

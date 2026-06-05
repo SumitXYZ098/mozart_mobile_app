@@ -11,15 +11,61 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Colors } from "../../theme/colors";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { LinearGradient } from "expo-linear-gradient";
+import axios from "axios";
+import { ENDPOINTS } from "@/api/endpoints";
 import CounterCardSection from "@/components/screenComponents/homeScreen/CounterCardSection";
 import DraftListSection from "@/components/screenComponents/homeScreen/DraftListSection";
 import UploadedListSection from "@/components/screenComponents/homeScreen/UploadedListSection";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useIsFocused } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
 
 export default function HomeScreen() {
   const { user } = useAuthStore();
   const navigation = useNavigation<any>();
+  const isFocused = useIsFocused();
+  const [notificationCount, setNotificationCount] = React.useState<number>(0);
+
+  const fetchNotifications = React.useCallback(async () => {
+    if (!user?.token) return;
+    try {
+      const response = await axios.get(ENDPOINTS.NOTIFICATIONS, {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      });
+      const responseData = response.data;
+      const list = Array.isArray(responseData)
+        ? responseData
+        : (responseData && Array.isArray(responseData.data) ? responseData.data : []);
+
+      const unreadList = list.filter((item: any) => {
+        const attrs = item.attributes || {};
+        const isRead = !!(
+          attrs.read || item.read ||
+          attrs.is_read || item.is_read ||
+          attrs.isRead || item.isRead ||
+          attrs.status === 'read' || item.status === 'read'
+        );
+        return !isRead;
+      });
+      setNotificationCount(unreadList.length);
+    } catch (error) {
+      console.error('Failed to fetch notifications', error);
+      setNotificationCount(0);
+    }
+  }, [user?.token]);
+
+  React.useEffect(() => {
+    if (isFocused) {
+      fetchNotifications();
+      const interval = setInterval(() => {
+        fetchNotifications();
+      }, 30000); // Poll every 30 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [isFocused, fetchNotifications]);
+
 
   return (
     <LinearGradient
@@ -45,15 +91,22 @@ export default function HomeScreen() {
               />
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => navigation.navigate("Notification")}
-              style={styles.topButton}
-            >
-              <Image
-                source={require("../../../assets/images/notification.png")}
-                resizeMode="contain"
-                style={styles.menuIcon}
-              />
-            </TouchableOpacity>
+                onPress={() => navigation.navigate("Notification")}
+                style={styles.topButton}
+              >
+                <View style={styles.notificationWrapper}>
+                  <Image
+                    source={require("../../../assets/images/notification.png")}
+                    resizeMode="contain"
+                    style={styles.menuIcon}
+                  />
+                  {notificationCount > 0 && (
+                    <View style={styles.badgeContainer}>
+                      <Text style={styles.badgeText}>{notificationCount}</Text>
+                    </View>
+                  )}
+                </View>
+              </TouchableOpacity>
           </View>
 
           <View style={styles.header}>
@@ -135,6 +188,26 @@ const styles = StyleSheet.create({
     color: Colors.black,
     fontFamily: "Poppins_400Regular",
     opacity: 0.9,
+  },
+  notificationWrapper: {
+    position: "relative",
+  },
+  badgeContainer: {
+    position: "absolute",
+    right: -6,
+    top: -6,
+    backgroundColor: "#f03939ff",
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 2,
+  },
+  badgeText: {
+    color: "white",
+    fontSize: 10,
+    fontWeight: "bold",
   },
   newRelease: {
     backgroundColor: Colors.primary,

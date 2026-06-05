@@ -12,6 +12,7 @@ import MyReleaseScreen from "@/screens/app/MyReleaseScreen";
 import NewReleaseScreen from "@/screens/app/NewReleaseScreen";
 import WelcomeNewReleaseScreen from "@/components/screenComponents/newReleaseScreen/WelcomeNewReleaseScreen";
 import ArtistScreen from "@/screens/app/ArtistScreen";
+import ChangePasswordScreen from "@/screens/app/ChangePasswordScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -67,6 +68,7 @@ export function ProfileStackNavigator() {
       screenOptions={{ headerShown: false }}
     >
       <Stack.Screen name="ProfileMain" component={ProfileScreen} />
+      <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
     </Stack.Navigator>
   );
 }

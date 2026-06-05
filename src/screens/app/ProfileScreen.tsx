@@ -25,40 +25,42 @@ export default function ProfileScreen() {
     {
       title: "My Profile",
       icon: require("../../../assets/images/profile-fill.png"),
-      onPress: () => {},
+      onPress: () => { },
     },
-    {
-      title: "Manage Plan",
-      icon: require("../../../assets/images/royalties.png"),
-      onPress: () => {
-        navigation.navigate("ChoosePlan");
-      },
-    },
-    {
-      title: "Refer a friend",
-      icon: require("../../../assets/images/follow-us.png"),
-      onPress: () => {},
-    },
-    {
-      title: "Preks",
-      icon: require("../../../assets/images/prek.png"),
-      onPress: () => {},
-    },
+    // {
+    //   title: "Manage Plan",
+    //   icon: require("../../../assets/images/royalties.png"),
+    //   onPress: () => {
+    //     navigation.navigate("ChoosePlan");
+    //   },
+    // },
+    // {
+    //   title: "Refer a friend",
+    //   icon: require("../../../assets/images/follow-us.png"),
+    //   onPress: () => { },
+    // },
+    // {
+    //   title: "Preks",
+    //   icon: require("../../../assets/images/prek.png"),
+    //   onPress: () => { },
+    // },
     {
       title: "Language",
       icon: require("../../../assets/images/language.png"),
-      onPress: () => {},
+      onPress: () => { },
     },
     {
       title: "Change Password",
       icon: require("../../../assets/images/reset-password.png"),
-      onPress: () => {},
+      onPress: () => {
+        navigation.navigate("ChangePassword");
+      },
     },
-    {
-      title: "Theme",
-      icon: require("../../../assets/images/theme.png"),
-      onPress: () => {},
-    },
+    // {
+    //   title: "Theme",
+    //   icon: require("../../../assets/images/theme.png"),
+    //   onPress: () => { },
+    // },
   ];
 
   return (
@@ -140,68 +142,69 @@ export default function ProfileScreen() {
             {user?.latest_subscription?.plan?.name === "Artist"
               ? "You're building momentum with 15 track uploads/year, basic royalty tracking, and distribution."
               : user?.latest_subscription?.plan?.name === "Artist Plus"
-              ? "You're getting unlimited uploads, advanced analytics, and collaborator royalty splits."
-              : user?.latest_subscription?.plan?.name === "Pro Label"
-              ? "You're getting priority distribution, custom label branding, and team management."
-              : "Please pick a subscription plan to start releasing your music to the world."}
+                ? "You're getting unlimited uploads, advanced analytics, and collaborator royalty splits."
+                : user?.latest_subscription?.plan?.name === "Pro Label"
+                  ? "You're getting priority distribution, custom label branding, and team management."
+                  : "Please pick a subscription plan to start releasing your music to the world."}
           </Text>
         </ImageBackground>
       </View>
       <View style={styles.menuSection}>
         <ScrollView style={{ gap: 20 }}>
-        <View style={{ gap: 16 }}>
-          {menuList.map((menuItem, index) => (
-            <View
-              key={index}
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <View
+          <View style={{ gap: 16 }}>
+            {menuList.map((menuItem, index) => (
+              <TouchableOpacity
+                key={index}
+                onPress={menuItem.onPress}
+                activeOpacity={0.7}
                 style={{
                   flexDirection: "row",
-                  gap: 12,
+                  justifyContent: "space-between",
                   alignItems: "center",
                 }}
               >
                 <View
                   style={{
-                    width: 42,
-                    height: 42,
-                    backgroundColor: Colors.lightPrimary,
-                    borderRadius: 8,
-                    padding: 9,
-                    justifyContent: "center",
+                    flexDirection: "row",
+                    gap: 12,
                     alignItems: "center",
                   }}
                 >
-                  <Image
-                    source={menuItem.icon}
+                  <View
                     style={{
-                      width: '100%',
-                      height: '100%',
+                      width: 42,
+                      height: 42,
+                      backgroundColor: Colors.lightPrimary,
+                      borderRadius: 8,
+                      padding: 9,
+                      justifyContent: "center",
+                      alignItems: "center",
                     }}
-                  />
+                  >
+                    <Image
+                      source={menuItem.icon}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                      }}
+                    />
+                  </View>
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontFamily: "Poppins_400Regular",
+                      color: Colors.black,
+                    }}
+                  >
+                    {menuItem.title}
+                  </Text>
                 </View>
-                <Text
-                  style={{
-                    fontSize: 16,
-                    fontFamily: "Poppins_400Regular",
-                    color: Colors.black,
-                  }}
-                >
-                  {menuItem.title}
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={Colors.gray} />
-            </View>
-          ))}
-        </View>
+                <Ionicons name="chevron-forward" size={20} color={Colors.gray} />
+              </TouchableOpacity>
+            ))}
+          </View>
         </ScrollView>
         <CustomButton
-        
           buttonType="disable"
           label="Logout"
           icon={<MaterialIcons name="logout" size={20} color={Colors.gray} />}
@@ -231,7 +234,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: 700,
+    fontWeight: "700",
     color: Colors.gray,
     fontFamily: "PlusJakartaSans_700Bold",
   },

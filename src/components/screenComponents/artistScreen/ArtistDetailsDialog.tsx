@@ -39,8 +39,9 @@ const ArtistDetailsDialog: React.FC<ArtistDetailsDialogProps> = ({
   const profileImage =
     artist?.Profile_image?.formats?.thumbnail?.url ||
     artist?.Profile_image?.formats?.small?.url ||
-    artist?.Profile_image?.url ||
-    null;
+    artist?.Profile_image?.url
+      ? `${process.env.EXPO_PUBLIC_API_URL}${artist?.Profile_image?.formats?.thumbnail?.url || artist?.Profile_image?.formats?.small?.url || artist?.Profile_image?.url}`
+      : null;
 
   useEffect(() => {
     if (visible) {
