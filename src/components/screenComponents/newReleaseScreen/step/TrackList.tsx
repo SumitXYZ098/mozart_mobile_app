@@ -1,5 +1,5 @@
 // TrackList.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   StyleSheet,
   ActivityIndicator,
   Platform,
+  Animated,
+  Easing,
 } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import { useFormContext, Controller, useFieldArray } from "react-hook-form";
@@ -41,6 +43,7 @@ const TrackList = ({ draftFormData }: { draftFormData?: any }) => {
   useEffect(() => {
     if (draftFormData?.data?.TrackList?.length) {
       setValue("TrackList", []);
+      console.log("Prefilling TrackList with draft data:", draftFormData.data.TrackList);
 
       draftFormData.data.TrackList.forEach((track: any) => {
         append({
@@ -112,7 +115,7 @@ const TrackList = ({ draftFormData }: { draftFormData?: any }) => {
     size?: number;
   }) => {
     const allowedTypes = ["audio/wav", "audio/flac"];
-    const maxSize = 100 * 1024 * 1024; // 100 MB (adjust if needed)
+    const maxSize = 100 * 1024 * 1024; // 100 MB
 
     // 1️⃣ Check file type
     if (!allowedTypes.includes(file.type)) {
@@ -137,6 +140,7 @@ const TrackList = ({ draftFormData }: { draftFormData?: any }) => {
     index: number,
     onChange: (fileId: string | null) => void
   ) => {
+    let uploadSuccess = false;
     try {
       // 1️⃣ Pick audio file using DocumentPicker
       const res = await DocumentPicker.getDocumentAsync({
@@ -160,12 +164,6 @@ const TrackList = ({ draftFormData }: { draftFormData?: any }) => {
         } as any;
       }
 
-      // 2️⃣ Validate audio file (you can reuse validateAudioFile)
-      // if (!validateAudioFile(mockFile)) {
-      //   Alert.alert("Invalid file", "Please select a valid audio file.");
-      //   return;
-      // }
-
       // 3️⃣ Get existing fileId & trackId
       const existingFileId = getValues(`TrackList.${index}.TrackUpload`);
       const trackId = getValues(`TrackList.${index}.trackId`);
@@ -180,12 +178,37 @@ const TrackList = ({ draftFormData }: { draftFormData?: any }) => {
 
       // 5️⃣ Upload the new file
       setUploading(true);
-      setUploadProgress(0);
+      setUploadProgress(1);
 
-      const uploaded = await uploadFile(fileToUpload, (progress) =>
-        setUploadProgress(progress)
-      );
-      const fileId = uploaded?.[0]?.id || null;
+      // Simulated progress: smoothly goes 1% → 95% while upload runs
+      let simProgress = 1;
+      const progressTimer = setInterval(() => {
+        if (simProgress < 30) {
+          simProgress += Math.floor(Math.random() * 5) + 3;
+        } else if (simProgress < 70) {
+          simProgress += Math.floor(Math.random() * 3) + 1;
+        } else if (simProgress < 95) {
+          simProgress += 1;
+        }
+        if (simProgress > 95) simProgress = 95;
+        setUploadProgress(simProgress);
+      }, 200);
+
+      let uploaded;
+      try {
+        uploaded = await uploadFile(fileToUpload, (realProgress) => {
+          // Use real progress if it's ahead of the simulation
+          if (realProgress > simProgress) {
+            simProgress = realProgress;
+            setUploadProgress(realProgress);
+          }
+        });
+      } finally {
+        clearInterval(progressTimer);
+      }
+      setUploadProgress(100);
+
+      const fileId = uploaded?.id || null;
 
       // 6️⃣ Update backend track if exists
       if (trackId && fileId) {
@@ -199,9 +222,7 @@ const TrackList = ({ draftFormData }: { draftFormData?: any }) => {
       onChange(fileId);
       setValue(`TrackList.${index}.TrackUpload`, fileId);
       setValue(`TrackList.${index}.file`, file.name);
-
-      // 8️⃣ Success message
-      Alert.alert("Success", "Audio file uploaded successfully.");
+      uploadSuccess = true;
     } catch (error: any) {
       console.error("Audio upload failed:", error);
       Alert.alert("Error", error?.message || "Failed to upload audio file.");
@@ -209,17 +230,15 @@ const TrackList = ({ draftFormData }: { draftFormData?: any }) => {
     } finally {
       setUploading(false);
       setUploadProgress(0);
+      if (uploadSuccess) {
+        setTimeout(() => {
+          setEditingIndex(index);
+        }, 150);
+      }
     }
   };
 
-  // Add the one more track in album/Ep
   const handleAddTrack = () => {
-    if (fields.length === 0) {
-      // Clear any residual data first
-      setValue("TrackList", []); // Reset field array
-    }
-
-    // Append new track
     append({
       TrackName: "Track Title",
       PrimaryGenre: primaryGenre,
@@ -438,12 +457,7 @@ const TrackList = ({ draftFormData }: { draftFormData?: any }) => {
       )}
 
       {uploading && (
-        <View style={styles.uploadingBox}>
-          <ActivityIndicator size="small" color="#6739B7" />
-          <Text style={styles.progressText}>
-            Uploading... {uploadProgress}%
-          </Text>
-        </View>
+        <MusicalLoader progress={uploadProgress} />
       )}
 
       {/* Add Track Button */}
@@ -591,6 +605,172 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 13,
     textAlign: "center",
+  },
+});
+
+const MusicalLoader = ({ progress }: { progress: number }) => {
+  const scale1 = useRef(new Animated.Value(1)).current;
+  const opacity1 = useRef(new Animated.Value(0.6)).current;
+  const scale2 = useRef(new Animated.Value(1)).current;
+  const opacity2 = useRef(new Animated.Value(0.6)).current;
+
+  useEffect(() => {
+    const animateRipple = (scale: Animated.Value, opacity: Animated.Value, delay: number) => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(delay),
+          Animated.parallel([
+            Animated.timing(scale, {
+              toValue: 2.5,
+              duration: 2000,
+              useNativeDriver: true,
+            }),
+            Animated.timing(opacity, {
+              toValue: 0,
+              duration: 2000,
+              useNativeDriver: true,
+            }),
+          ]),
+          Animated.parallel([
+            Animated.timing(scale, {
+              toValue: 1,
+              duration: 0,
+              useNativeDriver: true,
+            }),
+            Animated.timing(opacity, {
+              toValue: 0.6,
+              duration: 0,
+              useNativeDriver: true,
+            }),
+          ]),
+        ])
+      ).start();
+    };
+
+    animateRipple(scale1, opacity1, 0);
+    animateRipple(scale2, opacity2, 1000);
+
+    return () => {
+      scale1.stopAnimation();
+      opacity1.stopAnimation();
+      scale2.stopAnimation();
+      opacity2.stopAnimation();
+    };
+  }, [scale1, opacity1, scale2, opacity2]);
+
+  const title = progress > 0 ? "Uploading your music..." : "Processing request...";
+
+  return (
+    <View style={loaderStyles.container}>
+      <View style={loaderStyles.rippleContainer}>
+        {/* Ripple 1 */}
+        <Animated.View
+          style={[
+            loaderStyles.ripple,
+            {
+              transform: [{ scale: scale1 }],
+              opacity: opacity1,
+            },
+          ]}
+        />
+        {/* Ripple 2 */}
+        <Animated.View
+          style={[
+            loaderStyles.ripple,
+            {
+              transform: [{ scale: scale2 }],
+              opacity: opacity2,
+            },
+          ]}
+        />
+        {/* Center Music Badge */}
+        <View style={loaderStyles.centerBadge}>
+          <Ionicons name="musical-notes" size={22} color="#FFFFFF" />
+        </View>
+      </View>
+
+      <Text style={loaderStyles.title}>{title}</Text>
+      {progress > 0 && <Text style={loaderStyles.progressText}>{progress}%</Text>}
+
+      {/* Progress Bar */}
+      {progress > 0 && (
+        <View style={loaderStyles.progressTrack}>
+          <View style={[loaderStyles.progressBar, { width: `${progress}%` }]} />
+        </View>
+      )}
+    </View>
+  );
+};
+
+const loaderStyles = StyleSheet.create({
+  container: {
+    backgroundColor: "#F9F6FC",
+    borderWidth: 1,
+    borderColor: "#EADCF7",
+    borderRadius: 16,
+    padding: 24,
+    alignItems: "center",
+    marginVertical: 15,
+    // Soft shadow
+    shadowColor: "#6739B7",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  rippleContainer: {
+    width: 100,
+    height: 100,
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+    marginBottom: 16,
+  },
+  ripple: {
+    position: "absolute",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(103, 57, 183, 0.2)",
+  },
+  centerBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 4,
+    shadowColor: "#6739B7",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  title: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#4A4A4A",
+    fontFamily: "Poppins_500Medium",
+    marginBottom: 4,
+  },
+  progressText: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#6739B7",
+    fontFamily: "PlusJakartaSans_700Bold",
+  },
+  progressTrack: {
+    width: "85%",
+    height: 6,
+    backgroundColor: "#EEE8FF",
+    borderRadius: 3,
+    marginTop: 12,
+    overflow: "hidden",
+  },
+  progressBar: {
+    height: "100%",
+    backgroundColor: "#6739B7",
+    borderRadius: 3,
   },
 });
 

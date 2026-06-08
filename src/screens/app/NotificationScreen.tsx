@@ -81,7 +81,8 @@ const NotificationScreen = () => {
       setRefreshing(false);
     }
   }, [user?.token]);
-
+console.log('Token:', user?.token);
+console.log('Endpoint:', ENDPOINTS.NOTIFICATIONS);
   React.useEffect(() => {
     if (isFocused) {
       fetchNotifications();

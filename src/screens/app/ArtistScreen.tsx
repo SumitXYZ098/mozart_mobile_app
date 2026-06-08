@@ -50,7 +50,7 @@ const ArtistScreen = () => {
   const [artistId, setArtistId] = useState<string | null>(null);
   const [showArtistDialog, setShowArtistDialog] = useState(false);
   const [openArtistForm, setOpenArtistForm] = useState(false);
-  
+
   // Tab state
   const [activeTab, setActiveTab] = useState<TabKey>("Primary Artist");
   const tabAnims = useRef<Record<string, Animated.Value>>(
@@ -62,14 +62,14 @@ const ArtistScreen = () => {
       {} as Record<string, Animated.Value>
     )
   ).current;
-  
+
   // Filter artists by active tab
   const filteredArtists = useMemo(
     () => artists.filter((a) => a.role === activeTab),
     [artists, activeTab]
   );
-  
-    const handleTabPress = useCallback(
+
+  const handleTabPress = useCallback(
     (tabKey: TabKey) => {
       setActiveTab(tabKey);
       TABS.forEach((tab) => {
@@ -269,32 +269,32 @@ const ArtistScreen = () => {
 
       {/* Animated Tab Bar */}
       <View style={styles.tabContainer}>
-       <View style={styles.bottomDivider} />
-      
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.tabScrollContent}
-      >
-        {TABS.map((tab) => {
-          const isActive = activeTab === tab.key;
-          return (
-            <TouchableOpacity
-              key={tab.key}
-              onPress={() => handleTabPress(tab.key)}
-              style={styles.tabButton}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.tabText, isActive && styles.tabTextActive]}>
-                {tab.label}
-              </Text>
-              
-               {isActive && <View style={styles.activeUnderline} />}
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-    </View>
+        <View style={styles.bottomDivider} />
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.tabScrollContent}
+        >
+          {TABS.map((tab) => {
+            const isActive = activeTab === tab.key;
+            return (
+              <TouchableOpacity
+                key={tab.key}
+                onPress={() => handleTabPress(tab.key)}
+                style={styles.tabButton}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.tabText, isActive && styles.tabTextActive]}>
+                  {tab.label}
+                </Text>
+
+                {isActive && <View style={styles.activeUnderline} />}
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
 
       {loading ? (
         <FlatList
@@ -443,10 +443,10 @@ const styles = StyleSheet.create({
     fontFamily: "PlusJakartaSans_700Bold",
   },
   // Tab bar styles
- tabContainer: {
+  tabContainer: {
     position: 'relative',
     marginBottom: 16,
-    backgroundColor: '#FFFFFF', 
+    backgroundColor: '#FFFFFF',
   },
   bottomDivider: {
     position: 'absolute',
@@ -454,11 +454,11 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 1,
-   
+
   },
   tabScrollContent: {
     flexDirection: "row",
-    paddingHorizontal: 0,  
+    paddingHorizontal: 0,
   },
   tabButton: {
     paddingHorizontal: 13,
@@ -468,22 +468,22 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   tabText: {
-    fontSize: 14,  
+    fontSize: 14,
     fontFamily: "PlusJakartaSans_600SemiBold",
     fontWeight: "600",
-    
+
   },
   tabTextActive: {
     fontFamily: "PlusJakartaSans_700Bold",
     fontWeight: "700",
-    color: Colors.primary, 
+    color: Colors.primary,
   },
   activeUnderline: {
     position: 'absolute',
     bottom: 0,
-    left: 16,  
+    left: 16,
     right: 16,
-    height: 2,  
+    height: 2,
     backgroundColor: Colors.primary,
     borderTopLeftRadius: 2,
     borderTopRightRadius: 2,

@@ -17,7 +17,7 @@ export default function DrawerNavigator() {
           backgroundColor: "#F9F5FF",
         },
       }}
-      
+
       drawerContent={(props) => <CustomDrawer {...props} />}
     >
       <Drawer.Screen name="MainTabs" component={TabNavigator} />

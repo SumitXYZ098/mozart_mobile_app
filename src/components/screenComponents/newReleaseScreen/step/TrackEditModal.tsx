@@ -162,7 +162,7 @@ const TrackEditModalExpo: React.FC<TrackEditModalProps> = ({
       const limit = getArtistsLimit(user);
       const primaryArtistsCount = artists.filter(
         (a) => {
-           const r = a.role;
+          const r = a.role;
           return !r || r === "Primary Artist";
         }
       ).length;
@@ -214,7 +214,19 @@ const TrackEditModalExpo: React.FC<TrackEditModalProps> = ({
   };
 
   const handleNext = async () => {
-    const ok = await trigger();
+    console.log("handleNext called with trackIndex:", trackIndex, "currentStep:", currentStep);
+
+    // Only validate fields relevant to the current step
+    const step0Fields = [
+      `TrackList.${trackIndex}.TrackName`,
+      `TrackList.${trackIndex}.PrimaryGenre`,
+      `TrackList.${trackIndex}.RoleCredits`,
+    ] as const;
+    const step1Fields = [
+      `TrackList.${trackIndex}.ISWC`,
+    ] as const;
+    const fieldsToValidate = currentStep === 0 ? step0Fields : step1Fields;
+    const ok = await trigger(fieldsToValidate as any);
     if (!ok) return;
 
     const roleCredits = getValues(`TrackList.${trackIndex}.RoleCredits`) || [];
@@ -230,7 +242,7 @@ const TrackEditModalExpo: React.FC<TrackEditModalProps> = ({
     }
 
     const formData = getValues(`TrackList.${trackIndex}`);
-
+ console.log("Step 3 mutation response:", formData);
     try {
       if (trackId) {
         await updateTrack({ trackId, payload: formData }, {
@@ -249,6 +261,7 @@ const TrackEditModalExpo: React.FC<TrackEditModalProps> = ({
           },
         } as any);
       } else {
+       
         await step3Mutation.mutateAsync({ ...formData, tracks: [formData] }, {
           onSuccess: (data: any) => {
             Alert.alert("Success", "Track created successfully.");
@@ -279,7 +292,7 @@ const TrackEditModalExpo: React.FC<TrackEditModalProps> = ({
   };
 
   const handleBack = () => {
-    if (currentStep === 0) handleDialogClose;
+    if (currentStep === 0) handleDialogClose();
     else setCurrentStep((s) => s - 1);
   };
 
@@ -443,33 +456,33 @@ const TrackEditModalExpo: React.FC<TrackEditModalProps> = ({
                               );
                             })}
 
-                        {/* Add new artist option */}
-                        {query.trim().length > 0 && (
-                          <TouchableOpacity
-                            style={styles.createArtistRow}
-                            onPress={async () => {
-                              try {
-                                const newArtist = await handleCreateArtist(
-                                  query.trim(),
-                                  roleName
-                                );
-                                handleArtistSelect(
-                                  newArtist as string,
-                                  onChange
-                                );
-                              } catch {
-                                // handled inside handleCreateArtist
-                              }
-                            }}
-                          >
-                            <Ionicons name="add" size={16} color="#6739B7" />
-                            <Text style={styles.createArtistText}>
-                              Add "{query.trim()}"
-                            </Text>
-                          </TouchableOpacity>
-                        )}
-                      </ScrollView>
-                    )}
+                          {/* Add new artist option */}
+                          {query.trim().length > 0 && (
+                            <TouchableOpacity
+                              style={styles.createArtistRow}
+                              onPress={async () => {
+                                try {
+                                  const newArtist = await handleCreateArtist(
+                                    query.trim(),
+                                    roleName
+                                  );
+                                  handleArtistSelect(
+                                    newArtist as string,
+                                    onChange
+                                  );
+                                } catch {
+                                  // handled inside handleCreateArtist
+                                }
+                              }}
+                            >
+                              <Ionicons name="add" size={16} color="#6739B7" />
+                              <Text style={styles.createArtistText}>
+                                Add "{query.trim()}"
+                              </Text>
+                            </TouchableOpacity>
+                          )}
+                        </ScrollView>
+                      )}
                     </View>
                   )}
                 </View>
@@ -724,7 +737,7 @@ const TrackEditModalExpo: React.FC<TrackEditModalProps> = ({
                           onValueChange={(v) => {
                             field.onChange(v);
                             if (v) setValue(`TrackList.${trackIndex}.ISRC`, "");
-                          }} 
+                          }}
                         />
                       )}
                     />

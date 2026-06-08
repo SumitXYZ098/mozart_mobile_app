@@ -18,9 +18,11 @@ import DraftListSection from "@/components/screenComponents/homeScreen/DraftList
 import UploadedListSection from "@/components/screenComponents/homeScreen/UploadedListSection";
 import { useNavigation, useIsFocused } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
+import { useTranslation } from "@/utils/translations";
 
 export default function HomeScreen() {
   const { user } = useAuthStore();
+  const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const isFocused = useIsFocused();
   const [notificationCount, setNotificationCount] = React.useState<number>(0);
@@ -110,8 +112,8 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.header}>
-            <Text style={styles.title}>{`Good Morning, ${user?.name}`}</Text>
-            <Text style={styles.subtitle}>Welcome to Mozart! 🎶</Text>
+            <Text style={styles.title}>{`${t("good_morning")}, ${user?.name}`}</Text>
+            <Text style={styles.subtitle}>{t("welcome_to_mozart")}</Text>
           </View>
 
           <View style={styles.newRelease}>
@@ -119,9 +121,9 @@ export default function HomeScreen() {
             <View className="w-[64px] h-[64px] rounded-full bg-white opacity-[0.1] absolute -left-9 -bottom-[35px] z-10" />
             <View className="flex flex-row justify-between items-center">
               <View className="flex flex-col">
-                <Text style={styles.releaseTitle}>New Release</Text>
+                <Text style={styles.releaseTitle}>{t("new_release")}</Text>
                 <Text style={styles.releaseSubTitle}>
-                  Start a new single, EP, or album
+                  {t("new_release_desc")}
                 </Text>
               </View>
               <TouchableOpacity

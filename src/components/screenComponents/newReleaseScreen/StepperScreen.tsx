@@ -102,7 +102,7 @@ const StepperScreen = () => {
     DigitalReleaseDate: formatDate(
       new Date(new Date().setDate(now.getDate() + 1))
     ),
-     ReleaseCredits: [
+    ReleaseCredits: [
       { artistName: "", roleName: "Primary Artist" },
       { artistName: "", roleName: "Composer" },
       { artistName: "", roleName: "Lyricist" },
@@ -170,17 +170,18 @@ const StepperScreen = () => {
   const handleNext = async () => {
     const isValid = await methods.trigger();
     if (!isValid) return;
-
+ 
+    
     setLoading(true);
     try {
+      
       const formData = methods.getValues();
       setUploadProgress(0);
-
       // Simulate progress updates
       for (let i = 0; i <= 100; i += 20) {
         await new Promise((r) => setTimeout(r, 100));
         setUploadProgress(i);
-      }
+       }
       console.log(activeStep, "Step");
       if (activeStep === 0) {
         console.log(draftId, " is id");
@@ -217,7 +218,7 @@ const StepperScreen = () => {
 
   const proceedWithDistribution = async (formData: any) => {
     if (!draftId) throw new Error("Draft ID missing");
-    
+
     try {
       await finishMutation.mutateAsync(formData);
       await publishDraftMutation();
@@ -238,10 +239,10 @@ const StepperScreen = () => {
     }
 
     await AsyncStorage.removeItem(STORAGE_KEY);
-    
+
     // Refresh published tracks in store
     usePublishTrackStore.getState().fetchUserPublishTracks();
-    
+
     toast.success("✅ Release distributed successfully");
     navigation.navigate("Upload");
   };
@@ -360,7 +361,7 @@ const StepperScreen = () => {
     if (errorKeys.length > 0) {
       const firstKey = errorKeys[0];
       const errorObj = errors[firstKey];
-      
+
       if (Array.isArray(errorObj)) {
         for (const errItem of errorObj) {
           if (errItem) {

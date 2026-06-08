@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ScrollView,
   Modal,
+  Image,
 } from "react-native";
 import { useFormContext, Controller } from "react-hook-form";
 import dayjs, { Dayjs } from "dayjs";
@@ -17,7 +18,6 @@ import { musicStores, priceCategories } from ".";
 import DatePickerInput from "@/components/common/DatePickerInput";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
-import SectionedMultiSelect from "react-native-sectioned-multi-select";
 import { MaterialIcons } from "@expo/vector-icons";
 import CalendarPicker from "react-native-calendar-picker";
 import ReleaseTimeField from "../ReleaseTimeField";
@@ -35,11 +35,16 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
   const [digitalShow, setDigitalShow] = useState(false);
   const [show, setShow] = useState(false);
 
+  // 📝 Music Stores Bottom Sheet States
+  const [storeModalVisible, setStoreModalVisible] = useState(false);
+  const [storeSelectionMode, setStoreSelectionMode] = useState<"all" | "custom" | null>(null);
+
   const { symbol, convertedPrice, currency } = useCurrencyPricing({
     indiaPrice: 1099,
     canadaPrice: 12,
     usaPrice: 9,
   });
+
   useEffect(() => {
     if (draftFormData?.data) {
       const track = draftFormData.data;
@@ -72,7 +77,6 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
       );
       setSelectedZone(track.TimeZoneOfReference || getSystemTimeZone());
     } else {
-      // fallback defaults when draft is null/empty
       setValue(
         "DigitalReleaseDate",
         dayjs().add(1, "day").format("YYYY-MM-DD")
@@ -89,37 +93,25 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
     }
   }, [draftFormData, setValue]);
 
-  // ✅ Update release time when timezone changes
   useEffect(() => {
     const currentTime = getValues("ReleaseTime");
     const currentZone = getValues("TimeZoneOfReference");
 
     if (!currentTime || !selectedZone) return;
 
-    // 🧭 Normalize zones (handles "Asia/Kolkata (UTC+05:30)" → "Asia/Kolkata")
     const normalize = (tz: string | undefined) =>
       tz ? tz.split(" ")[0].trim() : "UTC";
 
     const oldZone = normalize(currentZone);
     const newZone = normalize(selectedZone);
 
-    // If same zone, do nothing
     if (oldZone === newZone) return;
 
     try {
-      // Get the digital release date (to combine with time)
-      const date = dayjs(
-        getValues("DigitalReleaseDate") || dayjs().format("YYYY-MM-DD")
-      );
-
-      // Create datetime in the old zone using current stored UTC time
       const utcTime = dayjs.utc(currentTime, "HH:mm:ss.SSS");
       const localTimeInOldZone = utcTime.tz(oldZone);
-
-      // Convert that time into the new timezone
       const converted = localTimeInOldZone.tz(newZone);
 
-      // Store back to form as UTC time string
       setValue("ReleaseTime", converted.utc().format("HH:mm:ss.SSS"));
       setValue("TimeZoneOfReference", selectedZone);
     } catch (err) {
@@ -127,16 +119,10 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
     }
   }, [selectedZone]);
 
-  console.log(
-    getValues("ReleaseTime"),
-    getValues("TimeZoneOfReference"),
-    "ReleaseTime"
-  );
-
   const isWithinNext10Days = (date: any) => {
     const today = dayjs();
     const maxDate = today.add(9, "day");
-    return date.isAfter(today) && date.isBefore(maxDate.add(1, "day")); // inclusive of maxDate
+    return date.isAfter(today) && date.isBefore(maxDate.add(1, "day"));
   };
 
   return (
@@ -165,8 +151,6 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
           return (
             <View style={styles.digitalContainer}>
               <Text style={styles.digitalLabel}>Digital Release Date</Text>
-
-              {/* Touchable to open modal */}
               <TouchableOpacity
                 style={[
                   styles.input,
@@ -174,82 +158,61 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
                 ]}
                 onPress={() => setDigitalShow(true)}
               >
-                <Text
-                  style={{
-                    color: value ? Colors.black : Colors.gray,
-                    fontSize: 14,
-                  }}
-                >
+                <Text style={{ color: value ? Colors.black : Colors.gray, fontSize: 14 }}>
                   {formatted}
                 </Text>
               </TouchableOpacity>
 
-              {/* Calendar modal */}
               <Modal visible={digitalShow} transparent animationType="slide">
                 <View style={styles.modalOverlay}>
                   <View style={styles.calendarContainer}>
                     <View style={styles.modalHeader}>
-                      <Text style={styles.modalTitle}>
-                        Select Digital Release Date
-                      </Text>
+                      <Text style={styles.modalTitle}>Select Digital Release Date</Text>
                       <TouchableOpacity onPress={() => setDigitalShow(false)}>
                         <Text style={styles.closeText}>Cancel</Text>
                       </TouchableOpacity>
                     </View>
 
                     <CalendarPicker
-                      minDate={dayjs().add(1, "day").toDate()} // tomorrow onwards
+                      minDate={dayjs().add(1, "day").toDate()}
                       todayBackgroundColor={Colors.lightPrimary}
                       selectedDayColor={Colors.primary}
                       selectedDayTextColor={Colors.white}
                       selectedDayStyle={{ backgroundColor: Colors.primary }}
                       onDateChange={(date) => {
                         if (date) {
-                          const formattedDate =
-                            dayjs(date).format("YYYY-MM-DD");
+                          const formattedDate = dayjs(date).format("YYYY-MM-DD");
                           onChange(formattedDate);
                           setDigitalReleaseDate(dayjs(date));
                           setDigitalShow(false);
                         }
                       }}
-                      customDatesStyles={Array.from({ length: 10 }).map(
-                        (_, i) => {
-                          const d = dayjs().add(i + 1, "day");
-                          return {
-                            date: d.toDate(),
-                            style: {
-                              backgroundColor: Colors.lightPrimary,
-                              borderRadius: 8,
-                            },
-                            textStyle: { color: Colors.black },
-                            allowDisabled: true,
-                          };
-                        }
-                      )}
+                      customDatesStyles={Array.from({ length: 10 }).map((_, i) => {
+                        const d = dayjs().add(i + 1, "day");
+                        return {
+                          date: d.toDate(),
+                          style: {
+                            backgroundColor: Colors.lightPrimary,
+                            borderRadius: 8,
+                          },
+                          textStyle: { color: Colors.black },
+                          allowDisabled: true,
+                        };
+                      })}
                     />
-
-                    <Text style={styles.note}>
-                      ⚡ Dates within next 10 days are highlighted
-                    </Text>
+                    <Text style={styles.note}>⚡ Dates within next 10 days are highlighted</Text>
                   </View>
                 </View>
               </Modal>
 
-              {/* Validation error */}
-              {fieldState.error && (
-                <Text style={styles.errorText}>{fieldState.error.message}</Text>
-              )}
+              {fieldState.error && <Text style={styles.errorText}>{fieldState.error.message}</Text>}
             </View>
           );
         }}
       />
 
       {/* Release Time */}
-      <ReleaseTimeField
-        control={control}
-        setValue={setValue}
-        getValues={getValues}
-      />
+      <ReleaseTimeField control={control} setValue={setValue} getValues={getValues} />
 
       {/* Priority / Standard cards */}
       <Controller
@@ -260,7 +223,6 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
           const disableStandard = date && isWithinNext10Days(date);
           const disablePriority = date && !isWithinNext10Days(date);
 
-          // ✅ Auto-fix invalid state
           if (disableStandard && field.value === "Standard") {
             field.onChange("Priority");
           } else if (disablePriority && field.value === "Priority") {
@@ -269,7 +231,6 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
 
           return (
             <View style={styles.row}>
-              {/* Priority Card */}
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={() => !disablePriority && field.onChange("Priority")}
@@ -279,34 +240,20 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
                   disablePriority && styles.disabledCard,
                 ]}
               >
-                <Text
-                  style={[
-                    styles.title,
-                    field.value === "Priority" && styles.selectedText,
-                  ]}
-                >
+                <Text style={[styles.title, field.value === "Priority" && styles.selectedText]}>
                   Priority
                 </Text>
-
                 <Text style={styles.subText}>Any Date within 24 hours</Text>
                 <Text style={styles.desc}>
-                  Skip the queue to get your music out extra fast or give
-                  yourself more time to pitch for playlists.
+                  Skip the queue to get your music out extra fast or give yourself more time to pitch for playlists.
                 </Text>
-
                 <View style={styles.footer}>
-                  <Text
-                    style={[
-                      styles.price,
-                      field.value === "Priority" && styles.selectedText,
-                    ]}
-                  >
+                  <Text style={[styles.price, field.value === "Priority" && styles.selectedText]}>
                     +{symbol}{convertedPrice} {currency}
                   </Text>
                 </View>
               </TouchableOpacity>
 
-              {/* Standard Card */}
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={() => !disableStandard && field.onChange("Standard")}
@@ -316,28 +263,15 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
                   disableStandard && styles.disabledCard,
                 ]}
               >
-                <Text
-                  style={[
-                    styles.title,
-                    field.value === "Standard" && styles.selectedText,
-                  ]}
-                >
+                <Text style={[styles.title, field.value === "Standard" && styles.selectedText]}>
                   Standard
                 </Text>
-
                 <Text style={styles.subText}>10 Days+ from Current Date</Text>
                 <Text style={styles.desc}>
-                  We'll let you know when your music has been processed and sent
-                  to stores.
+                  We'll let you know when your music has been processed and sent to stores.
                 </Text>
-
                 <View style={styles.footer}>
-                  <Text
-                    style={[
-                      styles.price,
-                      field.value === "Standard" && styles.selectedText,
-                    ]}
-                  >
+                  <Text style={[styles.price, field.value === "Standard" && styles.selectedText]}>
                     Included
                   </Text>
                 </View>
@@ -353,51 +287,31 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
         control={control}
         rules={{ required: "Original Release Date is required" }}
         render={({ field: { value, onChange }, fieldState }) => {
-          const formatted = value
-            ? dayjs(value).format("DD/MM/YYYY")
-            : "Select date";
-
-          // 🗓 Maximum date = DigitalReleaseDate
+          const formatted = value ? dayjs(value).format("DD/MM/YYYY") : "Select date";
           const digitalReleaseDate = getValues("DigitalReleaseDate");
-          const maxDate = digitalReleaseDate
-            ? dayjs(digitalReleaseDate).toDate()
-            : undefined;
+          const maxDate = digitalReleaseDate ? dayjs(digitalReleaseDate).toDate() : undefined;
 
           return (
             <View style={styles.digitalContainer}>
               <Text style={styles.digitalLabel}>Original Release Date</Text>
-
-              {/* Touchable Input */}
               <TouchableOpacity
-                style={[
-                  styles.input,
-                  fieldState.error && { borderColor: Colors.error },
-                ]}
+                style={[styles.input, fieldState.error && { borderColor: Colors.error }]}
                 onPress={() => setShow(true)}
               >
-                <Text
-                  style={{
-                    color: value ? Colors.black : Colors.gray,
-                    fontSize: 14,
-                  }}
-                >
+                <Text style={{ color: value ? Colors.black : Colors.gray, fontSize: 14 }}>
                   {formatted}
                 </Text>
               </TouchableOpacity>
 
-              {/* Calendar Modal */}
               <Modal visible={show} transparent animationType="slide">
                 <View style={styles.modalOverlay}>
                   <View style={styles.calendarContainer}>
                     <View style={styles.modalHeader}>
-                      <Text style={styles.modalTitle}>
-                        Select Original Release Date
-                      </Text>
+                      <Text style={styles.modalTitle}>Select Original Release Date</Text>
                       <TouchableOpacity onPress={() => setShow(false)}>
                         <Text style={styles.closeText}>Cancel</Text>
                       </TouchableOpacity>
                     </View>
-
                     <CalendarPicker
                       maxDate={maxDate}
                       todayBackgroundColor={Colors.lightPrimary}
@@ -406,8 +320,7 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
                       selectedDayStyle={{ backgroundColor: Colors.primary }}
                       onDateChange={(date) => {
                         if (date) {
-                          const formattedDate =
-                            dayjs(date).format("YYYY-MM-DD");
+                          const formattedDate = dayjs(date).format("YYYY-MM-DD");
                           onChange(formattedDate);
                           setShow(false);
                         }
@@ -416,11 +329,7 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
                   </View>
                 </View>
               </Modal>
-
-              {/* Validation Error */}
-              {fieldState.error && (
-                <Text style={styles.errorText}>{fieldState.error.message}</Text>
-              )}
+              {fieldState.error && <Text style={styles.errorText}>{fieldState.error.message}</Text>}
             </View>
           );
         }}
@@ -436,15 +345,142 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
         items={["Entire World", "India", "Canada"]}
       />
 
-      {/* Music Stores */}
-      <SelectInputField
-        control={control}
+      {/* 📊 Music Stores Bottom Sheet with Images Fixed */}
+      <Controller
         name="MusicStores"
-        label="Music Stores"
-        placeholder="Select Stores"
-        multiple
+        control={control}
         rules={{ required: "Please select at least one store" }}
-        items={musicStores}
+        render={({ field: { value = [], onChange }, fieldState }) => {
+          const selectedCount = value?.length || 0;
+          const displayValue = selectedCount > 0 ? `${selectedCount} Stores Selected` : "Select Stores";
+
+          const toggleStore = (storeId: string, storeName: string) => {
+            const isSel = value.includes(storeId) || value.includes(storeName);
+            if (isSel) {
+              onChange(value.filter((id: string) => id !== storeId && id !== storeName));
+            } else {
+              onChange([...value, storeId]);
+            }
+          };
+
+          const handleSelectAll = () => {
+            setStoreSelectionMode("all");
+            const allStoreIds = musicStores.map((s: any) => s.id || s); 
+            onChange(allStoreIds);
+          };
+
+          return (
+            <View style={styles.digitalContainer}>
+              <Text style={styles.digitalLabel}>Music Stores</Text>
+              <TouchableOpacity
+                style={[styles.input, fieldState.error && { borderColor: Colors.error }]}
+                onPress={() => setStoreModalVisible(true)}
+              >
+                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                  <Text style={{ color: selectedCount > 0 ? Colors.black : Colors.gray, fontSize: 14 }}>
+                    {displayValue}
+                  </Text>
+                  <MaterialIcons name="arrow-drop-down" size={24} color={Colors.gray} />
+                </View>
+              </TouchableOpacity>
+
+              <Modal visible={storeModalVisible} transparent animationType="slide">
+                <View style={styles.modalOverlay}>
+                  <View style={styles.bottomSheetContainer}>
+                    <View style={styles.bsHeader}>
+                      <View>
+                        <Text style={styles.bsTitle}>Digital Stores</Text>
+                        <Text style={styles.bsSubtitle}>Which Stores would you like</Text>
+                      </View>
+                      <TouchableOpacity onPress={() => setStoreModalVisible(false)}>
+                        <MaterialIcons name="close" size={24} color={Colors.black} />
+                      </TouchableOpacity>
+                    </View>
+
+                      {/* Top Strategies */}
+                      <View style={styles.strategyContainer}>
+                        <TouchableOpacity style={styles.strategyRow} onPress={handleSelectAll}>
+                          <MaterialIcons 
+                            name={storeSelectionMode === "all" ? "check-box" : "check-box-outline-blank"} 
+                            size={24} 
+                            color={storeSelectionMode === "all" ? Colors.primary : Colors.gray} 
+                          />
+                          <View style={{ marginLeft: 10 }}>
+                            <Text style={styles.strategyTitle}>All stores</Text>
+                            <Text style={styles.strategyDesc}>Select all stores.</Text>
+                          </View>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.strategyRow} onPress={() => setStoreSelectionMode("custom")}>
+                          <MaterialIcons 
+                            name={storeSelectionMode === "custom" ? "check-box" : "check-box-outline-blank"} 
+                            size={24} 
+                            color={storeSelectionMode === "custom" ? Colors.primary : Colors.gray} 
+                          />
+                          <View style={{ marginLeft: 10 }}>
+                            <Text style={styles.strategyTitle}>Custom selection of stores</Text>
+                            <Text style={styles.strategyDesc}>Choose your own mix of streaming, download and social platforms.</Text>
+                          </View>
+                        </TouchableOpacity>
+                      </View>
+
+                      {/* 🖼 Store Row Items rendered with Real Image assets */}
+                      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 30 }}>
+                      {musicStores.map((store: any) => {
+                        const storeId = store.id || store;
+                        const storeName = store.name || store;
+                        const storeSub = store.subText || "STORE";
+                        const isSelected = value.includes(storeId) || value.includes(storeName);
+                        
+                        const LogoComponent = store.logo;
+                        // Handle image source securely (URI string or local module requirement)
+                        const imageSource = typeof store.logo === "string" ? { uri: store.logo } : store.logo;
+
+                        return (
+                          <TouchableOpacity 
+                            key={storeId} 
+                            style={styles.storeItemRow}
+                            onPress={() => toggleStore(storeId, storeName)}
+                          >
+                            <View style={{ flexDirection: "row", alignItems: "center" }}>
+                              {LogoComponent ? (
+                                typeof LogoComponent === "function" || typeof LogoComponent === "object" ? (
+                                  <View style={[styles.storeLogoImage, { justifyContent: "center", alignItems: "center", overflow: "hidden", backgroundColor: "transparent" }]}>
+                                    <LogoComponent width={40} height={40} />
+                                  </View>
+                                ) : (
+                                  <Image 
+                                    source={imageSource} 
+                                    style={styles.storeLogoImage} 
+                                    resizeMode="cover"
+                                  />
+                                )
+                              ) : (
+                                <View style={styles.storeLogoFallback}>
+                                  <Text style={{ fontSize: 10, fontWeight: "bold" }}>{storeName.slice(0,2).toUpperCase()}</Text>
+                                </View>
+                              )}
+                              <View style={{ marginLeft: 12 }}>
+                                <Text style={styles.storeNameText}>{storeName}</Text>
+                                <Text style={styles.storeSubText}>{storeSub}</Text>
+                              </View>
+                            </View>
+                            <MaterialIcons 
+                              name={isSelected ? "check-box" : "check-box-outline-blank"} 
+                              size={24} 
+                              color={isSelected ? Colors.primary : "#D1D1D6"} 
+                            />
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </ScrollView>
+                  </View>
+                </View>
+              </Modal>
+              {fieldState.error && <Text style={styles.errorText}>{fieldState.error.message}</Text>}
+            </View>
+          );
+        }}
       />
 
       {/* Price Category */}
@@ -465,20 +501,13 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
                     field.value === cat && styles.priceButtonActive,
                   ]}
                 >
-                  <Text
-                    style={[
-                      styles.priceText,
-                      field.value === cat && styles.priceTextActive,
-                    ]}
-                  >
+                  <Text style={[styles.priceText, field.value === cat && styles.priceTextActive]}>
                     {cat}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
-            {fieldState.error && (
-              <Text style={styles.errorText}>{fieldState.error.message}</Text>
-            )}
+            {fieldState.error && <Text style={styles.errorText}>{fieldState.error.message}</Text>}
           </View>
         )}
       />
@@ -634,5 +663,87 @@ const styles = StyleSheet.create({
   },
   priceTextActive: {
     color: Colors.white,
+  },
+  
+  /* 📊 Bottom Sheet Container Layout */
+  bottomSheetContainer: {
+    backgroundColor: Colors.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    maxHeight: "85%",
+  },
+  bsHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 20,
+  },
+  bsTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: Colors.black,
+  },
+  bsSubtitle: {
+    fontSize: 14,
+    color: "#8E8E93",
+    marginTop: 4,
+  },
+  strategyContainer: {
+    backgroundColor: "#F2F2F7",
+    borderRadius: 12,
+    padding: 16,
+    gap: 16,
+    marginBottom: 20,
+  },
+  strategyRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+  strategyTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: Colors.black,
+  },
+  strategyDesc: {
+    fontSize: 13,
+    color: "#8E8E93",
+    marginTop: 2,
+    paddingRight: 20,
+  },
+  storeItemRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#F2F2F7",
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 10,
+  },
+  storeLogoImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: "#E5E5EA",
+  },
+  storeLogoFallback: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: "#E5E5EA",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  storeNameText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: Colors.black,
+  },
+  storeSubText: {
+    fontSize: 11,
+    color: "#AEAEB2",
+    textTransform: "uppercase",
+    marginTop: 2,
   },
 });

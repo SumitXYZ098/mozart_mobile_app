@@ -1,3 +1,43 @@
+import AmazonMusicIcon from "../../../../../assets/storeIcon/amazonMusic.svg";
+import AnghamiIcon from "../../../../../assets/storeIcon/anghami.svg";
+import AppleMusicIcon from "../../../../../assets/storeIcon/appleMusic.svg";
+import AudibleMagicIcon from "../../../../../assets/storeIcon/audibleMagic.svg";
+import AwaIcon from "../../../../../assets/storeIcon/awa.svg";
+import BeatportIcon from "../../../../../assets/storeIcon/beatport.svg";
+import BoomplayIcon from "../../../../../assets/storeIcon/boomplay.svg";
+import ClaroMusicIcon from "../../../../../assets/storeIcon/claroMusic.svg";
+import DeezerIcon from "../../../../../assets/storeIcon/deezer.svg";
+import DouYinIcon from "../../../../../assets/storeIcon/douYin.svg";
+import FloIcon from "../../../../../assets/storeIcon/flo.svg";
+import IHeartIcon from "../../../../../assets/storeIcon/iHeart.svg";
+import JooxIcon from "../../../../../assets/storeIcon/joox.svg";
+import KDigitalIcon from "../../../../../assets/storeIcon/kDigital.svg";
+import KanjianIcon from "../../../../../assets/storeIcon/kanjian.svg";
+import KkboxIcon from "../../../../../assets/storeIcon/kkbox.svg";
+import LickdIcon from "../../../../../assets/storeIcon/lickd.svg";
+import LissenIcon from "../../../../../assets/storeIcon/lissen.svg";
+import MassiveIcon from "../../../../../assets/storeIcon/massive.svg";
+import MetaIcon from "../../../../../assets/storeIcon/meta.svg";
+import MixCloudIcon from "../../../../../assets/storeIcon/mixCloud.svg";
+import NetCaseIcon from "../../../../../assets/storeIcon/netCase.svg";
+import PandoraIcon from "../../../../../assets/storeIcon/pandora.svg";
+import PelotonIcon from "../../../../../assets/storeIcon/peloton.svg";
+import QobuzIcon from "../../../../../assets/storeIcon/qobuz.svg";
+import SaavnIcon from "../../../../../assets/storeIcon/saavn.svg";
+import SodaMusicIcon from "../../../../../assets/storeIcon/sodaMusic.svg";
+import SoundcloudIcon from "../../../../../assets/storeIcon/soundcloud.svg";
+import SoundexIcon from "../../../../../assets/storeIcon/soundex.svg";
+import SpotifyIcon from "../../../../../assets/storeIcon/spotify.svg";
+import SupernaturalIcon from "../../../../../assets/storeIcon/supernatural.svg";
+import TaobaoIcon from "../../../../../assets/storeIcon/taobao.svg";
+import TencentIcon from "../../../../../assets/storeIcon/tencent.svg";
+import TidalIcon from "../../../../../assets/storeIcon/tidal.svg";
+import TiktokIcon from "../../../../../assets/storeIcon/tiktok.svg";
+import TunedGlobalIcon from "../../../../../assets/storeIcon/tunedGlobal.svg";
+import UdioIcon from "../../../../../assets/storeIcon/udio.svg";
+import YangoPlayIcon from "../../../../../assets/storeIcon/yangoPlay.svg";
+import YoutubeMusicIcon from "../../../../../assets/storeIcon/youtubeMusic.svg";
+
 export const genresList = [
   "Alternative",
   "Alternative/Experimental",
@@ -460,9 +500,43 @@ export const languagesList = [
 export const priceCategories = ["Budget", "Mid", "Full", "Premium"];
 
 export const musicStores = [
-  "Spotify",
-  "Youtube Music",
-  "Apple Music",
-  "Amoeba Music",
-  "Local Music Store",
+  { id: "spotify", name: "Spotify", subText: "SPO", logo: SpotifyIcon },
+  { id: "youtubeMusic", name: "Youtube Music", subText: "YTM", logo: YoutubeMusicIcon },
+  { id: "appleMusic", name: "Apple Music", subText: "APM", logo: AppleMusicIcon },
+  { id: "amazonMusic", name: "Amazon Music", subText: "AMZ", logo: AmazonMusicIcon },
+  { id: "anghami", name: "Anghami", subText: "ANG", logo: AnghamiIcon },
+  { id: "audibleMagic", name: "Audible Magic", subText: "AUM", logo: AudibleMagicIcon },
+  { id: "awa", name: "AWA", subText: "AWA", logo: AwaIcon },
+  { id: "beatport", name: "Beatport", subText: "BTP", logo: BeatportIcon },
+  { id: "boomplay", name: "Boomplay", subText: "BMP", logo: BoomplayIcon },
+  { id: "claroMusic", name: "Claro Música", subText: "CLR", logo: ClaroMusicIcon },
+  { id: "deezer", name: "Deezer", subText: "DEE", logo: DeezerIcon },
+  { id: "douYin", name: "Douyin", subText: "DY", logo: DouYinIcon },
+  { id: "flo", name: "FLO", subText: "FLO", logo: FloIcon },
+  { id: "iHeart", name: "iHeartRadio", subText: "IHR", logo: IHeartIcon },
+  { id: "joox", name: "JOOX", subText: "JOX", logo: JooxIcon },
+  { id: "kDigital", name: "K-Digital", subText: "KDM", logo: KDigitalIcon },
+  { id: "kanjian", name: "Kanjian", subText: "KAN", logo: KanjianIcon },
+  { id: "kkbox", name: "KKBOX", subText: "KKX", logo: KkboxIcon },
+  { id: "lickd", name: "Lickd", subText: "LKD", logo: LickdIcon },
+  { id: "lissen", name: "Lissen", subText: "LIS", logo: LissenIcon },
+  { id: "massive", name: "Massive Music", subText: "MSV", logo: MassiveIcon },
+  { id: "meta", name: "Meta (FB / Instagram)", subText: "META", logo: MetaIcon },
+  { id: "mixCloud", name: "Mixcloud", subText: "MXC", logo: MixCloudIcon },
+  { id: "netCase", name: "NetEase Cloud Music", subText: "NTE", logo: NetCaseIcon },
+  { id: "pandora", name: "Pandora", subText: "PND", logo: PandoraIcon },
+  { id: "peloton", name: "Peloton", subText: "PLT", logo: PelotonIcon },
+  { id: "qobuz", name: "Qobuz", subText: "QBZ", logo: QobuzIcon },
+  { id: "saavn", name: "JioSaavn", subText: "JSV", logo: SaavnIcon },
+  { id: "sodaMusic", name: "Soda Music", subText: "SDA", logo: SodaMusicIcon },
+  { id: "soundcloud", name: "Soundcloud", subText: "SND", logo: SoundcloudIcon },
+  { id: "soundex", name: "SoundEx", subText: "SDX", logo: SoundexIcon },
+  { id: "supernatural", name: "Supernatural", subText: "SUPNAT", logo: SupernaturalIcon },
+  { id: "taobao", name: "Taobao", subText: "XIAM", logo: TaobaoIcon },
+  { id: "tencent", name: "Tencent", subText: "TNCT", logo: TencentIcon },
+  { id: "tidal", name: "Tidal", subText: "WIMP", logo: TidalIcon },
+  { id: "tiktok", name: "TikTok", subText: "TIKTOK", logo: TiktokIcon },
+  { id: "tunedGlobal", name: "Tuned Global", subText: "TGLOBAL", logo: TunedGlobalIcon },
+  { id: "udio", name: "Udio", subText: "UDIO", logo: UdioIcon },
+  { id: "yangoPlay", name: "Yango Play", subText: "YGP", logo: YangoPlayIcon },
 ];

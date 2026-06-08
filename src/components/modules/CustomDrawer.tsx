@@ -24,6 +24,7 @@ import Royalties from "../../../assets/images/royalties.png";
 import { LinearGradient } from "expo-linear-gradient";
 import { Controller, useForm } from "react-hook-form";
 import * as ImagePicker from "expo-image-picker";
+import { useTranslation } from "@/utils/translations";
 import {
   deleteUploadFileById,
   getUploadFileById,
@@ -41,6 +42,7 @@ interface FormValues {
 
 export default function CustomDrawer(props: any) {
   const { user } = useAuthStore();
+  const { t } = useTranslation();
   const { control, handleSubmit, reset, setValue, watch } = useForm<FormValues>(
     {
       mode: "onBlur",
@@ -113,14 +115,14 @@ export default function CustomDrawer(props: any) {
       Alert.alert(
         "Upload Error",
         err?.response?.data?.error?.message ||
-          err?.message ||
-          "Failed to upload image."
+        err?.message ||
+        "Failed to upload image."
       );
     } finally {
       setUploading(false);
     }
   };
-  
+
   // ✅ Clear image
   const handleClear = async () => {
     const attachment = watch("attachment");
@@ -212,7 +214,7 @@ export default function CustomDrawer(props: any) {
             height: 20,
           }}
         />
-        <Text style={styles.itemText}>Artists</Text>
+        <Text style={styles.itemText}>{t("artists")}</Text>
       </TouchableOpacity>
       {/* Catalogue */}
       <TouchableOpacity
@@ -231,7 +233,7 @@ export default function CustomDrawer(props: any) {
             height: 20,
           }}
         />
-        <Text style={styles.itemText}>Catalogue</Text>
+        <Text style={styles.itemText}>{t("catalogue")}</Text>
       </TouchableOpacity>
       {/* Royalties */}
       <TouchableOpacity
@@ -250,7 +252,7 @@ export default function CustomDrawer(props: any) {
             height: 20,
           }}
         />
-        <Text style={styles.itemText}>Royalties</Text>
+        <Text style={styles.itemText}>{t("royalties")}</Text>
       </TouchableOpacity>
       {/* FAQs */}
       <TouchableOpacity
@@ -269,7 +271,7 @@ export default function CustomDrawer(props: any) {
             height: 20,
           }}
         />
-        <Text style={styles.itemText}>FAQs</Text>
+        <Text style={styles.itemText}>{t("faqs")}</Text>
       </TouchableOpacity>
       {/* Live Chat */}
       <TouchableOpacity
@@ -288,7 +290,7 @@ export default function CustomDrawer(props: any) {
             height: 20,
           }}
         />
-        <Text style={styles.itemText}>Live Chat</Text>
+        <Text style={styles.itemText}>{t("live_chat")}</Text>
       </TouchableOpacity>
       {/* Open Modal Instead of Screen */}
       <TouchableOpacity
@@ -307,7 +309,7 @@ export default function CustomDrawer(props: any) {
             height: 20,
           }}
         />
-        <Text style={styles.itemText}>Contact Form</Text>
+        <Text style={styles.itemText}>{t("contact_form")}</Text>
       </TouchableOpacity>
       {/* Support Modal */}
       <Modal
@@ -329,7 +331,7 @@ export default function CustomDrawer(props: any) {
                 marginBottom: 16,
               }}
             >
-              <Text style={styles.modalTitle}>Raise a Support Ticket</Text>
+              <Text style={styles.modalTitle}>{t("raise_ticket")}</Text>
 
               <TouchableOpacity onPress={() => setIsModalVisible(false)}>
                 <MaterialIcons name="close" size={24} color={Colors.gray} />

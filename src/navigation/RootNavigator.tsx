@@ -5,6 +5,7 @@ import { ActivityIndicator, View } from "react-native";
 import { Colors } from "@/theme/colors";
 import AuthNavigator from "./AuthNavigator";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useLanguageStore } from "@/stores/useLanguageStore";
 import DrawerNavigator from "./DrawerNavigator";
 import ChoosePlanScreen from "@/screens/app/ChoosePlanScreen";
 import UpgradePlanScreen from "@/screens/app/UpgradePlanScreen";
@@ -20,9 +21,11 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
   const { user, isAuthLoaded, loadUserFromStorage } = useAuthStore();
+  const { loadLanguageFromStorage } = useLanguageStore();
 
   useEffect(() => {
     loadUserFromStorage();
+    loadLanguageFromStorage();
   }, []);
 
   if (!isAuthLoaded) {

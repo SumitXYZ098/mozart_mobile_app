@@ -61,6 +61,7 @@ const CoverArtStep: React.FC<CoverArtStepProps> = ({ draftFormData }) => {
         );
         return;
       }
+      console.log("Launching image picker...",);
 
       // Launch picker
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -84,13 +85,37 @@ const CoverArtStep: React.FC<CoverArtStepProps> = ({ draftFormData }) => {
 
       // --- Upload process ---
       setUploading(true);
-      setUploadProgress(0);
+      setUploadProgress(1);
 
-      const uploaded = await uploadFile(file, (progress) =>
-        setUploadProgress(progress)
-      );
+      // Simulated progress: smoothly goes 1% → 95% while upload runs
+      let simProgress = 1;
+      const progressTimer = setInterval(() => {
+        if (simProgress < 30) {
+          simProgress += Math.floor(Math.random() * 5) + 3;
+        } else if (simProgress < 70) {
+          simProgress += Math.floor(Math.random() * 3) + 1;
+        } else if (simProgress < 95) {
+          simProgress += 1;
+        }
+        if (simProgress > 95) simProgress = 95;
+        setUploadProgress(simProgress);
+      }, 200);
 
-      const imageId = uploaded?.[0]?.id;
+      let uploaded;
+      try {
+        uploaded = await uploadFile(file, (realProgress) => {
+          if (realProgress > simProgress) {
+            simProgress = realProgress;
+            setUploadProgress(realProgress);
+          }
+        });
+      } finally {
+        clearInterval(progressTimer);
+      }
+      setUploadProgress(100);
+
+      const imageId = uploaded?.id;
+      console.log("Upload completed. Image ID:", imageId);
       if (imageId) {
         setValue("CoverArt", imageId, { shouldValidate: true });
         const fileInfo = await getUploadFileById(imageId);
@@ -103,8 +128,8 @@ const CoverArtStep: React.FC<CoverArtStepProps> = ({ draftFormData }) => {
       Alert.alert(
         "Upload Error",
         err?.response?.data?.error?.message ||
-          err?.message ||
-          "Failed to upload image."
+        err?.message ||
+        "Failed to upload image."
       );
     } finally {
       setUploading(false);
@@ -167,7 +192,7 @@ const CoverArtStep: React.FC<CoverArtStepProps> = ({ draftFormData }) => {
                 <View style={styles.previewContainer}>
                   <Image
                     source={{
-                     uri: previewUrl,
+                      uri: previewUrl,
                     }}
                     style={styles.imagePreview}
                   />

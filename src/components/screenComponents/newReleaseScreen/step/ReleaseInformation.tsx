@@ -56,11 +56,11 @@ const ReleaseInformation: React.FC<ReleaseInformationProps> = ({
           releaseCreditsArray.length
             ? releaseCreditsArray
             : [
-                { artistName: "", roleName: "Primary Artist" },
-                { artistName: "", roleName: "Composer" },
-                { artistName: "", roleName: "Lyricist" },
-                { artistName: "", roleName: "Producer" },
-              ],
+              { artistName: "", roleName: "Primary Artist" },
+              { artistName: "", roleName: "Composer" },
+              { artistName: "", roleName: "Lyricist" },
+              { artistName: "", roleName: "Producer" },
+            ],
         );
       }
     }
