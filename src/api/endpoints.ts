@@ -2,9 +2,9 @@ const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 export const ENDPOINTS = {
 
   // Login/Signup Endpoint
-  REGISTER:`${BASE_URL}/api/auth/local/register`,
-  LOGIN:`${BASE_URL}/api/auth/local`,
-  CHECK_EMAIL:(email: string) => `${BASE_URL}/api/email-exists?email=${email}`,
+  REGISTER: `${BASE_URL}/api/auth/local/register`,
+  LOGIN: `${BASE_URL}/api/auth/local`,
+  CHECK_EMAIL: (email: string) => `${BASE_URL}/api/email-exists?email=${email}`,
   EMAIL_VERIFICATION: `${BASE_URL}/api/email/send-verification`,
   EMAIL_STATUS: (email: string) =>
     `${BASE_URL}/api/email/check-status?email=${email}`,

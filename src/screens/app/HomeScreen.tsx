@@ -27,6 +27,20 @@ export default function HomeScreen() {
   const isFocused = useIsFocused();
   const [notificationCount, setNotificationCount] = React.useState<number>(0);
 
+const getGreetingKey = (): "good_morning" | "good_afternoon" | "good_evening" | "good_night" => {
+  const hour = new Date().getHours();
+
+  if (hour < 12) {
+    return "good_morning";
+  } else if (hour < 17) {
+    return "good_afternoon";
+  } else if (hour < 21) {
+    return "good_evening";
+  } else {
+    return "good_night";
+  }
+};
+
   const fetchNotifications = React.useCallback(async () => {
     if (!user?.token) return;
     try {
@@ -112,7 +126,7 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.header}>
-            <Text style={styles.title}>{`${t("good_morning")}, ${user?.name}`}</Text>
+            <Text style={styles.title}>{`${t(getGreetingKey())}, ${user?.name}`}</Text>
             <Text style={styles.subtitle}>{t("welcome_to_mozart")}</Text>
           </View>
 

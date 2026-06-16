@@ -24,7 +24,7 @@ export function useSubscribe() {
       if (!user || !user.token || !user.id) {
         throw new Error("You must be logged in to purchase a subscription.");
       }
-      return subscribeToPlan(user.id, planName, user.token);
+      return subscribeToPlan(planName, user.token);
     },
     onSuccess: async (data, planName) => {
       if (user) {
@@ -52,11 +52,15 @@ export function useCreateStripeSession() {
   const { user } = useAuthStore();
 
   return useMutation({
-    mutationFn: async (planName: string) => {
+    mutationFn: async ({
+      planName,
+    }: {
+      planName: string;
+    }) => {
       if (!user || !user.token || !user.id) {
         throw new Error("You must be logged in to purchase a subscription.");
       }
-      return createStripeSession(user.id, planName, user.token);
+      return createStripeSession(planName, user.token);
     },
     onError: (error: any) => {
       console.error("Create Stripe session error:", error);
@@ -181,7 +185,7 @@ export function useCreateUpgradeSession() {
       if (!user || !user.token || !user.id) {
         throw new Error("You must be logged in to purchase a subscription.");
       }
-      return createUpgradeSession(user.id, planName, user.token);
+      return createUpgradeSession(planName, user.token);
     },
     onError: (error: any) => {
       console.error("Create upgrade session error:", error);

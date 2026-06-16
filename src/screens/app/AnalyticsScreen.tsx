@@ -62,19 +62,19 @@ const MOCK_DATA: Record<
   }
 > = {
   [PERIODS.DAYS_7]: {
-    total: "9,842",
-    totalFormatted: "9.8K",
-    change: "+12.45%",
-    isNegative: false,
-    dateRange: "30 May - 05 Jun 2026",
+    total: "9,476",
+    totalFormatted: "9.4K",
+    change: "-7.29%",
+    isNegative: true,
+    dateRange: "15 Aug - 22 Aug 2025",
     points: [
-      { label: "May 30", value: 1000 },
-      { label: "May 31", value: 1050 },
-      { label: "Jun 1", value: 1100 },
-      { label: "Jun 2", value: 1500 },
-      { label: "Jun 3", value: 1700 },
-      { label: "Jun 4", value: 1600 },
-      { label: "Jun 5", value: 1892 },
+      { label: "Sun", value: 1520 },
+      { label: "Mon", value: 1410 },
+      { label: "Tue", value: 1200 },
+      { label: "Wed", value: 1310 },
+      { label: "Thu", value: 1220 },
+      { label: "Fri", value: 1080 },
+      { label: "Sat", value: 1736 },
     ],
   },
   [PERIODS.DAYS_14]: {
@@ -82,31 +82,38 @@ const MOCK_DATA: Record<
     totalFormatted: "24K",
     change: "-3.15%",
     isNegative: true,
-    dateRange: "23 May - 05 Jun 2026",
+    dateRange: "09 Aug - 22 Aug 2025",
     points: [
-      { label: "May 23", value: 1200 },
-      { label: "May 25", value: 1300 },
-      { label: "May 27", value: 1550 },
-      { label: "May 29", value: 1600 },
-      { label: "May 31", value: 1750 },
-      { label: "Jun 2", value: 2100 },
-      { label: "Jun 4", value: 2400 },
+      { label: "Aug 9", value: 1600 },
+      { label: "Aug 10", value: 1550 },
+      { label: "Aug 11", value: 1700 },
+      { label: "Aug 12", value: 1620 },
+      { label: "Aug 13", value: 1500 },
+      { label: "Aug 14", value: 1800 },
+      { label: "Aug 15", value: 1950 },
+      { label: "Aug 16", value: 1700 },
+      { label: "Aug 17", value: 1650 },
+      { label: "Aug 18", value: 1820 },
+      { label: "Aug 19", value: 1710 },
+      { label: "Aug 20", value: 1680 },
+      { label: "Aug 21", value: 1580 },
+      { label: "Aug 22", value: 2140 },
     ],
   },
   [PERIODS.DAYS_30]: {
     total: "69,000",
     totalFormatted: "69K",
-    change: "+24.8%",
+    change: "+24.80%",
     isNegative: false,
-    dateRange: "07 May - 05 Jun 2026",
+    dateRange: "24 Jul - 22 Aug 2025",
     points: [
-      { label: "May 7", value: 1500 },
-      { label: "May 12", value: 1650 },
-      { label: "May 17", value: 1850 },
-      { label: "May 22", value: 1950 },
-      { label: "May 27", value: 2200 },
-      { label: "Jun 1", value: 2700 },
-      { label: "Jun 5", value: 3300 },
+      { label: "Jul 24", value: 10000 },
+      { label: "Jul 29", value: 11500 },
+      { label: "Aug 3", value: 10800 },
+      { label: "Aug 8", value: 12200 },
+      { label: "Aug 13", value: 11900 },
+      { label: "Aug 18", value: 13100 },
+      { label: "Aug 22", value: 14500 },
     ],
   },
 };
@@ -192,7 +199,7 @@ const parseDateString = (dateStr: string) => {
       const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
       return `${months[d.getMonth()]} ${d.getDate()}`;
     }
-  } catch {}
+  } catch { }
 
   return dateStr;
 };
@@ -204,16 +211,18 @@ const mapApiData = (apiData: any[], period: string) => {
   return apiData.map((item: any) => {
     let label = "";
     if (item.label) label = item.label;
-    else if (item.day) label = item.day;
+    else if (item.day) label = parseDateString(item.day);
     else if (item.date) {
       label = parseDateString(item.date);
     }
 
     let value = 0;
     if (typeof item.value === "number") value = item.value;
+    else if (typeof item.totalStreams === "number") value = item.totalStreams;
     else if (typeof item.streams === "number") value = item.streams;
     else if (typeof item.count === "number") value = item.count;
     else if (typeof item.streams_count === "number") value = item.streams_count;
+    else if (item.totalStreams) value = parseFloat(item.totalStreams) || 0;
     else if (item.value) value = parseFloat(item.value) || 0;
     else if (item.streams) value = parseFloat(item.streams) || 0;
     else if (item.count) value = parseFloat(item.count) || 0;
@@ -401,14 +410,8 @@ const AnalyticsScreen = () => {
       }
     }
 
-    return {
-      total: "0",
-      totalFormatted: "0",
-      change: "0%",
-      isNegative: false,
-      dateRange: "",
-      points: [],
-    };
+    // Robust Mock Data Fallback
+    return MOCK_DATA[selectedPeriod] || MOCK_DATA[PERIODS.DAYS_7];
   }, [apiData, apiResponse, selectedPeriod]);
 
   // Compile Best Performing Stores data
@@ -426,9 +429,17 @@ const AnalyticsScreen = () => {
       };
     }
 
+    // Robust Mock Data Fallback
+    const fallbackStores = MOCK_BEST_STORES[selectedPeriod] || MOCK_BEST_STORES[PERIODS.DAYS_7];
+    const totalSum = fallbackStores.reduce(
+      (sum, item) => sum + (item.totalUnits || 0),
+      0
+    );
+    const totalStr = formatTotalUnitsLabel(totalSum);
+
     return {
-      total: "0",
-      data: [],
+      total: totalStr,
+      data: fallbackStores,
     };
   }, [storesApiData, selectedPeriod]);
 
@@ -528,7 +539,7 @@ const AnalyticsScreen = () => {
           <View>
             {/* Title Section */}
             <Text style={styles.sectionTitle}>Your Streams & Downloads</Text>
-            <Text style={styles.sectionSubtitle}>Performing Store</Text>
+            <Text style={styles.sectionSubtitle}>Preforming Store</Text>
 
             {/* Store Dropdown Trigger */}
             <TouchableOpacity
@@ -545,35 +556,56 @@ const AnalyticsScreen = () => {
               </View>
             ) : (
               <View style={styles.cardsStack}>
+                {/* Sub Period selector tabs outside the chart, above the report card */}
+                <View style={styles.chartPeriodBar}>
+                  {(
+                    [
+                      { label: "7 Days", value: PERIODS.DAYS_7 },
+                      { label: "14 Days", value: PERIODS.DAYS_14 },
+                      { label: "30 Days", value: PERIODS.DAYS_30 },
+                    ] as const
+                  ).map((item, index, arr) => {
+                    const isActive = selectedPeriod === item.value;
+                    const showDivider =
+                      index > 0 &&
+                      !isActive &&
+                      selectedPeriod !== arr[index - 1].value;
+
+                    return (
+                      <React.Fragment key={item.value}>
+                        {showDivider && <View style={styles.divider} />}
+                        <TouchableOpacity
+                          onPress={() => setSelectedPeriod(item.value)}
+                          style={[
+                            styles.periodButton,
+                            isActive && styles.periodButtonActive,
+                          ]}
+                          activeOpacity={0.8}
+                        >
+                          <Text
+                            style={[
+                              styles.periodButtonText,
+                              isActive && styles.periodButtonTextActive,
+                            ]}
+                          >
+                            {item.label}
+                          </Text>
+                        </TouchableOpacity>
+                      </React.Fragment>
+                    );
+                  })}
+                </View>
+
                 {/* Metric Summary Card: Left purple accent bar and brand shadows */}
                 <View style={styles.reportCard}>
-                  <View style={styles.reportHeader}>
-                    <Text style={styles.reportTitle}>{getPeriodLabel()}</Text>
-                    <Text style={styles.reportDate}>
-                      {activeDataset.dateRange}
-                    </Text>
-                  </View>
                   <View style={styles.reportRow}>
-                    <View style={styles.metricContainer}>
-                      <Text style={styles.metricValue}>
-                        {activeDataset.total}
-                      </Text>
-                      <Text style={styles.metricLabel}>Total Streams</Text>
+                    <View style={styles.reportLeftColumn}>
+                      <Text style={styles.reportTitle}>Streaming Report</Text>
+                      <Text style={styles.reportSubtitle}>Last Reporting Days</Text>
                     </View>
-                    <View style={styles.changeContainer}>
-                      <Text
-                        style={[
-                          styles.changeValue,
-                          {
-                            color: activeDataset.isNegative
-                              ? Colors.red
-                              : Colors.green,
-                          },
-                        ]}
-                      >
-                        {activeDataset.change}
-                      </Text>
-                      <Text style={styles.changeLabel}>{getVsPeriodLabel()}</Text>
+                    <View style={styles.reportRightColumn}>
+                      <Text style={styles.reportValue}>{activeDataset.total}</Text>
+                      <Text style={styles.reportMetricLabel}>Total Streams</Text>
                     </View>
                   </View>
                 </View>
@@ -581,8 +613,6 @@ const AnalyticsScreen = () => {
                 {/* SVG Chart Component */}
                 <AnalyticsChart
                   points={activeDataset.points}
-                  selectedPeriod={selectedPeriod}
-                  setSelectedPeriod={setSelectedPeriod}
                 />
 
                 {/* Best Performing Stores Component (SVG Donut Chart) */}
@@ -590,6 +620,7 @@ const AnalyticsScreen = () => {
                   data={bestPerformingStoresDataset.data}
                   loading={storesLoading && !refreshing}
                   totalStreams={bestPerformingStoresDataset.total}
+                  isEarnings={true}
                 />
               </View>
             )}
@@ -610,7 +641,7 @@ const AnalyticsScreen = () => {
                 No financial transactions or sales records are currently
                 available. Reports are compiled monthly after processing.
               </Text>
-              
+
               <TouchableOpacity
                 style={styles.salesActionButton}
                 onPress={() =>
@@ -804,72 +835,84 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     rowGap: 24,
   },
-  reportCard: {
-    backgroundColor: Colors.white,
-    borderRadius: 24,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: "#F0EFFB",
-    borderLeftWidth: 4,
-    borderLeftColor: Colors.primary, // Left vertical accent line
-    shadowColor: "#6739B7",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.05,
-    shadowRadius: 16,
-    elevation: 3,
-    paddingLeft: 18,
-  },
-  reportHeader: {
+  chartPeriodBar: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    backgroundColor: "#F7F7F7",
+    borderRadius: 14,
+    padding: 4,
     alignItems: "center",
-    marginBottom: 14,
+    width: "100%",
   },
-  reportTitle: {
-    fontSize: 14,
+  periodButton: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 10,
+  },
+  periodButtonActive: {
+    backgroundColor: Colors.primary,
+  },
+  periodButtonText: {
+    fontSize: 12,
     fontFamily: "PlusJakartaSans_600SemiBold",
     fontWeight: "600",
-    color: "#333",
+    color: "#7A7A7A",
   },
-  reportDate: {
-    fontSize: 11,
-    fontFamily: "Poppins_400Regular",
-    color: Colors.gray,
+  periodButtonTextActive: {
+    color: Colors.white,
+    fontFamily: "PlusJakartaSans_700Bold",
+  },
+  divider: {
+    width: 1,
+    height: 14,
+    backgroundColor: "#E5E5E5",
+  },
+  reportCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.10,
+    shadowRadius: 12,
+    elevation: 5,
   },
   reportRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-end",
+    alignItems: "center",
   },
-  metricContainer: {
+  reportLeftColumn: {
     flexDirection: "column",
   },
-  metricValue: {
+  reportTitle: {
+    fontSize: 18,
+    fontFamily: "PlusJakartaSans_700Bold",
+    fontWeight: "700",
+    color: "#1A1A1A",
+  },
+  reportSubtitle: {
+    fontSize: 12,
+    fontFamily: "Poppins_400Regular",
+    color: "#A0A0A0",
+    marginTop: 4,
+  },
+  reportRightColumn: {
+    flexDirection: "column",
+    alignItems: "flex-end",
+  },
+  reportValue: {
     fontSize: 32,
     fontFamily: "PlusJakartaSans_700Bold",
     fontWeight: "700",
     color: Colors.primary,
     lineHeight: 38,
   },
-  metricLabel: {
-    fontSize: 11,
+  reportMetricLabel: {
+    fontSize: 12,
     fontFamily: "Poppins_400Regular",
-    color: Colors.gray,
-    marginTop: 4,
-  },
-  changeContainer: {
-    alignItems: "flex-end",
-  },
-  changeValue: {
-    fontSize: 24,
-    fontFamily: "PlusJakartaSans_700Bold",
-    fontWeight: "700",
-    lineHeight: 28,
-  },
-  changeLabel: {
-    fontSize: 11,
-    fontFamily: "Poppins_400Regular",
-    color: Colors.gray,
+    color: "#A0A0A0",
     marginTop: 4,
   },
   salesContainer: {

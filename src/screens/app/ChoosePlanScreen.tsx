@@ -178,7 +178,9 @@ export default function ChoosePlanScreen() {
             setPaymentPlanName(plan.name);
             setIsLoadingOverlay(true);
             try {
-              const session = await createStripeSessionMutation(plan.name);
+              const session = await createStripeSessionMutation({
+                planName: plan.name,
+              });
               if (session?.url) {
                 setPendingSessionId(session.sessionId || "mock_session");
                 setCheckoutModalVisible(true);

@@ -2,6 +2,7 @@
   "expo": {
     "name": "mozart_mobile_app",
     "slug": "mozart_mobile_app",
+    "scheme": "mozart",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/splash.png",

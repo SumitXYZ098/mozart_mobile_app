@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   Dimensions,
 } from "react-native";
 import Svg, {
@@ -25,21 +24,9 @@ interface DataPoint {
 
 interface AnalyticsChartProps {
   points: DataPoint[];
-  selectedPeriod: string;
-  setSelectedPeriod: (period: string) => void;
 }
 
-const PERIODS = {
-  DAYS_7: "7days",
-  DAYS_14: "14days",
-  DAYS_30: "30days",
-};
-
-const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
-  points,
-  selectedPeriod,
-  setSelectedPeriod,
-}) => {
+const AnalyticsChart: React.FC<AnalyticsChartProps> = ({ points }) => {
   // Measure SVG dynamic width
   const defaultChartWidth = screenWidth - 88;
   const [chartWidth, setChartWidth] = useState<number>(defaultChartWidth);
@@ -50,8 +37,8 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
     if (points.length === 0) return [];
 
     const values = points.map((p) => p.value);
-    const maxVal = Math.max(...values, 1);
-    const minVal = Math.min(...values, 0);
+    const maxVal = Math.max(...values);
+    const minVal = Math.min(...values);
 
     return points.map((p, i) => {
       const x =
@@ -90,41 +77,6 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
 
   return (
     <View style={styles.chartCard}>
-      {/* Chart Card Header */}
-      <View style={styles.chartHeader}>
-        <Text style={styles.chartTitle}>Streams Overview</Text>
-        
-        {/* Sub Period selector tabs */}
-        <View style={styles.chartPeriodBar}>
-          {(
-            [
-              { label: "7 Days", value: PERIODS.DAYS_7 },
-              { label: "14 Days", value: PERIODS.DAYS_14 },
-              { label: "30 Days", value: PERIODS.DAYS_30 },
-            ] as const
-          ).map((item) => (
-            <TouchableOpacity
-              key={item.value}
-              onPress={() => setSelectedPeriod(item.value)}
-              style={[
-                styles.periodButton,
-                selectedPeriod === item.value && styles.periodButtonActive,
-              ]}
-              activeOpacity={0.8}
-            >
-              <Text
-                style={[
-                  styles.periodButtonText,
-                  selectedPeriod === item.value && styles.periodButtonTextActive,
-                ]}
-              >
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
       {/* Chart Svg Line */}
       <View
         style={styles.chartWrapper}
@@ -188,9 +140,27 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
                   showLabel = i === 0 || i === points.length - 1 || i % step === 0;
                 }
 
+                if (!showLabel) return null;
+
+                const x = chartPoints[i]?.x ?? 0;
+                const labelWidth = 50;
+                let leftPosition = x - labelWidth / 2;
+                // Clamp label position to stay within the chart boundaries
+                leftPosition = Math.max(0, Math.min(leftPosition, chartWidth - labelWidth));
+
                 return (
-                  <Text key={`label-${i}`} style={styles.xLabelText}>
-                    {showLabel ? pt.label : ""}
+                  <Text
+                    key={`label-${i}`}
+                    style={[
+                      styles.xLabelText,
+                      {
+                        position: "absolute",
+                        left: leftPosition,
+                        width: labelWidth,
+                      },
+                    ]}
+                  >
+                    {pt.label}
                   </Text>
                 );
               })}
@@ -207,65 +177,26 @@ export default AnalyticsChart;
 const styles = StyleSheet.create({
   chartCard: {
     backgroundColor: Colors.white,
-    borderRadius: 24,
+    borderRadius: 20,
     padding: 20,
-    borderWidth: 1,
-    borderColor: "#F0EFFB",
-    shadowColor: "#6739B7", // Premium brand shadow
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.05,
-    shadowRadius: 16,
-    elevation: 3,
-  },
-  chartHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  chartTitle: {
-    fontSize: 16,
-    fontFamily: "PlusJakartaSans_700Bold",
-    fontWeight: "700",
-    color: "#1A1A1A",
-  },
-  chartPeriodBar: {
-    flexDirection: "row",
-    backgroundColor: Colors.secondary,
-    borderRadius: 12,
-    padding: 3,
-  },
-  periodButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 9,
-  },
-  periodButtonActive: {
-    backgroundColor: Colors.primary,
-  },
-  periodButtonText: {
-    fontSize: 11,
-    fontFamily: "PlusJakartaSans_600SemiBold",
-    fontWeight: "600",
-    color: Colors.gray,
-  },
-  periodButtonTextActive: {
-    color: Colors.white,
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.10,
+    shadowRadius: 12,
+    elevation: 5,
   },
   chartWrapper: {
     height: 180,
   },
   xLabelRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 8,
-    paddingHorizontal: 4,
+    position: "relative",
+    height: 20,
+    marginTop: 12,
   },
   xLabelText: {
     fontSize: 10,
     fontFamily: "Poppins_400Regular",
     color: Colors.gray,
-    minWidth: 32,
     textAlign: "center",
   },
 });

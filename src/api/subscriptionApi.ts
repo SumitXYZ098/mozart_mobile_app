@@ -6,13 +6,15 @@ import { ENDPOINTS } from "./endpoints";
  * Creates a Stripe checkout session for a subscription plan.
  */
 export async function createStripeSession(
-  userId: string,
   planName: string,
-  token: string
+  token: string,
 ): Promise<{ url: string; sessionId?: string }> {
   const response = await axios.post(
     ENDPOINTS.CREATE_STRIPE_SESSION,
-    { userId, planName },
+    {
+      planName,
+      platform: "app"
+    },
     {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -106,14 +108,13 @@ export async function verifyPriorityPayment(
  * UI presentation work flawlessly.
  */
 export async function subscribeToPlan(
-  userId: string,
   planName: string,
   token: string
 ): Promise<Subscription> {
   try {
     const response = await axios.post(
       ENDPOINTS.CREATE_STRIPE_SESSION,
-      { planName, userId },
+      { planName, platform: "app" },
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -140,13 +141,12 @@ export async function subscribeToPlan(
  * Creates a Stripe checkout session for a subscription plan upgrade.
  */
 export async function createUpgradeSession(
-  userId: string,
   planName: string,
   token: string
 ): Promise<{ url: string; sessionId?: string }> {
   const response = await axios.post(
     ENDPOINTS.UPGRADE_PLAN,
-    { userId, planName },
+    { planName, platform: "app" },
     {
       headers: {
         Authorization: `Bearer ${token}`,
