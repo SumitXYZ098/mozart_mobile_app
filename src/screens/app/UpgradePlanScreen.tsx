@@ -18,6 +18,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { useAddOnArtist, useVerifyPayment } from "@/hooks/useSubscription";
 import { useCurrencyPricing } from "@/hooks/useCurrencyPricing";
 import { toast } from "@/stores/useToastStore";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { ContactSalesModal } from "@/components/common/ContactSalesModal";
 import { LoadingOverlay } from "@/components/common/LoadingOverlay";
@@ -28,7 +29,7 @@ export default function UpgradePlanScreen() {
 
   const [artistLimit, setArtistLimit] = useState(5);
   const [contactModalVisible, setContactModalVisible] = useState(false);
-  const [checkoutModalVisible, setCheckoutModalVisible] = useState(false);
+
   const [pendingSessionId, setPendingSessionId] = useState("");
   const [isLoadingOverlay, setIsLoadingOverlay] = useState(false);
 
@@ -82,8 +83,36 @@ export default function UpgradePlanScreen() {
       });
 
       if (session?.url) {
-        setPendingSessionId(session.sessionId || "mock_addon_session");
-        setCheckoutModalVisible(true);
+        const rawSession = session as any;
+        let extractedSessionId =
+          rawSession.sessionId ||
+          rawSession.id ||
+          rawSession.session_id ||
+          rawSession.stripeSessionId ||
+          rawSession.session?.id;
+
+        // Fallback: Extract the Stripe Session ID from the URL if not provided directly in response fields
+        if (!extractedSessionId && rawSession.url) {
+          const match = rawSession.url.match(/(cs_(?:test|live)_[a-zA-Z0-9_]+)/);
+          if (match) {
+            extractedSessionId = match[1];
+            console.log("Extracted Session ID from URL:", extractedSessionId);
+          }
+        }
+
+        extractedSessionId = extractedSessionId || "mock_addon_session";
+        setPendingSessionId(extractedSessionId);
+
+        // Save pending checkout session details to AsyncStorage
+        await AsyncStorage.setItem(
+          "pending_checkout_session",
+          JSON.stringify({
+            sessionId: extractedSessionId,
+            type: "upgrade",
+            artists: artistLimit,
+          })
+        );
+
         setIsLoadingOverlay(false);
         await Linking.openURL(session.url);
       } else {
@@ -97,24 +126,7 @@ export default function UpgradePlanScreen() {
     }
   };
 
-  const handleVerifyCheckout = async () => {
-    if (!pendingSessionId) {
-      toast.error("No pending checkout session found.");
-      return;
-    }
-    setCheckoutModalVisible(false);
-    setIsLoadingOverlay(true);
-    try {
-      await verifyPaymentMutation(pendingSessionId);
-      navigation.replace("Dashboard");
-    } catch (err: any) {
-      console.error(err);
-      toast.error("Verify payment failed. Please complete checkout or try again.");
-    } finally {
-      setIsLoadingOverlay(false);
-      setPendingSessionId("");
-    }
-  };
+
 
   const isPending = isPurchasing || isVerifying || isLoadingOverlay;
 
@@ -256,41 +268,7 @@ export default function UpgradePlanScreen() {
           onClose={() => setContactModalVisible(false)}
         />
 
-        {/* Stripe Checkout Verification Modal */}
-        <Modal
-          visible={checkoutModalVisible}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setCheckoutModalVisible(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalIconContainer}>
-                <Ionicons name="card" size={32} color={Colors.primary} />
-              </View>
-              <Text style={styles.modalTitle}>Stripe Checkout Payment</Text>
-              <Text style={styles.modalDescription}>
-                Stripe payment sheet has been opened in your browser. Please complete the checkout, then return here to verify your add-on activation.
-              </Text>
 
-              <TouchableOpacity
-                style={styles.verifyBtn}
-                activeOpacity={0.8}
-                onPress={handleVerifyCheckout}
-              >
-                <Text style={styles.verifyBtnText}>Verify Payment</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.closeBtn}
-                activeOpacity={0.8}
-                onPress={() => setCheckoutModalVisible(false)}
-              >
-                <Text style={styles.closeBtnText}>Cancel</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
 
         {/* Processing Loading Overlay */}
         <LoadingOverlay

@@ -49,7 +49,7 @@ export async function verifyPayment(
 ): Promise<any> {
   const response = await axios.post(
     ENDPOINTS.VERIFY_PAYMENT,
-    { sessionId },
+    { sessionId, session_id: sessionId },
     {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -70,7 +70,7 @@ export async function priorityPayment(
 ): Promise<{ url: string; sessionId?: string }> {
   const response = await axios.post(
     ENDPOINTS.PRIORITY_PAYMENT,
-    { draftId, amount, currency },
+    { draftId, amount, currency, platform: "app" },
     {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -89,7 +89,7 @@ export async function verifyPriorityPayment(
 ): Promise<any> {
   const response = await axios.post(
     ENDPOINTS.VERIFY_PRIORITY_PAYMENT,
-    { sessionId },
+    { session_id: sessionId },
     {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -167,7 +167,7 @@ export async function addOnArtist(
 ): Promise<{ url: string; sessionId?: string }> {
   const response = await axios.post(
     ENDPOINTS.ARTIST_ADDON,
-    { artists, amount, currency },
+    { artists, amount, currency, platform: "app" },
     {
       headers: {
         Authorization: `Bearer ${token}`,

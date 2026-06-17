@@ -23,6 +23,7 @@ import {
   useVerifyPayment,
 } from "@/hooks/useSubscription";
 import { toast } from "@/stores/useToastStore";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { TermsModal } from "@/components/common/TermsModal";
 import { ContactSalesModal } from "@/components/common/ContactSalesModal";
@@ -119,7 +120,7 @@ export default function ChoosePlanScreen() {
 
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [termsVisible, setTermsVisible] = useState(false);
-  const [checkoutModalVisible, setCheckoutModalVisible] = useState(false);
+
   const [contactModalVisible, setContactModalVisible] = useState(false);
   const [pendingSessionId, setPendingSessionId] = useState("");
   const [isLoadingOverlay, setIsLoadingOverlay] = useState(false);
@@ -182,19 +183,44 @@ export default function ChoosePlanScreen() {
                 planName: plan.name,
               });
               if (session?.url) {
-                setPendingSessionId(session.sessionId || "mock_session");
-                setCheckoutModalVisible(true);
+                const rawSession = session as any;
+                let extractedSessionId =
+                  rawSession.sessionId ||
+                  rawSession.id ||
+                  rawSession.session_id ||
+                  rawSession.stripeSessionId ||
+                  rawSession.session?.id;
+
+                // Fallback: Extract the Stripe Session ID from the URL if not provided directly in response fields
+                if (!extractedSessionId && rawSession.url) {
+                  const match = rawSession.url.match(/(cs_(?:test|live)_[a-zA-Z0-9_]+)/);
+                  if (match) {
+                    extractedSessionId = match[1];
+                    console.log("Extracted Session ID from URL:", extractedSessionId);
+                  }
+                }
+
+                extractedSessionId = extractedSessionId || "mock_session";
+                setPendingSessionId(extractedSessionId);
+
+                // Save pending checkout session details to AsyncStorage
+                await AsyncStorage.setItem(
+                  "pending_checkout_session",
+                  JSON.stringify({
+                    sessionId: extractedSessionId,
+                    type: "subscription",
+                    planName: plan.name,
+                  })
+                );
+
                 setIsLoadingOverlay(false);
                 await Linking.openURL(session.url);
               } else {
                 throw new Error("Invalid checkout response");
               }
             } catch (err: any) {
-              console.warn("Real Stripe checkout failed, offering fallback simulation:", err);
-              // Gracefully handle local setup differences by opening simulation modal
-              setPendingSessionId("simulated_" + Math.random().toString(36).substr(2, 9));
-              setCheckoutModalVisible(true);
-              toast.info("Active subscription setup. Opening checkout browser.");
+              console.warn("Real Stripe checkout failed:", err);
+              toast.error(err?.message || "Failed to initiate subscription checkout.");
             } finally {
               setIsLoadingOverlay(false);
             }
@@ -222,44 +248,7 @@ export default function ChoosePlanScreen() {
     }
   };
 
-  const handleVerifyCheckout = async () => {
-    if (!pendingSessionId) {
-      toast.error("No pending checkout session found.");
-      return;
-    }
-    setCheckoutModalVisible(false);
-    setIsLoadingOverlay(true);
-    try {
-      await verifyPaymentMutation(pendingSessionId);
-      navigation.replace("Dashboard");
-    } catch (err: any) {
-      console.error(err);
-      toast.error("Verify payment failed. Please complete checkout or try again.");
-    } finally {
-      setIsLoadingOverlay(false);
-      setSelectedPlanId(null);
-      setPendingSessionId("");
-    }
-  };
 
-  const handleSimulatePaymentSuccess = async () => {
-    setCheckoutModalVisible(false);
-    setIsLoadingOverlay(true);
-    try {
-      await subscribeMutation(paymentPlanName);
-      const { refreshUserProfile } = useAuthStore.getState();
-      await refreshUserProfile();
-      toast.success(`Payment simulation successful for ${paymentPlanName}!`);
-      navigation.replace("Dashboard");
-    } catch (err: any) {
-      console.error(err);
-      toast.error("Simulation failed.");
-    } finally {
-      setIsLoadingOverlay(false);
-      setSelectedPlanId(null);
-      setPendingSessionId("");
-    }
-  };
 
   const handleLogout = () => {
     Alert.alert("Logout", "Are you sure you want to log out of your account?", [
@@ -454,55 +443,7 @@ export default function ChoosePlanScreen() {
           isProcessing={isSubscribing || isLoadingOverlay}
         />
 
-        {/* Stripe Checkout Verification Modal */}
-        <Modal
-          visible={checkoutModalVisible}
-          transparent
-          animationType="fade"
-          onRequestClose={() => {
-            setCheckoutModalVisible(false);
-            setSelectedPlanId(null);
-          }}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalIconContainer}>
-                <Ionicons name="card" size={32} color={Colors.primary} />
-              </View>
-              <Text style={styles.modalTitle}>Stripe Checkout Payment</Text>
-              <Text style={styles.modalDescription}>
-                Stripe payment sheet has been opened in your browser. Please complete the subscription checkout, then return here to verify your plan activation.
-              </Text>
 
-              <TouchableOpacity
-                style={styles.verifyBtn}
-                activeOpacity={0.8}
-                onPress={handleVerifyCheckout}
-              >
-                <Text style={styles.verifyBtnText}>Verify Payment</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.simulateBtn}
-                activeOpacity={0.8}
-                onPress={handleSimulatePaymentSuccess}
-              >
-                <Text style={styles.simulateBtnText}>Simulate Success (Dev Mode)</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.closeBtn}
-                activeOpacity={0.8}
-                onPress={() => {
-                  setCheckoutModalVisible(false);
-                  setSelectedPlanId(null);
-                }}
-              >
-                <Text style={styles.closeBtnText}>Cancel</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
 
         <ContactSalesModal
           visible={contactModalVisible}

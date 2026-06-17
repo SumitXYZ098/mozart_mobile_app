@@ -17,7 +17,7 @@ import { formatDate, getSystemTimeZone } from "@/utils/utils";
 import { toast } from "@/stores/useToastStore";
 import { LoadingOverlay } from "@/components/common/LoadingOverlay";
 import CustomButton from "@/components/common/CustomButton";
-import { StyleSheet, View, Modal, Linking, Text, TouchableOpacity, Image } from "react-native";
+import { StyleSheet, View, Modal, Linking, Text, TouchableOpacity, Image, AppState, ActivityIndicator } from "react-native";
 import ReleaseInformation from "./step/ReleaseInformation";
 import CoverArtStep from "./step/CoverArt";
 import { Colors } from "@/theme/colors";
@@ -170,18 +170,18 @@ const StepperScreen = () => {
   const handleNext = async () => {
     const isValid = await methods.trigger();
     if (!isValid) return;
- 
-    
+
+
     setLoading(true);
     try {
-      
+
       const formData = methods.getValues();
       setUploadProgress(0);
       // Simulate progress updates
       for (let i = 0; i <= 100; i += 20) {
         await new Promise((r) => setTimeout(r, 100));
         setUploadProgress(i);
-       }
+      }
       console.log(activeStep, "Step");
       if (activeStep === 0) {
         console.log(draftId, " is id");
@@ -247,6 +247,61 @@ const StepperScreen = () => {
     navigation.navigate("Upload");
   };
 
+  useEffect(() => {
+    const handleDeepLink = async (url: string) => {
+      console.log("Incoming deep link:", url);
+      // Parse session_id from query parameters
+      const match = url.match(/[?&]session_id=([^&]+)/);
+      if (match && match[1]) {
+        const sessionId = match[1];
+        console.log("Extracted session_id from deep link:", sessionId);
+        setPendingSessionId(sessionId);
+        
+        // Auto-verify payment
+        setPaymentStatus("verifying");
+        setLoading(true);
+        try {
+          await verifyPriorityPaymentMutation(sessionId);
+          setCheckoutModalVisible(false);
+          setPaymentStatus("idle");
+          
+          // Clean up draft & redirect
+          try {
+            await deleteDraftMutation.mutateAsync();
+          } catch (delErr) {
+            console.log("Draft deletion failed/skipped:", delErr);
+          } finally {
+            clearDraft();
+          }
+          await AsyncStorage.removeItem(STORAGE_KEY);
+          usePublishTrackStore.getState().fetchUserPublishTracks();
+          toast.success("✅ Release distributed successfully");
+          navigation.navigate("Upload");
+        } catch (err: any) {
+          console.error("Deep link verification failed:", err);
+          // Keep modal open so they can retry or cancel
+          setPaymentStatus("opened");
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    const subscription = Linking.addEventListener("url", ({ url }) => {
+      handleDeepLink(url);
+    });
+
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        handleDeepLink(url);
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
   const onSubmit = async (formData: any) => {
     console.log("=== Distribute onSubmit Triggered ===");
     console.log("Draft ID:", draftId);
@@ -296,7 +351,6 @@ const StepperScreen = () => {
         currency: pricing.currency,
       });
       if (session?.url) {
-        setPendingSessionId(session.sessionId || "mock_session");
         setPaymentStatus("opened");
         await Linking.openURL(session.url);
       } else {
@@ -304,7 +358,6 @@ const StepperScreen = () => {
       }
     } catch (err: any) {
       console.warn("Real Stripe checkout failed, offering fallback simulation:", err);
-      setPendingSessionId("simulated_" + Math.random().toString(36).substr(2, 9));
       setPaymentStatus("opened");
       toast.info("Priority payment setup. Opening checkout browser.");
     } finally {
@@ -312,46 +365,9 @@ const StepperScreen = () => {
     }
   };
 
-  const handleVerifyPriorityCheckout = async () => {
-    if (!pendingSessionId) {
-      toast.error("No pending checkout session found.");
-      return;
-    }
-    setPaymentStatus("verifying");
-    setLoading(true);
-    try {
-      await verifyPriorityPaymentMutation(pendingSessionId);
-      setCheckoutModalVisible(false);
-      if (pendingSubmitData) {
-        await proceedWithDistribution(pendingSubmitData);
-      } else {
-        throw new Error("Form data missing for distribution");
-      }
-    } catch (err: any) {
-      console.error(err);
-      toast.error("Verify payment failed. Please complete checkout or try again.");
-      setPaymentStatus("opened");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSimulatePrioritySuccess = async () => {
+  const handleCancelCheckout = async () => {
     setCheckoutModalVisible(false);
-    setLoading(true);
-    try {
-      toast.success("Priority payment simulated successfully!");
-      if (pendingSubmitData) {
-        await proceedWithDistribution(pendingSubmitData);
-      } else {
-        throw new Error("Form data missing for distribution");
-      }
-    } catch (err: any) {
-      console.error(err);
-      toast.error("Simulation failed.");
-    } finally {
-      setLoading(false);
-    }
+    setPaymentStatus("idle");
   };
 
   const onInvalid = (errors: any) => {
@@ -458,18 +474,19 @@ const StepperScreen = () => {
         />
 
         {/* Priority Release Checkout Modal */}
+        {/* Priority Release Checkout Modal */}
         <Modal
           visible={checkoutModalVisible}
           transparent
           animationType="fade"
-          onRequestClose={() => setCheckoutModalVisible(false)}
+          onRequestClose={handleCancelCheckout}
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               {/* Close Button */}
               <TouchableOpacity
                 style={styles.closeIconButton}
-                onPress={() => setCheckoutModalVisible(false)}
+                onPress={handleCancelCheckout}
               >
                 <Ionicons name="close" size={24} color="#B3B3B3" />
               </TouchableOpacity>
@@ -540,7 +557,7 @@ const StepperScreen = () => {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.cancelButton}
-                    onPress={() => setCheckoutModalVisible(false)}
+                    onPress={handleCancelCheckout}
                   >
                     <Text style={styles.cancelButtonText}>Cancel</Text>
                   </TouchableOpacity>
@@ -548,26 +565,14 @@ const StepperScreen = () => {
               ) : (
                 <View style={styles.verticalActions}>
                   <Text style={styles.paymentOpenedText}>
-                    Stripe checkout sheet has been opened in your browser. Please complete payment, then click verify.
+                    Stripe checkout sheet has been opened in your browser. Please complete payment.
                   </Text>
-                  <TouchableOpacity
-                    style={[styles.payButton, { width: "100%", marginBottom: 8, flex: 0 }]}
-                    onPress={handleVerifyPriorityCheckout}
-                    disabled={paymentStatus === "verifying"}
-                  >
-                    <Text style={styles.payButtonText}>
-                      {paymentStatus === "verifying" ? "Verifying..." : "Verify Payment"}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.simulateButton}
-                    onPress={handleSimulatePrioritySuccess}
-                  >
-                    <Text style={styles.simulateButtonText}>Simulate Success (Dev Mode)</Text>
-                  </TouchableOpacity>
+                  {paymentStatus === "verifying" && (
+                    <ActivityIndicator size="small" color="#7632C5" style={{ marginBottom: 16 }} />
+                  )}
                   <TouchableOpacity
                     style={[styles.cancelButton, { width: "100%", flex: 0 }]}
-                    onPress={() => setCheckoutModalVisible(false)}
+                    onPress={handleCancelCheckout}
                   >
                     <Text style={styles.cancelButtonText}>Cancel</Text>
                   </TouchableOpacity>

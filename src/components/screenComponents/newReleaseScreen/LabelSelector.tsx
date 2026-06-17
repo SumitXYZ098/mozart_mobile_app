@@ -20,7 +20,7 @@ import BottomSheetKeyboardAwareScrollView from "@/components/modules/baseBottomS
 
 const LabelSelector = ({ controllerName }: { controllerName: string }) => {
   const { control, setValue, watch } = useFormContext();
-  const selectedLabel = watch(controllerName); // 👈 watch the current label
+  const selectedLabel = watch(controllerName); //  watch the current label
 
   const { data, isFetching, refetch } = useLabelsList();
   const { mutateAsync: addLabelMutation, isPending } = useAddLabel();
