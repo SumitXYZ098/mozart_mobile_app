@@ -120,11 +120,8 @@ export default function ReleaseCreditsSection() {
       throw err;
     }
   };
-
-  
-
   return (
-    <View style={{ marginBottom: 20 }}>
+    <View style={{ marginTop: 25 }}>
       <ArtistLimitModal
         visible={limitModalVisible}
         onClose={() => setLimitModalVisible(false)}

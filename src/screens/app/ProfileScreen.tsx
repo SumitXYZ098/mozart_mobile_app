@@ -150,7 +150,7 @@ export default function ProfileScreen() {
       setUploading(true);
 
       const uploaded = await uploadFile(file, () => {});
-      const imageId = uploaded?.[0]?.id;
+      const imageId = uploaded?.id;
 
       if (imageId && user?.id) {
         await axios.put(
@@ -241,7 +241,11 @@ export default function ProfileScreen() {
           <View style={styles.profileSection}>
             <View style={styles.avatarWrapper}>
               <LazyImage
-                uri={`${user?.Profile_image?.formats?.small?.url || user?.Profile_image?.url || ""}`}
+                uri={
+                  user?.Profile_image
+                    ? `${process.env.EXPO_PUBLIC_API_URL}${user.Profile_image.formats?.small?.url || user.Profile_image.url}`
+                    : ""
+                }
                 style={{ width: 110, height: 110, borderRadius: 110 }}
               />
               <TouchableOpacity
@@ -429,10 +433,10 @@ const styles = StyleSheet.create({
     fontFamily: "PlusJakartaSans_700Bold",
   },
   placeholder: {
-    width: 38, // Balance the backButton width
+    width: 38,  
   },
   scrollContent: {
-    paddingBottom: 40,
+    paddingBottom: 40,                                                                                               
   },
   profileSection: {
     alignItems: "center",

@@ -176,7 +176,7 @@ export default function CustomDrawer(props: any) {
           <Image
             source={{
               uri:
-                `${process.env.EXPO_PUBLIC_API_URL}${user?.Profile_image?.formats?.thumbnail?.url}` ||
+                `${process.env.EXPO_PUBLIC_API_URL}${user?.Profile_image?.formats?.thumbnail?.url}` || 
                 "",
             }}
             style={styles.avatar}
@@ -530,9 +530,10 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
   },
   avatar: {
-    width: 36,
-    height: 36,
+    width: 52,
+    height: 52,
     borderRadius: 40,
+  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
   },
   name: {
     fontSize: 18,

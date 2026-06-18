@@ -7,7 +7,6 @@ import InputField from "@/components/modules/InputField";
 import { useDraftStore } from "@/stores/draftStore";
 import SelectInputField from "@/components/common/SelectInputField";
 import { genresList, languagesList, rolesList } from ".";
-import LabelSelector from "../LabelSelector";
 import DatePickerInput from "@/components/common/DatePickerInput";
 import ReleaseCreditSection from "./ReleaseCreditSection";
 
@@ -82,10 +81,10 @@ const ReleaseInformation: React.FC<ReleaseInformationProps> = ({
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={{ paddingBottom: 80 }}
+      contentContainerStyle={{ paddingBottom: 0 }}
       bounces={true} // ✅ bounce on edges
-      alwaysBounceVertical={true} // ✅ vertical bounce
-      persistentScrollbar={true} // ✅ show scrollbar always
+      alwaysBounceVertical={false} // ✅ vertical bounce
+      persistentScrollbar={false} // ✅ show scrollbar always
 
     >
       <Text style={styles.title}>Release Information</Text>
@@ -143,6 +142,7 @@ const ReleaseInformation: React.FC<ReleaseInformationProps> = ({
             name="Version"
             control={control}
             zIndex={4}
+
           />
           <Text style={styles.helperText}>A Remaster, Live, Remix, etc.</Text>
 
@@ -156,7 +156,7 @@ const ReleaseInformation: React.FC<ReleaseInformationProps> = ({
             zIndex={3}
           />
 
-          <Text style={[styles.label, { marginTop: 4 }]}>Genre</Text>
+          <Text style={[styles.label, { marginTop: 4, }]}>Genre</Text>
           <View
             style={{
               flexDirection: "row",
@@ -190,6 +190,8 @@ const ReleaseInformation: React.FC<ReleaseInformationProps> = ({
 
           {/* <LabelSelector controllerName="AddLabel" /> */}
 
+
+          <ReleaseCreditSection />
           <Text style={[styles.label]}>© Copyright Holder</Text>
           <View
             style={{
@@ -221,8 +223,6 @@ const ReleaseInformation: React.FC<ReleaseInformationProps> = ({
               )}
             />
           </View>
-
-          <ReleaseCreditSection />
           <Text style={styles.helperText}>
             Enter the copyright owner name for the cover art or any written
             material (like liner notes). This name also apply to the musical

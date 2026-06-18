@@ -176,7 +176,7 @@ const ArtistDetailsForm: React.FC<ArtistDetailsFormProps> = ({
         setUploadProgress(progress)
       );
 
-      const imageId = uploaded?.[0]?.id;
+      const imageId = uploaded?.id;
 
       if (imageId) {
         setValue("Profile_image", imageId, { shouldValidate: true });

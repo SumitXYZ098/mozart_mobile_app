@@ -242,7 +242,7 @@ const TrackEditModalExpo: React.FC<TrackEditModalProps> = ({
     }
 
     const formData = getValues(`TrackList.${trackIndex}`);
- console.log("Step 3 mutation response:", formData);
+    console.log("Step 3 mutation response:", formData);
     try {
       if (trackId) {
         await updateTrack({ trackId, payload: formData }, {
@@ -261,7 +261,7 @@ const TrackEditModalExpo: React.FC<TrackEditModalProps> = ({
           },
         } as any);
       } else {
-       
+
         await step3Mutation.mutateAsync({ ...formData, tracks: [formData] }, {
           onSuccess: (data: any) => {
             Alert.alert("Success", "Track created successfully.");
