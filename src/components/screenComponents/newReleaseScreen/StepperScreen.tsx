@@ -256,7 +256,7 @@ const StepperScreen = () => {
         const sessionId = match[1];
         console.log("Extracted session_id from deep link:", sessionId);
         setPendingSessionId(sessionId);
-        
+
         // Auto-verify payment
         setPaymentStatus("verifying");
         setLoading(true);
@@ -264,7 +264,7 @@ const StepperScreen = () => {
           await verifyPriorityPaymentMutation(sessionId);
           setCheckoutModalVisible(false);
           setPaymentStatus("idle");
-          
+
           // Clean up draft & redirect
           try {
             await deleteDraftMutation.mutateAsync();

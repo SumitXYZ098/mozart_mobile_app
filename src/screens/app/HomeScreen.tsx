@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -26,6 +27,8 @@ export default function HomeScreen() {
   const navigation = useNavigation<any>();
   const isFocused = useIsFocused();
   const [notificationCount, setNotificationCount] = React.useState<number>(0);
+  const [refreshing, setRefreshing] = React.useState(false);
+  const [refreshTrigger, setRefreshTrigger] = React.useState(0);
 
 const getGreetingKey = (): "good_morning" | "good_afternoon" | "good_evening" | "good_night" => {
   const hour = new Date().getHours();
@@ -74,13 +77,23 @@ const getGreetingKey = (): "good_morning" | "good_afternoon" | "good_evening" | 
   React.useEffect(() => {
     if (isFocused) {
       fetchNotifications();
+      setRefreshTrigger((prev) => prev + 1);
       const interval = setInterval(() => {
         fetchNotifications();
       }, 30000); // Poll every 30 seconds
-
+ 
       return () => clearInterval(interval);
     }
   }, [isFocused, fetchNotifications]);
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await fetchNotifications();
+    setRefreshTrigger((prev) => prev + 1);
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 800);
+  }, [fetchNotifications]);
 
 
   return (
@@ -92,7 +105,17 @@ const getGreetingKey = (): "good_morning" | "good_afternoon" | "good_evening" | 
       style={styles.container}
     >
       <SafeAreaView style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[Colors.primary]}
+              tintColor={Colors.primary}
+            />
+          }
+        >
           <View style={styles.topBar}>
             <TouchableOpacity
               onPress={() => {
@@ -155,9 +178,9 @@ const getGreetingKey = (): "good_morning" | "good_afternoon" | "good_evening" | 
             <View className="w-[64px] h-[64px] rounded-full bg-white opacity-[0.1] absolute -right-[35px] -top-[35px] z-10" />
             <View className="w-[64px] h-[64px] rounded-full bg-white opacity-[0.1] absolute -right-6 -top-[42px] z-10" />
           </View>
-          <CounterCardSection />
-          <DraftListSection />
-          <UploadedListSection />
+          <CounterCardSection refreshTrigger={refreshTrigger} />
+          <DraftListSection refreshTrigger={refreshTrigger} />
+          <UploadedListSection refreshTrigger={refreshTrigger} />
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>

@@ -1,4 +1,4 @@
-import { useUserPublishTracks } from "@/hooks/useUserPublishTracks";
+import { usePublishTrackStore } from "@/stores/publishTrackStore";
 import { Colors } from "@/theme/colors";
 import React, { useEffect } from "react";
 import {
@@ -16,10 +16,14 @@ import EmptyState from "@/components/modules/EmptyState";
 import { horizontalScale, moderateScale, verticalScale } from "@/utils/metrics";
 import { useNavigation } from "@react-navigation/native";
 
-const UploadedListSection = () => {
-  const { tracks, loading } = useUserPublishTracks();
+const UploadedListSection = ({ refreshTrigger }: { refreshTrigger?: number }) => {
+  const { tracks, loading, fetchUserPublishTracks } = usePublishTrackStore();
   const shimmerAnimation = new Animated.Value(0);
   const navigation = useNavigation<any>();
+
+  useEffect(() => {
+    fetchUserPublishTracks();
+  }, [fetchUserPublishTracks, refreshTrigger]);
 
 //   console.log(
 //   "CoverArt URL:",

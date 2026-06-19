@@ -11,7 +11,7 @@ interface CountDataProps {
   totalEarnings: number;
 }
 
-const CounterCardSection = () => {
+const CounterCardSection = ({ refreshTrigger }: { refreshTrigger?: number }) => {
   const { user } = useAuthStore();
   const [countData, setCountData] = useState<CountDataProps>({
     artistCount: 0,
@@ -56,7 +56,7 @@ const CounterCardSection = () => {
     };
 
     fetchDashboardCounts();
-  }, [user?.token]);
+  }, [user?.token, refreshTrigger]);
 
   // Shimmer animation effect
   useEffect(() => {

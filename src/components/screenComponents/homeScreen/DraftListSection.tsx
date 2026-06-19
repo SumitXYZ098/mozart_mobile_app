@@ -28,7 +28,7 @@ type DraftItem = {
   };
 };
 
-const DraftListSection = () => {
+const DraftListSection = ({ refreshTrigger }: { refreshTrigger?: number }) => {
   const [draftList, setDraftList] = useState<DraftItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const shimmerAnimation = new Animated.Value(0);
@@ -54,7 +54,7 @@ const DraftListSection = () => {
     };
     
     fetchDraftList();
-  }, []);
+  }, [refreshTrigger]);
 
 
   // Shimmer animation effect

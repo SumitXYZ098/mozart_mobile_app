@@ -37,7 +37,8 @@
       "expo-font",
       "expo-document-picker",
       "expo-image-picker",
-      "expo-localization"
+      "expo-localization",
+      "expo-web-browser"
     ]
   }
 }

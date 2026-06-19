@@ -19,6 +19,7 @@ export interface Subscription {
   id: number;
   status: string;
   plan: Plan;
+  artistsAllowed?: number | string;
 }
 
 export interface User {

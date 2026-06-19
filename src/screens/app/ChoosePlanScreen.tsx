@@ -29,7 +29,7 @@ import { TermsModal } from "@/components/common/TermsModal";
 import { ContactSalesModal } from "@/components/common/ContactSalesModal";
 import { useCurrencyPricing } from "@/hooks/useCurrencyPricing";
 import { LoadingOverlay } from "@/components/common/LoadingOverlay";
- 
+
 
 interface PlanItem {
   id: string;
@@ -376,8 +376,8 @@ export default function ChoosePlanScreen() {
                     {plan.id === "custom"
                       ? "Custom Pricing"
                       : plan.id === "pro-label"
-                      ? "Free"
-                      : `${symbol}${convertedPrice}`}
+                        ? "Free"
+                        : `${symbol}${convertedPrice}`}
                   </Text>
                   {plan.billing ? (
                     <Text style={styles.billingText}>{plan.billing}</Text>

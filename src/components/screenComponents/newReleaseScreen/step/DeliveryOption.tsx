@@ -365,7 +365,7 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
 
           const handleSelectAll = () => {
             setStoreSelectionMode("all");
-            const allStoreIds = musicStores.map((s: any) => s.id || s); 
+            const allStoreIds = musicStores.map((s: any) => s.id || s);
             onChange(allStoreIds);
           };
 
@@ -397,48 +397,48 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
                       </TouchableOpacity>
                     </View>
 
-                      {/* Top Strategies */}
-                      <View style={styles.strategyContainer}>
-                        <TouchableOpacity style={styles.strategyRow} onPress={handleSelectAll}>
-                          <MaterialIcons 
-                            name={storeSelectionMode === "all" ? "check-box" : "check-box-outline-blank"} 
-                            size={24} 
-                            color={storeSelectionMode === "all" ? Colors.primary : Colors.gray} 
-                          />
-                          <View style={{ marginLeft: 10 }}>
-                            <Text style={styles.strategyTitle}>All stores</Text>
-                            <Text style={styles.strategyDesc}>Select all stores.</Text>
-                          </View>
-                        </TouchableOpacity>
+                    {/* Top Strategies */}
+                    <View style={styles.strategyContainer}>
+                      <TouchableOpacity style={styles.strategyRow} onPress={handleSelectAll}>
+                        <MaterialIcons
+                          name={storeSelectionMode === "all" ? "check-box" : "check-box-outline-blank"}
+                          size={24}
+                          color={storeSelectionMode === "all" ? Colors.primary : Colors.gray}
+                        />
+                        <View style={{ marginLeft: 10 }}>
+                          <Text style={styles.strategyTitle}>All stores</Text>
+                          <Text style={styles.strategyDesc}>Select all stores.</Text>
+                        </View>
+                      </TouchableOpacity>
 
-                        <TouchableOpacity style={styles.strategyRow} onPress={() => setStoreSelectionMode("custom")}>
-                          <MaterialIcons 
-                            name={storeSelectionMode === "custom" ? "check-box" : "check-box-outline-blank"} 
-                            size={24} 
-                            color={storeSelectionMode === "custom" ? Colors.primary : Colors.gray} 
-                          />
-                          <View style={{ marginLeft: 10 }}>
-                            <Text style={styles.strategyTitle}>Custom selection of stores</Text>
-                            <Text style={styles.strategyDesc}>Choose your own mix of streaming, download and social platforms.</Text>
-                          </View>
-                        </TouchableOpacity>
-                      </View>
+                      <TouchableOpacity style={styles.strategyRow} onPress={() => setStoreSelectionMode("custom")}>
+                        <MaterialIcons
+                          name={storeSelectionMode === "custom" ? "check-box" : "check-box-outline-blank"}
+                          size={24}
+                          color={storeSelectionMode === "custom" ? Colors.primary : Colors.gray}
+                        />
+                        <View style={{ marginLeft: 10 }}>
+                          <Text style={styles.strategyTitle}>Custom selection of stores</Text>
+                          <Text style={styles.strategyDesc}>Choose your own mix of streaming, download and social platforms.</Text>
+                        </View>
+                      </TouchableOpacity>
+                    </View>
 
-                      {/* 🖼 Store Row Items rendered with Real Image assets */}
-                      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 30 }}>
+                    {/* 🖼 Store Row Items rendered with Real Image assets */}
+                    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 30 }}>
                       {musicStores.map((store: any) => {
                         const storeId = store.id || store;
                         const storeName = store.name || store;
                         const storeSub = store.subText || "STORE";
                         const isSelected = value.includes(storeId) || value.includes(storeName);
-                        
+
                         const LogoComponent = store.logo;
                         // Handle image source securely (URI string or local module requirement)
                         const imageSource = typeof store.logo === "string" ? { uri: store.logo } : store.logo;
 
                         return (
-                          <TouchableOpacity 
-                            key={storeId} 
+                          <TouchableOpacity
+                            key={storeId}
                             style={styles.storeItemRow}
                             onPress={() => toggleStore(storeId, storeName)}
                           >
@@ -449,15 +449,15 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
                                     <LogoComponent width={40} height={40} />
                                   </View>
                                 ) : (
-                                  <Image 
-                                    source={imageSource} 
-                                    style={styles.storeLogoImage} 
+                                  <Image
+                                    source={imageSource}
+                                    style={styles.storeLogoImage}
                                     resizeMode="cover"
                                   />
                                 )
                               ) : (
                                 <View style={styles.storeLogoFallback}>
-                                  <Text style={{ fontSize: 10, fontWeight: "bold" }}>{storeName.slice(0,2).toUpperCase()}</Text>
+                                  <Text style={{ fontSize: 10, fontWeight: "bold" }}>{storeName.slice(0, 2).toUpperCase()}</Text>
                                 </View>
                               )}
                               <View style={{ marginLeft: 12 }}>
@@ -465,10 +465,10 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
                                 <Text style={styles.storeSubText}>{storeSub}</Text>
                               </View>
                             </View>
-                            <MaterialIcons 
-                              name={isSelected ? "check-box" : "check-box-outline-blank"} 
-                              size={24} 
-                              color={isSelected ? Colors.primary : "#D1D1D6"} 
+                            <MaterialIcons
+                              name={isSelected ? "check-box" : "check-box-outline-blank"}
+                              size={24}
+                              color={isSelected ? Colors.primary : "#D1D1D6"}
                             />
                           </TouchableOpacity>
                         );
@@ -664,7 +664,7 @@ const styles = StyleSheet.create({
   priceTextActive: {
     color: Colors.white,
   },
-  
+
   /* 📊 Bottom Sheet Container Layout */
   bottomSheetContainer: {
     backgroundColor: Colors.white,

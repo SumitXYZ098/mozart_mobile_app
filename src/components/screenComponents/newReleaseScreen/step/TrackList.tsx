@@ -109,16 +109,18 @@ const TrackList = ({ draftFormData }: { draftFormData?: any }) => {
   }, [releaseCredits, setValue, getValues]);
 
   // ✅ Validate that selected file is correct format and size
+  // ✅ Validate that selected file is correct format and size
   const validateAudioFile = (file: {
     name: string;
-    type: string;
+    mimeType?: string;
     size?: number;
   }) => {
-    const allowedTypes = ["audio/wav", "audio/flac"];
+    const fileName = file.name.toLowerCase();
+    const isWavOrFlac = fileName.endsWith(".wav") || fileName.endsWith(".flac");
     const maxSize = 100 * 1024 * 1024; // 100 MB
 
-    // 1️⃣ Check file type
-    if (!allowedTypes.includes(file.type)) {
+    // 1️⃣ Check file type / extension
+    if (!isWavOrFlac) {
       Alert.alert(
         "Invalid File Type",
         "Only WAV or FLAC audio files are allowed."
@@ -144,7 +146,7 @@ const TrackList = ({ draftFormData }: { draftFormData?: any }) => {
     try {
       // 1️⃣ Pick audio file using DocumentPicker
       const res = await DocumentPicker.getDocumentAsync({
-        type: ["audio/wav", "audio/flac"],
+        type: Platform.OS === "android" ? ["audio/*"] : ["audio/wav", "audio/flac"],
         copyToCacheDirectory: true,
       });
 
@@ -152,6 +154,11 @@ const TrackList = ({ draftFormData }: { draftFormData?: any }) => {
 
       const file = res.assets?.[0];
       if (!file) return;
+
+      // 2️⃣ Validate file type and size
+      if (!validateAudioFile(file)) {
+        return;
+      }
 
       let fileToUpload: any;
       if (Platform.OS === "web" && file.file) {

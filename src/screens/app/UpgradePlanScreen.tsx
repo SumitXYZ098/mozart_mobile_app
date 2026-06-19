@@ -15,7 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Colors } from "@/theme/colors";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { useAddOnArtist, useVerifyPayment } from "@/hooks/useSubscription";
+import { useAddOnArtist, useVerifyPayment, useCreateUpgradeSession } from "@/hooks/useSubscription";
 import { useCurrencyPricing } from "@/hooks/useCurrencyPricing";
 import { toast } from "@/stores/useToastStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -27,7 +27,8 @@ export default function UpgradePlanScreen() {
   const { user } = useAuthStore();
   const navigation = useNavigation<any>();
 
-  const [artistLimit, setArtistLimit] = useState(5);
+  const alreadyArtistLimit = user?.latest_subscription?.artistsAllowed;
+  const [artistLimit, setArtistLimit] = useState(alreadyArtistLimit ? Number(alreadyArtistLimit) : 5);
   const [contactModalVisible, setContactModalVisible] = useState(false);
 
   const [pendingSessionId, setPendingSessionId] = useState("");
@@ -35,6 +36,7 @@ export default function UpgradePlanScreen() {
 
   const { mutateAsync: addOnArtistMutation, isPending: isPurchasing } = useAddOnArtist();
   const { mutateAsync: verifyPaymentMutation, isPending: isVerifying } = useVerifyPayment();
+  const { mutateAsync: createUpgradeSessionMutation, isPending: isUpgrading } = useCreateUpgradeSession();
 
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (nextAppState) => {
@@ -126,9 +128,56 @@ export default function UpgradePlanScreen() {
     }
   };
 
+  const handleUpgradePlan = async () => {
+    setIsLoadingOverlay(true);
+    try {
+      const session = await createUpgradeSessionMutation("Artist Plus");
 
+      if (session?.url) {
+        const rawSession = session as any;
+        let extractedSessionId =
+          rawSession.sessionId ||
+          rawSession.id ||
+          rawSession.session_id ||
+          rawSession.stripeSessionId ||
+          rawSession.session?.id;
 
-  const isPending = isPurchasing || isVerifying || isLoadingOverlay;
+        // Fallback: Extract the Stripe Session ID from the URL if not provided directly in response fields
+        if (!extractedSessionId && rawSession.url) {
+          const match = rawSession.url.match(/(cs_(?:test|live)_[a-zA-Z0-9_]+)/);
+          if (match) {
+            extractedSessionId = match[1];
+            console.log("Extracted Session ID from URL:", extractedSessionId);
+          }
+        }
+
+        extractedSessionId = extractedSessionId || "mock_upgrade_session";
+        setPendingSessionId(extractedSessionId);
+
+        // Save pending checkout session details to AsyncStorage
+        await AsyncStorage.setItem(
+          "pending_checkout_session",
+          JSON.stringify({
+            sessionId: extractedSessionId,
+            type: "upgrade",
+            planName: "Artist Plus",
+          })
+        );
+
+        setIsLoadingOverlay(false);
+        await Linking.openURL(session.url);
+      } else {
+        throw new Error("Invalid checkout response");
+      }
+    } catch (err: any) {
+      console.warn("Upgrade plan checkout failed:", err);
+      toast.error(err?.message || "Failed to initiate upgrade checkout.");
+    } finally {
+      setIsLoadingOverlay(false);
+    }
+  };
+
+  const isPending = isPurchasing || isVerifying || isUpgrading || isLoadingOverlay;
 
   return (
     <LinearGradient
@@ -155,78 +204,125 @@ export default function UpgradePlanScreen() {
             <Text style={styles.mainTitle}>Upgrade Your Plan</Text>
           </View>
 
-          {/* Card 1: Add-on Artist */}
-          <View style={styles.card}>
-            <Text style={styles.cardPlanName}>Add-on Artist</Text>
-            <Text style={styles.cardPlanDescription}>
-              Increase your primary artist limit.
-            </Text>
+          {/* Card 1: Add-on Artist / Upgrade to Artist Plus */}
+          {user?.latest_subscription?.plan?.name === "Artist" ? (
+            <View style={styles.card}>
+              <Text style={styles.cardPlanName}>Artist Plus</Text>
+              <Text style={styles.cardPlanDescription}>
+                For serious independent artists.
+              </Text>
 
-            {/* Stepper & Price block */}
-            <View style={styles.addonDetailsContainer}>
-              <View style={styles.stepperSection}>
-                <Text style={styles.stepperLabel}>Artist Limit</Text>
-                <View style={styles.stepperControls}>
-                  <TouchableOpacity
-                    onPress={handleDecreaseArtist}
-                    disabled={artistLimit <= 5}
-                    style={[styles.stepperBtn, artistLimit <= 5 && styles.stepperBtnDisabled]}
-                  >
-                    <Text style={styles.stepperBtnText}>-5</Text>
-                  </TouchableOpacity>
-
-                  <Text style={styles.stepperValue}>{artistLimit}</Text>
-
-                  <TouchableOpacity
-                    onPress={handleIncreaseArtist}
-                    disabled={artistLimit >= 25}
-                    style={[styles.stepperBtn, artistLimit >= 25 && styles.stepperBtnDisabled]}
-                  >
-                    <Text style={styles.stepperBtnText}>+5</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              <View style={styles.priceSection}>
-                <Text style={styles.priceText}>
-                  {symbol}
-                  {addOnPrice}
-                </Text>
-                {artistLimit >= 10 && (
-                  <Text style={styles.discountBadge}>10% discount applied</Text>
-                )}
-              </View>
-            </View>
-
-            {/* Features List */}
-            <View style={styles.featuresList}>
-              {[
-                `Add ${artistLimit} Primary Artists`,
-                "Manage More Music Catalogs",
-                "Instant Activation",
-              ].map((feature, idx) => (
-                <View key={idx} style={styles.featureItem}>
-                  <View style={styles.checkContainer}>
-                    <Ionicons name="checkmark" size={12} color="#6739B7" />
+              {/* Features List */}
+              <View style={styles.featuresList}>
+                {[
+                  "Keep 100% of your royalties",
+                  "05 Artist's Primary",
+                  "Unlimited Uploads",
+                  "Distribution to 100+ DSP",
+                  "Track-level analytics",
+                  "Royalty tracking",
+                ].map((feature, idx) => (
+                  <View key={idx} style={styles.featureItem}>
+                    <View style={styles.checkContainer}>
+                      <Ionicons name="checkmark" size={12} color="#6739B7" />
+                    </View>
+                    <Text style={styles.featureText}>{feature}</Text>
                   </View>
-                  <Text style={styles.featureText}>{feature}</Text>
-                </View>
-              ))}
-            </View>
+                ))}
+              </View>
 
-            {/* Add Artist Button */}
-            <TouchableOpacity
-              style={styles.filledButton}
-              onPress={handleArtistAddOn}
-              disabled={isPending}
-            >
-              {isPending ? (
-                <ActivityIndicator color={Colors.white} size="small" />
-              ) : (
-                <Text style={styles.filledButtonText}>Add Artist</Text>
-              )}
-            </TouchableOpacity>
-          </View>
+              <Text style={[styles.cardPlanDescription, { marginBottom: 20 }]}>
+                Price adjusted automatically based on your current plan.
+              </Text>
+
+              {/* Upgrade Button */}
+              <TouchableOpacity
+                style={styles.filledButton}
+                onPress={handleUpgradePlan}
+                disabled={isPending}
+              >
+                {isPending ? (
+                  <ActivityIndicator color={Colors.white} size="small" />
+                ) : (
+                  <Text style={styles.filledButtonText}>Upgrade</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          ) : (
+            Number(alreadyArtistLimit) !== 25 && (
+              <View style={styles.card}>
+                <Text style={styles.cardPlanName}>Add-on Artist</Text>
+                <Text style={styles.cardPlanDescription}>
+                  Increase your primary artist limit.
+                </Text>
+
+                {/* Stepper & Price block */}
+                <View style={styles.addonDetailsContainer}>
+                  <View style={styles.stepperSection}>
+                    <Text style={styles.stepperLabel}>Artist Limit</Text>
+                    <View style={styles.stepperControls}>
+                      <TouchableOpacity
+                        onPress={handleDecreaseArtist}
+                        disabled={artistLimit <= 5}
+                        style={[styles.stepperBtn, artistLimit <= 5 && styles.stepperBtnDisabled]}
+                      >
+                        <Text style={styles.stepperBtnText}>-5</Text>
+                      </TouchableOpacity>
+
+                      <Text style={styles.stepperValue}>{artistLimit}</Text>
+
+                      <TouchableOpacity
+                        onPress={handleIncreaseArtist}
+                        disabled={artistLimit >= 25}
+                        style={[styles.stepperBtn, artistLimit >= 25 && styles.stepperBtnDisabled]}
+                      >
+                        <Text style={styles.stepperBtnText}>+5</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  <View style={styles.priceSection}>
+                    <Text style={styles.priceText}>
+                      {symbol}
+                      {addOnPrice}
+                    </Text>
+                    {artistLimit >= 10 && (
+                      <Text style={styles.discountBadge}>10% discount applied</Text>
+                    )}
+                  </View>
+                </View>
+
+                {/* Features List */}
+                <View style={styles.featuresList}>
+                  {[
+                    `Add ${artistLimit} Primary Artists`,
+                    "Manage More Music Catalogs",
+                    "Instant Activation",
+                  ].map((feature, idx) => (
+                    <View key={idx} style={styles.featureItem}>
+                      <View style={styles.checkContainer}>
+                        <Ionicons name="checkmark" size={12} color="#6739B7" />
+                      </View>
+                      <Text style={styles.featureText}>{feature}</Text>
+                    </View>
+                  ))}
+                </View>
+
+                {/* Add Artist Button */}
+                <TouchableOpacity
+                  style={styles.filledButton}
+                  onPress={handleArtistAddOn}
+                  disabled={isPending}
+                >
+                  {isPending ? (
+                    <ActivityIndicator color={Colors.white} size="small" />
+                  ) : (
+                    <Text style={styles.filledButtonText}>Add Artist</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            )
+          )}
 
           {/* Card 2: Custom Distribution Plan */}
           <View style={styles.card}>
