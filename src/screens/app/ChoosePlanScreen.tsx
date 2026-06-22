@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -29,6 +29,7 @@ import { TermsModal } from "@/components/common/TermsModal";
 import { ContactSalesModal } from "@/components/common/ContactSalesModal";
 import { useCurrencyPricing } from "@/hooks/useCurrencyPricing";
 import { LoadingOverlay } from "@/components/common/LoadingOverlay";
+import PaymentBottomSheet, { PaymentBottomSheetRef } from "@/components/common/PaymentBottomSheet";
 
 
 interface PlanItem {
@@ -127,6 +128,7 @@ export default function ChoosePlanScreen() {
   const [paymentPlanName, setPaymentPlanName] = useState("");
 
   const navigation = useNavigation<any>();
+  const paymentBottomSheetRef = useRef<PaymentBottomSheetRef>(null);
 
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (nextAppState) => {
@@ -146,7 +148,7 @@ export default function ChoosePlanScreen() {
   const isPending = isSubscribing || isVerifying || isLoadingOverlay;
 
 
-  const handleSubscribe = async (plan: PlanItem) => {
+  const handleSubscribe = async (plan: PlanItem, priceText: string) => {
     if (plan.id === "custom") {
       setContactModalVisible(true);
       return;
@@ -166,68 +168,53 @@ export default function ChoosePlanScreen() {
       return;
     }
 
-    // Stripe checkout flow for Artist / Artist Plus
-    Alert.alert(
-      "Confirm Plan Selection",
-      `Would you like to subscribe to the ${plan.name} plan? You will be redirected to Stripe for payment.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Proceed to Checkout",
-          onPress: async () => {
-            setSelectedPlanId(plan.id);
-            setPaymentPlanName(plan.name);
-            setIsLoadingOverlay(true);
-            try {
-              const session = await createStripeSessionMutation({
-                planName: plan.name,
-              });
-              if (session?.url) {
-                const rawSession = session as any;
-                let extractedSessionId =
-                  rawSession.sessionId ||
-                  rawSession.id ||
-                  rawSession.session_id ||
-                  rawSession.stripeSessionId ||
-                  rawSession.session?.id;
+    paymentBottomSheetRef.current?.present({
+      title: `${plan.name} Plan`,
+      description: plan.description,
+      priceText: priceText,
+      onCreateSession: async () => {
+        const session = await createStripeSessionMutation({
+          planName: plan.name,
+        });
 
-                // Fallback: Extract the Stripe Session ID from the URL if not provided directly in response fields
-                if (!extractedSessionId && rawSession.url) {
-                  const match = rawSession.url.match(/(cs_(?:test|live)_[a-zA-Z0-9_]+)/);
-                  if (match) {
-                    extractedSessionId = match[1];
-                    console.log("Extracted Session ID from URL:", extractedSessionId);
-                  }
-                }
+        const rawSession = session as any;
+        let extractedSessionId =
+          rawSession.sessionId ||
+          rawSession.id ||
+          rawSession.session_id ||
+          rawSession.stripeSessionId ||
+          rawSession.session?.id;
 
-                extractedSessionId = extractedSessionId || "mock_session";
-                setPendingSessionId(extractedSessionId);
+        if (!extractedSessionId && rawSession.url) {
+          const match = rawSession.url.match(/(cs_(?:test|live)_[a-zA-Z0-9_]+)/);
+          if (match) {
+            extractedSessionId = match[1];
+          }
+        }
 
-                // Save pending checkout session details to AsyncStorage
-                await AsyncStorage.setItem(
-                  "pending_checkout_session",
-                  JSON.stringify({
-                    sessionId: extractedSessionId,
-                    type: "subscription",
-                    planName: plan.name,
-                  })
-                );
+        extractedSessionId = extractedSessionId || "mock_session";
 
-                setIsLoadingOverlay(false);
-                await Linking.openURL(session.url);
-              } else {
-                throw new Error("Invalid checkout response");
-              }
-            } catch (err: any) {
-              console.warn("Real Stripe checkout failed:", err);
-              toast.error(err?.message || "Failed to initiate subscription checkout.");
-            } finally {
-              setIsLoadingOverlay(false);
-            }
-          },
-        },
-      ],
-    );
+        await AsyncStorage.setItem(
+          "pending_checkout_session",
+          JSON.stringify({
+            sessionId: extractedSessionId,
+            type: "subscription",
+            planName: plan.name,
+          })
+        );
+
+        return session;
+      },
+      onSuccess: async () => {
+        const { refreshUserProfile } = useAuthStore.getState();
+        await refreshUserProfile();
+        toast.success(`Subscribed to ${plan.name} successfully!`);
+        navigation.replace("Dashboard");
+      },
+      onCancel: () => {
+        console.log("Subscription payment canceled.");
+      }
+    });
   };
 
   const handleProLabelActivation = async () => {
@@ -402,7 +389,7 @@ export default function ChoosePlanScreen() {
                     plan.isPopular ? styles.filledButton : styles.outlineButton,
                     isCurrentPlan && styles.disabledButton,
                   ]}
-                  onPress={() => handleSubscribe(plan)}
+                  onPress={() => handleSubscribe(plan, plan.id === "custom" ? "" : plan.id === "pro-label" ? "Free" : `${symbol}${convertedPrice}${plan.billing || ""}`)}
                   disabled={isPending || isCurrentPlan}
                 >
                   {isButtonLoading ? (
@@ -455,6 +442,9 @@ export default function ChoosePlanScreen() {
           visible={isLoadingOverlay || isVerifying || isSubscribing}
           message={isVerifying ? "Verifying Payment..." : "Processing activation..."}
         />
+
+        {/* Custom Order Summary / Stripe Payment BottomSheet */}
+        <PaymentBottomSheet ref={paymentBottomSheetRef} />
       </SafeAreaView>
     </LinearGradient>
   );

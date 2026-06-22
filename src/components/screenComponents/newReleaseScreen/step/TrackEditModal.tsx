@@ -50,6 +50,11 @@ const TrackEditModalExpo: React.FC<TrackEditModalProps> = ({
 }) => {
   const { control, watch, setValue, trigger, getValues } = useFormContext();
   const releaseType = watch("ReleaseType");
+  const primaryGenre =
+    releaseType === "Single" ? getValues("PrimaryGenre") : "";
+  const secondaryGenre =
+    releaseType === "Single" ? getValues("SecondaryGenre") : "";
+
   // trackIndex is a numeric index into TrackList; read the actual trackId from the form state
   const trackId = watch(`TrackList.${trackIndex}.trackId`);
   const { data: trackData } = useTrack(trackId);
@@ -81,71 +86,147 @@ const TrackEditModalExpo: React.FC<TrackEditModalProps> = ({
   >({});
   const [limitModalVisible, setLimitModalVisible] = useState(false);
 
+  const roleCredits = watch(`TrackList.${trackIndex}.RoleCredits`);
+  const releaseCredits = watch("ReleaseCredits");
 
   useEffect(() => {
     if (artists) setLocalArtists(artists);
   }, [artists]);
 
+  // Sync role credits with release credits
   useEffect(() => {
-    if (trackId && trackData) {
-      setValue(`TrackList.${trackIndex}.TrackName`, trackData.TrackName || "");
-      setValue(
-        `TrackList.${trackIndex}.PrimaryGenre`,
-        trackData.PrimaryGenre || ""
-      );
-      setValue(
-        `TrackList.${trackIndex}.SecondaryGenre`,
-        trackData.SecondaryGenre || ""
-      );
-      setValue(`TrackList.${trackIndex}.ISRC`, trackData.ISRC || "");
-      setValue(`TrackList.${trackIndex}.ISWC`, trackData.ISWC || "");
-      setValue(
-        `TrackList.${trackIndex}.LyricsAvailable`,
-        trackData.LyricsAvailable ?? false
-      );
-      setValue(
-        `TrackList.${trackIndex}.AppropriateForAllAudiences`,
-        trackData.AppropriateForAllAudiences ?? false
-      );
-      setValue(
-        `TrackList.${trackIndex}.ContainsExplicitContent`,
-        trackData.ContainsExplicitContent ?? false
-      );
-      setValue(
-        `TrackList.${trackIndex}.CleanVersionAvailable`,
-        trackData.CleanVersionAvailable ?? false
-      );
-      setValue(
-        `TrackList.${trackIndex}.RequestANewISRC`,
-        trackData.RequestANewISRC ?? false
+    if (!roleCredits?.length || !releaseCredits?.length) return;
+
+    roleCredits.forEach((credit: any, index: number) => {
+      if (!credit?.roleName || credit?.artistName) return;
+
+      const matchedReleaseCredit = releaseCredits.find(
+        (item: any) => item.roleName === credit.roleName
       );
 
-      if (trackData.RoleCredits && trackData.RoleCredits.length) {
-        setValue(`TrackList.${trackIndex}.RoleCredits`, trackData.RoleCredits);
-      } else {
-        const current = getValues(`TrackList.${trackIndex}.RoleCredits`);
-        if (!current || !current.length) {
-          const releaseCredits = getValues("ReleaseCredits");
-          if (releaseCredits && releaseCredits.length) {
-            setValue(
-              `TrackList.${trackIndex}.RoleCredits`,
-              releaseCredits.map((rc: any) => ({
-                artistName: rc.artistName || "",
-                roleName: rc.roleName || "",
-              }))
-            );
-          } else {
-            setValue(`TrackList.${trackIndex}.RoleCredits`, [
-              { artistName: "", roleName: "Primary Artist" },
-              { artistName: "", roleName: "Composer" },
-              { artistName: "", roleName: "Lyricist" },
-              { artistName: "", roleName: "Producer" },
-            ]);
+      if (matchedReleaseCredit?.artistName) {
+        setValue(
+          `TrackList.${trackIndex}.RoleCredits.${index}.artistName`,
+          matchedReleaseCredit.artistName,
+          {
+            shouldValidate: true,
+            shouldDirty: true,
           }
+        );
+      }
+    });
+  }, [roleCredits, releaseCredits, trackIndex, setValue]);
+
+  // Prefill form with existing track data
+  useEffect(() => {
+    if (releaseType === "Single") {
+      setValue(`TrackList.${trackIndex}.PrimaryGenre`, primaryGenre);
+      setValue(`TrackList.${trackIndex}.SecondaryGenre`, secondaryGenre);
+    }
+
+    if (trackId) {
+      if (trackData) {
+        setValue(
+          `TrackList.${trackIndex}.TrackName`,
+          trackData.TrackName || ""
+        );
+        setValue(
+          `TrackList.${trackIndex}.PrimaryGenre`,
+          releaseType === "Single"
+            ? primaryGenre
+            : trackData.PrimaryGenre || ""
+        );
+        setValue(
+          `TrackList.${trackIndex}.SecondaryGenre`,
+          releaseType === "Single"
+            ? secondaryGenre
+            : trackData.SecondaryGenre || ""
+        );
+        setValue(`TrackList.${trackIndex}.ISRC`, trackData.ISRC || "");
+        setValue(`TrackList.${trackIndex}.ISWC`, trackData.ISWC || "");
+        setValue(
+          `TrackList.${trackIndex}.LyricsAvailable`,
+          trackData.LyricsAvailable || false
+        );
+        setValue(
+          `TrackList.${trackIndex}.AppropriateForAllAudiences`,
+          trackData.AppropriateForAllAudiences || false
+        );
+        setValue(
+          `TrackList.${trackIndex}.ContainsExplicitContent`,
+          trackData.ContainsExplicitContent || false
+        );
+        setValue(
+          `TrackList.${trackIndex}.CleanVersionAvailable`,
+          trackData.CleanVersionAvailable || false
+        );
+        setValue(
+          `TrackList.${trackIndex}.RequestANewISRC`,
+          trackData.RequestANewISRC || false
+        );
+
+        const releaseCredits = getValues("ReleaseCredits") || [];
+        const trackCredits = trackData.RoleCredits || [];
+
+        const credits = trackCredits.length > 0 ? trackCredits : releaseCredits;
+
+        let formattedCredits = credits.map((credit: any) => {
+          const matchedReleaseCredit = releaseCredits.find(
+            (releaseCredit: any) => releaseCredit.roleName === credit.roleName
+          );
+
+          return {
+            ...credit,
+            artistName:
+              credit.artistName || matchedReleaseCredit?.artistName || "",
+          };
+        });
+
+        const primaryIndex = formattedCredits.findIndex(
+          (c: any) => c.roleName === "Primary Artist"
+        );
+
+        if (primaryIndex > 0) {
+          const [primary] = formattedCredits.splice(primaryIndex, 1);
+          formattedCredits.unshift(primary);
+        } else if (primaryIndex === -1) {
+          const primaryReleaseCredit = releaseCredits.find(
+            (c: any) => c.roleName === "Primary Artist"
+          );
+
+          formattedCredits.unshift({
+            artistName: primaryReleaseCredit?.artistName || "",
+            roleName: "Primary Artist",
+          });
         }
+
+        setValue(`TrackList.${trackIndex}.RoleCredits`, formattedCredits);
+      }
+    } else {
+      const currentCredits = getValues(`TrackList.${trackIndex}.RoleCredits`);
+      if (!currentCredits || currentCredits.length === 0) {
+        setValue(`TrackList.${trackIndex}.RoleCredits`, [
+          { artistName: "", roleName: "Primary Artist" },
+        ]);
       }
     }
-  }, [trackData, trackId, setValue, trackIndex]);
+  }, [
+    trackData,
+    setValue,
+    trackIndex,
+    trackId,
+    releaseType,
+    primaryGenre,
+    secondaryGenre,
+    getValues,
+  ]);
+
+  const requestNewISRC = watch(`TrackList.${trackIndex}.RequestANewISRC`);
+
+  // Clear ISRC when RequestANewISRC is checked
+  useEffect(() => {
+    if (requestNewISRC) setValue(`TrackList.${trackIndex}.ISRC`, "");
+  }, [requestNewISRC, setValue, trackIndex]);
 
   const suggestions = useMemo(() => {
     const q = artistQuery.trim().toLowerCase();
@@ -715,13 +796,18 @@ const TrackEditModalExpo: React.FC<TrackEditModalProps> = ({
                     name={`TrackList.${trackIndex}.ISRC`}
                     render={({ field }) => (
                       <TextInput
-                        style={styles.input}
+                        style={[
+                          styles.input,
+                          requestNewISRC && {
+                            backgroundColor: "#F3F4F6",
+                            color: "#9CA3AF",
+                            borderColor: "#E5E7EB",
+                          },
+                        ]}
                         placeholder="Enter ISRC (12 chars) or request a new one"
                         value={field.value}
                         onChangeText={field.onChange}
-                        editable={
-                          !getValues(`TrackList.${trackIndex}.RequestANewISRC`)
-                        }
+                        editable={!requestNewISRC}
                       />
                     )}
                   />

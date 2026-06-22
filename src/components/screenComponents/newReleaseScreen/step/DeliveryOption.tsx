@@ -38,6 +38,7 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
   // 📝 Music Stores Bottom Sheet States
   const [storeModalVisible, setStoreModalVisible] = useState(false);
   const [storeSelectionMode, setStoreSelectionMode] = useState<"all" | "custom" | null>(null);
+  const [tempSelectedStores, setTempSelectedStores] = useState<string[]>([]);
 
   const { symbol, convertedPrice, currency } = useCurrencyPricing({
     indiaPrice: 1099,
@@ -355,18 +356,24 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
           const displayValue = selectedCount > 0 ? `${selectedCount} Stores Selected` : "Select Stores";
 
           const toggleStore = (storeId: string, storeName: string) => {
-            const isSel = value.includes(storeId) || value.includes(storeName);
+            const isSel = tempSelectedStores.includes(storeId) || tempSelectedStores.includes(storeName);
             if (isSel) {
-              onChange(value.filter((id: string) => id !== storeId && id !== storeName));
+              setTempSelectedStores(tempSelectedStores.filter((id: string) => id !== storeId && id !== storeName));
+              setStoreSelectionMode("custom");
             } else {
-              onChange([...value, storeId]);
+              setTempSelectedStores([...tempSelectedStores, storeId]);
             }
           };
 
           const handleSelectAll = () => {
-            setStoreSelectionMode("all");
-            const allStoreIds = musicStores.map((s: any) => s.id || s);
-            onChange(allStoreIds);
+            if (storeSelectionMode === "all") {
+              setStoreSelectionMode("custom");
+              setTempSelectedStores([]);
+            } else {
+              setStoreSelectionMode("all");
+              const allStoreIds = musicStores.map((s: any) => s.id || s);
+              setTempSelectedStores(allStoreIds);
+            }
           };
 
           return (
@@ -374,7 +381,13 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
               <Text style={styles.digitalLabel}>Music Stores</Text>
               <TouchableOpacity
                 style={[styles.input, fieldState.error && { borderColor: Colors.error }]}
-                onPress={() => setStoreModalVisible(true)}
+                onPress={() => {
+                  setTempSelectedStores([...value]);
+                  const allStoreIds = musicStores.map((s: any) => s.id || s);
+                  const isAll = allStoreIds.every((id: string) => value.includes(id));
+                  setStoreSelectionMode(isAll ? "all" : "custom");
+                  setStoreModalVisible(true);
+                }}
               >
                 <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                   <Text style={{ color: selectedCount > 0 ? Colors.black : Colors.gray, fontSize: 14 }}>
@@ -425,12 +438,12 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
                     </View>
 
                     {/* 🖼 Store Row Items rendered with Real Image assets */}
-                    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 30 }}>
+                    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
                       {musicStores.map((store: any) => {
                         const storeId = store.id || store;
                         const storeName = store.name || store;
                         const storeSub = store.subText || "STORE";
-                        const isSelected = value.includes(storeId) || value.includes(storeName);
+                        const isSelected = tempSelectedStores.includes(storeId) || tempSelectedStores.includes(storeName);
 
                         const LogoComponent = store.logo;
                         // Handle image source securely (URI string or local module requirement)
@@ -474,6 +487,25 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
                         );
                       })}
                     </ScrollView>
+
+                    {/* Cancel & Save Buttons */}
+                    <View style={styles.modalFooter}>
+                      <TouchableOpacity
+                        style={[styles.modalBtn, styles.modalCancelBtn]}
+                        onPress={() => setStoreModalVisible(false)}
+                      >
+                        <Text style={styles.modalCancelText}>Cancel</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.modalBtn, styles.modalSaveBtn]}
+                        onPress={() => {
+                          onChange(tempSelectedStores);
+                          setStoreModalVisible(false);
+                        }}
+                      >
+                        <Text style={styles.modalSaveText}>Save</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 </View>
               </Modal>
@@ -745,5 +777,38 @@ const styles = StyleSheet.create({
     color: "#AEAEB2",
     textTransform: "uppercase",
     marginTop: 2,
+  },
+  modalFooter: {
+    flexDirection: "row",
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+    backgroundColor: Colors.white,
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 12,
+  },
+  modalBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalCancelBtn: {
+    backgroundColor: "#F3F3F3",
+  },
+  modalSaveBtn: {
+    backgroundColor: Colors.primary,
+  },
+  modalCancelText: {
+    color: "#111",
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  modalSaveText: {
+    color: Colors.white,
+    fontSize: 15,
+    fontWeight: "700",
   },
 });

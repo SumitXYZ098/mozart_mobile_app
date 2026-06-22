@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { FormProvider, useForm } from "react-hook-form";
+import PaymentBottomSheet, { PaymentBottomSheetRef } from "@/components/common/PaymentBottomSheet";
 
 // Simulated hooks – replace with your real ones
 import {
@@ -71,6 +72,7 @@ const StepperScreen = () => {
 
   const [activeStep, setActiveStep] = useState(0);
   const [checkoutModalVisible, setCheckoutModalVisible] = useState(false);
+  const paymentBottomSheetRef = useRef<PaymentBottomSheetRef>(null);
   const [pendingSessionId, setPendingSessionId] = useState("");
   const [pendingSubmitData, setPendingSubmitData] = useState<any>(null);
   const [coverArtUrl, setCoverArtUrl] = useState<string>("");
@@ -244,7 +246,7 @@ const StepperScreen = () => {
     usePublishTrackStore.getState().fetchUserPublishTracks();
 
     toast.success("✅ Release distributed successfully");
-    navigation.navigate("Upload");
+    navigation.replace("Upload");
   };
 
   useEffect(() => {
@@ -276,7 +278,7 @@ const StepperScreen = () => {
           await AsyncStorage.removeItem(STORAGE_KEY);
           usePublishTrackStore.getState().fetchUserPublishTracks();
           toast.success("✅ Release distributed successfully");
-          navigation.navigate("Upload");
+          navigation.replace("Upload");
         } catch (err: any) {
           console.error("Deep link verification failed:", err);
           // Keep modal open so they can retry or cancel
@@ -341,28 +343,51 @@ const StepperScreen = () => {
     }
   };
 
-  const handlePriorityPay = async () => {
-    if (!draftId) return;
+  const handlePriorityCheckoutSuccess = async () => {
+    setCheckoutModalVisible(false);
+    setPaymentStatus("idle");
     setLoading(true);
     try {
-      const session = await priorityPaymentMutation({
-        draftId,
-        amount: pricing.convertedPrice,
-        currency: pricing.currency,
-      });
-      if (session?.url) {
-        setPaymentStatus("opened");
-        await Linking.openURL(session.url);
-      } else {
-        throw new Error("Invalid checkout response");
+      try {
+        await deleteDraftMutation.mutateAsync();
+      } catch (delErr) {
+        console.log("Draft deletion failed/skipped:", delErr);
+      } finally {
+        clearDraft();
       }
-    } catch (err: any) {
-      console.warn("Real Stripe checkout failed, offering fallback simulation:", err);
-      setPaymentStatus("opened");
-      toast.info("Priority payment setup. Opening checkout browser.");
+      await AsyncStorage.removeItem(STORAGE_KEY);
+      usePublishTrackStore.getState().fetchUserPublishTracks();
+      toast.success("✅ Release distributed successfully");
+      navigation.replace("Upload");
+    } catch (err) {
+      console.error("Fulfillment failed:", err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePriorityPay = async () => {
+    if (!draftId) return;
+    setCheckoutModalVisible(false);
+    paymentBottomSheetRef.current?.present({
+      title: "Priority Delivery",
+      description: `Publish "${pendingSubmitData?.ReleaseTitle || "Untitled Release"}" with priority delivery.`,
+      priceText: `${pricing.symbol}${pricing.convertedPrice} ${pricing.currency}`,
+      onCreateSession: async () => {
+        return await priorityPaymentMutation({
+          draftId,
+          amount: pricing.convertedPrice,
+          currency: pricing.currency,
+        });
+      },
+      onSuccess: () => {
+        handlePriorityCheckoutSuccess();
+      },
+      onCancel: () => {
+        console.log("Priority payment canceled.");
+        setCheckoutModalVisible(true);
+      }
+    });
   };
 
   const handleCancelCheckout = async () => {
@@ -581,6 +606,7 @@ const StepperScreen = () => {
             </View>
           </View>
         </Modal>
+        <PaymentBottomSheet ref={paymentBottomSheetRef} />
       </ScrollView>
     </FormProvider>
   );

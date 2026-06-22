@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -22,10 +22,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { ContactSalesModal } from "@/components/common/ContactSalesModal";
 import { LoadingOverlay } from "@/components/common/LoadingOverlay";
+import PaymentBottomSheet, { PaymentBottomSheetRef } from "@/components/common/PaymentBottomSheet";
 
 export default function UpgradePlanScreen() {
   const { user } = useAuthStore();
   const navigation = useNavigation<any>();
+  const paymentBottomSheetRef = useRef<PaymentBottomSheetRef>(null);
 
   const alreadyArtistLimit = user?.latest_subscription?.artistsAllowed;
   const [artistLimit, setArtistLimit] = useState(alreadyArtistLimit ? Number(alreadyArtistLimit) : 5);
@@ -76,15 +78,17 @@ export default function UpgradePlanScreen() {
   };
 
   const handleArtistAddOn = async () => {
-    setIsLoadingOverlay(true);
-    try {
-      const session = await addOnArtistMutation({
-        artists: artistLimit,
-        amount: addOnPrice,
-        currency,
-      });
+    paymentBottomSheetRef.current?.present({
+      title: "Add-on Artist",
+      description: `Increase your primary artist limit to ${artistLimit} artists.`,
+      priceText: `${symbol}${addOnPrice}`,
+      onCreateSession: async () => {
+        const session = await addOnArtistMutation({
+          artists: artistLimit,
+          amount: addOnPrice,
+          currency,
+        });
 
-      if (session?.url) {
         const rawSession = session as any;
         let extractedSessionId =
           rawSession.sessionId ||
@@ -93,19 +97,15 @@ export default function UpgradePlanScreen() {
           rawSession.stripeSessionId ||
           rawSession.session?.id;
 
-        // Fallback: Extract the Stripe Session ID from the URL if not provided directly in response fields
         if (!extractedSessionId && rawSession.url) {
           const match = rawSession.url.match(/(cs_(?:test|live)_[a-zA-Z0-9_]+)/);
           if (match) {
             extractedSessionId = match[1];
-            console.log("Extracted Session ID from URL:", extractedSessionId);
           }
         }
 
         extractedSessionId = extractedSessionId || "mock_addon_session";
-        setPendingSessionId(extractedSessionId);
 
-        // Save pending checkout session details to AsyncStorage
         await AsyncStorage.setItem(
           "pending_checkout_session",
           JSON.stringify({
@@ -115,25 +115,28 @@ export default function UpgradePlanScreen() {
           })
         );
 
-        setIsLoadingOverlay(false);
-        await Linking.openURL(session.url);
-      } else {
-        throw new Error("Invalid checkout response");
+        return session;
+      },
+      onSuccess: async () => {
+        const { refreshUserProfile } = useAuthStore.getState();
+        await refreshUserProfile();
+        toast.success(`Artist limit upgraded to ${artistLimit} successfully!`);
+        navigation.goBack();
+      },
+      onCancel: () => {
+        console.log("Add-on Artist payment canceled.");
       }
-    } catch (err: any) {
-      console.warn("Artist add-on checkout failed:", err);
-      toast.error(err?.message || "Failed to initiate add-on checkout.");
-    } finally {
-      setIsLoadingOverlay(false);
-    }
+    });
   };
 
   const handleUpgradePlan = async () => {
-    setIsLoadingOverlay(true);
-    try {
-      const session = await createUpgradeSessionMutation("Artist Plus");
+    paymentBottomSheetRef.current?.present({
+      title: "Upgrade to Artist Plus",
+      description: "Get 5 primary artists, unlimited uploads, advanced analytics, and royalty tracking.",
+      priceText: "Upgrade Plan",
+      onCreateSession: async () => {
+        const session = await createUpgradeSessionMutation("Artist Plus");
 
-      if (session?.url) {
         const rawSession = session as any;
         let extractedSessionId =
           rawSession.sessionId ||
@@ -142,19 +145,15 @@ export default function UpgradePlanScreen() {
           rawSession.stripeSessionId ||
           rawSession.session?.id;
 
-        // Fallback: Extract the Stripe Session ID from the URL if not provided directly in response fields
         if (!extractedSessionId && rawSession.url) {
           const match = rawSession.url.match(/(cs_(?:test|live)_[a-zA-Z0-9_]+)/);
           if (match) {
             extractedSessionId = match[1];
-            console.log("Extracted Session ID from URL:", extractedSessionId);
           }
         }
 
         extractedSessionId = extractedSessionId || "mock_upgrade_session";
-        setPendingSessionId(extractedSessionId);
 
-        // Save pending checkout session details to AsyncStorage
         await AsyncStorage.setItem(
           "pending_checkout_session",
           JSON.stringify({
@@ -164,17 +163,18 @@ export default function UpgradePlanScreen() {
           })
         );
 
-        setIsLoadingOverlay(false);
-        await Linking.openURL(session.url);
-      } else {
-        throw new Error("Invalid checkout response");
+        return session;
+      },
+      onSuccess: async () => {
+        const { refreshUserProfile } = useAuthStore.getState();
+        await refreshUserProfile();
+        toast.success("Successfully upgraded to Artist Plus!");
+        navigation.goBack();
+      },
+      onCancel: () => {
+        console.log("Upgrade plan payment canceled.");
       }
-    } catch (err: any) {
-      console.warn("Upgrade plan checkout failed:", err);
-      toast.error(err?.message || "Failed to initiate upgrade checkout.");
-    } finally {
-      setIsLoadingOverlay(false);
-    }
+    });
   };
 
   const isPending = isPurchasing || isVerifying || isUpgrading || isLoadingOverlay;
@@ -371,6 +371,9 @@ export default function UpgradePlanScreen() {
           visible={isPending}
           message={isVerifying ? "Verifying Payment..." : "Processing activation..."}
         />
+
+        {/* Custom Order Summary / Stripe Payment BottomSheet */}
+        <PaymentBottomSheet ref={paymentBottomSheetRef} />
       </SafeAreaView>
     </LinearGradient>
   );
