@@ -498,6 +498,7 @@ const TrackEditModalExpo: React.FC<TrackEditModalProps> = ({
                           keyboardShouldPersistTaps="handled"
                           contentContainerStyle={{ paddingBottom: 8 }}
                           style={{ maxHeight: 160 }}
+                          showsVerticalScrollIndicator={false}
                         >
                           {localArtists
                             .filter((a) => {
@@ -626,6 +627,7 @@ const TrackEditModalExpo: React.FC<TrackEditModalProps> = ({
           <ScrollView
             style={styles.content}
             contentContainerStyle={{ paddingBottom: 24 }}
+            showsVerticalScrollIndicator={false}
           >
             {/* Step 0 */}
             {currentStep === 0 && (

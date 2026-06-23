@@ -29,9 +29,8 @@ const ReviewScreen = () => {
   }, [formValues?.CoverArt]);
 
   return (
-    <ScrollView
+    <View
       style={styles.container}
-      contentContainerStyle={{ paddingBottom: 40 }}
     >
       <Text style={styles.heading}>Review Your Release</Text>
 
@@ -97,7 +96,7 @@ const ReviewScreen = () => {
           </View>
         </View>
       </View>
-    </ScrollView>
+    </View>
   );
 };
 

@@ -127,7 +127,7 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <View style={styles.container}>
       <Text style={styles.heading}>Delivery Options</Text>
 
       {/* Time Zone */}
@@ -543,7 +543,7 @@ const DeliveryOption = ({ draftFormData }: { draftFormData?: any }) => {
           </View>
         )}
       />
-    </ScrollView>
+    </View>
   );
 };
 

@@ -241,11 +241,7 @@ export default function ProfileScreen() {
           <View style={styles.profileSection}>
             <View style={styles.avatarWrapper}>
               <LazyImage
-                uri={
-                  user?.Profile_image
-                    ? `${process.env.EXPO_PUBLIC_API_URL}${user.Profile_image.formats?.small?.url || user.Profile_image.url}`
-                    : ""
-                }
+                uri={user?.Profile_image?.formats?.thumbnail?.url || user?.Profile_image?.url || ""}
                 style={{ width: 110, height: 110, borderRadius: 110 }}
               />
               <TouchableOpacity

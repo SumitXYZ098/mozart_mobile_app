@@ -31,6 +31,7 @@ import {
   uploadFile,
 } from "@/api/uploadApi";
 import { createIssue } from "@/api/issuesRaised";
+import { LazyImage } from "./LazyImage";
 
 interface FormValues {
   title: string;
@@ -162,7 +163,7 @@ export default function CustomDrawer(props: any) {
     }
   };
   return (
-    <DrawerContentScrollView {...props}>
+    <DrawerContentScrollView {...props} style={styles.drawerContainer}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -173,12 +174,8 @@ export default function CustomDrawer(props: any) {
         </TouchableOpacity>
 
         <View style={styles.profileContainor}>
-          <Image
-            source={{
-              uri:
-                `${process.env.EXPO_PUBLIC_API_URL}${user?.Profile_image?.formats?.thumbnail?.url}` || 
-                "",
-            }}
+          <LazyImage
+            uri={user?.Profile_image?.formats?.thumbnail?.url || user?.Profile_image?.url || ""}
             style={styles.avatar}
           />
           <Text style={styles.name}>{user?.name || "Artist"}</Text>
@@ -514,6 +511,9 @@ export default function CustomDrawer(props: any) {
 }
 
 const styles = StyleSheet.create({
+  drawerContainer: {
+    backgroundColor: "#ecdefdff", // Soft lavender/light purple background
+  },
   header: {
     alignItems: "flex-start",
     paddingTop: 4,
@@ -526,14 +526,18 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   profileContainor: {
-    gap: 6,
+    gap: 10,
     justifyContent: "flex-start",
   },
   avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 40,
-  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+    width: 56,
+    height: 56,
+    borderRadius: 26,
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 3,
   },
   name: {
     fontSize: 18,

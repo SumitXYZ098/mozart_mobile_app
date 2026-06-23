@@ -79,13 +79,8 @@ const ReleaseInformation: React.FC<ReleaseInformationProps> = ({
   };
 
   return (
-    <ScrollView
+    <View
       style={styles.container}
-      contentContainerStyle={{ paddingBottom: 0 }}
-      bounces={true} // ✅ bounce on edges
-      alwaysBounceVertical={false} // ✅ vertical bounce
-      persistentScrollbar={false} // ✅ show scrollbar always
-
     >
       <Text style={styles.title}>Release Information</Text>
       <Text style={styles.subtitle}>
@@ -294,7 +289,7 @@ const ReleaseInformation: React.FC<ReleaseInformationProps> = ({
           />
         )}
       </View>
-    </ScrollView>
+    </View>
   );
 };
 

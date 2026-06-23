@@ -291,6 +291,7 @@ export default function ReleaseCreditsSection() {
                           keyboardShouldPersistTaps="handled"
                           contentContainerStyle={{ paddingVertical: 4 }}
                           style={{ maxHeight: 180 }}
+                          showsVerticalScrollIndicator={false}
                         >
                           {localArtists
                             .filter((a) => {

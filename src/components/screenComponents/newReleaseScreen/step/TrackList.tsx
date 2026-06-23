@@ -329,7 +329,7 @@ const TrackList = ({ draftFormData }: { draftFormData?: any }) => {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <View style={styles.container}>
       <Text
         style={[
           styles.heading,
@@ -501,7 +501,7 @@ const TrackList = ({ draftFormData }: { draftFormData?: any }) => {
           }}
         />
       )}
-    </ScrollView>
+    </View>
   );
 };
 

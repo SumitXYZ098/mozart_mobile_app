@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   Modal,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,6 +20,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { ENDPOINTS } from "@/api/endpoints";
 import AnalyticsChart from "@/components/screenComponents/analyticsScreen/AnalyticsChart";
 import BestPerformingStores from "@/components/screenComponents/analyticsScreen/BestPerformingStores";
+import BestPerformingCountries from "@/components/screenComponents/analyticsScreen/BestPerformingCountries";
 
 // Constants for Period selector matching User Dashboard Specs
 const PERIODS = {
@@ -249,6 +251,100 @@ const AnalyticsScreen = () => {
   const [selectedStore, setSelectedStore] = useState<string>("Youtube Music");
   const [storeDropdownVisible, setStoreDropdownVisible] = useState<boolean>(false);
 
+  // Sales Report Form State
+  const [fromDate, setFromDate] = useState<string | null>(null);
+  const [toDate, setToDate] = useState<string | null>(null);
+
+  // Reports list state
+  interface SalesReport {
+    id: string;
+    from: string;
+    to: string;
+  }
+
+  const [reports, setReports] = useState<SalesReport[]>([
+    { id: "1", from: "2025-12", to: "2026-02" },
+    { id: "2", from: "2025-12", to: "2026-02" },
+    { id: "3", from: "2025-12", to: "2026-02" },
+    { id: "4", from: "2025-12", to: "2026-02" },
+  ]);
+
+  // Custom Month Picker Modal State
+  const [pickerVisible, setPickerVisible] = useState<boolean>(false);
+  const [pickerTarget, setPickerTarget] = useState<"from" | "to">("from");
+  const [tempMonth, setTempMonth] = useState<string>("06");
+  const [tempYear, setTempYear] = useState<string>("26");
+
+  const openDatePicker = (target: "from" | "to") => {
+    setPickerTarget(target);
+    const currentDate = target === "from" ? fromDate : toDate;
+    if (currentDate) {
+      const parts = currentDate.split("/");
+      if (parts.length === 2) {
+        setTempMonth(parts[0]);
+        setTempYear(parts[1]);
+      }
+    } else {
+      setTempMonth("06");
+      setTempYear("26");
+    }
+    setPickerVisible(true);
+  };
+
+  const handlePrevYear = () => {
+    const yrInt = parseInt(tempYear, 10);
+    if (yrInt > 24) {
+      setTempYear(String(yrInt - 1).padStart(2, "0"));
+    }
+  };
+
+  const handleNextYear = () => {
+    const yrInt = parseInt(tempYear, 10);
+    if (yrInt < 30) {
+      setTempYear(String(yrInt + 1).padStart(2, "0"));
+    }
+  };
+
+  const handleConfirmDate = () => {
+    const formattedDate = `${tempMonth}/${tempYear}`;
+    if (pickerTarget === "from") {
+      setFromDate(formattedDate);
+    } else {
+      setToDate(formattedDate);
+    }
+    setPickerVisible(false);
+  };
+
+  const formatToYYYYMM = (dateStr: string) => {
+    const parts = dateStr.split("/");
+    if (parts.length === 2) {
+      return `20${parts[1]}-${parts[0]}`;
+    }
+    return dateStr;
+  };
+
+  const handleRequestReport = () => {
+    if (!fromDate || !toDate) {
+      Alert.alert("Required Fields", "Please select both 'From' and 'To' dates.");
+      return;
+    }
+
+    const formattedFrom = formatToYYYYMM(fromDate);
+    const formattedTo = formatToYYYYMM(toDate);
+
+    const newReport: SalesReport = {
+      id: Date.now().toString(),
+      from: formattedFrom,
+      to: formattedTo,
+    };
+
+    setReports([newReport, ...reports]);
+    Alert.alert(
+      "Report Requested",
+      `Your sales report from ${fromDate} to ${toDate} has been successfully requested.`
+    );
+  };
+
   // Badge notifications count
   const [notificationCount, setNotificationCount] = useState<number>(0);
 
@@ -263,14 +359,23 @@ const AnalyticsScreen = () => {
   const [storesApiResponse, setStoresApiResponse] = useState<any>(null);
   const [storesApiData, setStoresApiData] = useState<StoreChannel[] | null>(null);
 
-  // Call both daily-trends endpoints and notifications
+  // API State: Best Performing Countries
+  const [countriesLoading, setCountriesLoading] = useState<boolean>(false);
+  const [countriesApiData, setCountriesApiData] = useState<any[] | null>(null);
+
+  // Call daily-trends endpoints and notifications
   const fetchAnalyticsData = useCallback(async () => {
-    if (!user?.token) return;
+    console.log("[Analytics] fetchAnalyticsData started. Selected period:", selectedPeriod);
+    if (!user?.token) {
+      console.warn("[Analytics] Cannot fetch analytics: user token is missing");
+      return;
+    }
     setLoading(true);
     setStoresLoading(true);
+    setCountriesLoading(true);
 
     try {
-      // 1. Fetch Streams Overview trend data
+      console.log("[Analytics] Sending request to TOTAL_STREAMS:", ENDPOINTS.TOTAL_STREAMS);
       const streamsPromise = axios.get(ENDPOINTS.TOTAL_STREAMS, {
         params: { period: selectedPeriod },
         headers: {
@@ -278,7 +383,7 @@ const AnalyticsScreen = () => {
         },
       });
 
-      // 2. Fetch Best Performing Stores platform data
+      console.log("[Analytics] Sending request to TOTAL_STREAM_PER_PLATFORM:", ENDPOINTS.TOTAL_STREAM_PER_PLATFORM);
       const storesPromise = axios.get(ENDPOINTS.TOTAL_STREAM_PER_PLATFORM, {
         params: { period: selectedPeriod },
         headers: {
@@ -286,7 +391,14 @@ const AnalyticsScreen = () => {
         },
       });
 
-      // 3. Fetch notifications to update header badging count
+      console.log("[Analytics] Sending request to BEST_PERFORMING_COUNTRIES:", ENDPOINTS.BEST_PERFORMING_COUNTRIES);
+      const countriesPromise = axios.get(ENDPOINTS.BEST_PERFORMING_COUNTRIES, {
+        params: { period: selectedPeriod },
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      });
+
       const notificationsPromise = axios.get(ENDPOINTS.NOTIFICATIONS, {
         headers: {
           Authorization: `Bearer ${user.token}`,
@@ -294,20 +406,40 @@ const AnalyticsScreen = () => {
       });
 
       // Run parallel requests
-      const [streamsRes, storesRes, notificationsRes] = await Promise.all([
+      const [streamsRes, storesRes, countriesRes, notificationsRes] = await Promise.all([
         streamsPromise.catch((e) => {
-          console.error("Streams overview error:", e);
+          console.error("[Analytics] Streams overview request error:", e?.response?.data || e?.message || e);
           return null;
         }),
         storesPromise.catch((e) => {
-          console.error("Best performing stores error:", e);
+          console.error("[Analytics] Best performing stores request error:", e?.response?.data || e?.message || e);
+          return null;
+        }),
+        countriesPromise.catch((e) => {
+          console.error("[Analytics] Best performing countries request error:", e?.response?.data || e?.message || e);
           return null;
         }),
         notificationsPromise.catch((e) => {
-          console.error("Notifications fetch error:", e);
+          console.error("[Analytics] Notifications request error:", e?.response?.data || e?.message || e);
           return null;
         }),
       ]);
+
+      if (streamsRes) {
+        console.log("[Analytics] Streams response received:", streamsRes.status, JSON.stringify(streamsRes.data));
+      } else {
+        console.warn("[Analytics] Streams response was null or failed");
+      }
+      if (storesRes) {
+        console.log("[Analytics] Stores response received:", storesRes.status, JSON.stringify(storesRes.data));
+      } else {
+        console.warn("[Analytics] Stores response was null or failed");
+      }
+      if (countriesRes) {
+        console.log("[Analytics] Countries response received:", countriesRes.status, JSON.stringify(countriesRes.data));
+      } else {
+        console.warn("[Analytics] Countries response was null or failed");
+      }
 
       // Handle Streams trend data
       if (streamsRes && streamsRes.data && streamsRes.data.success) {
@@ -325,6 +457,13 @@ const AnalyticsScreen = () => {
       } else {
         setStoresApiData(null);
         setStoresApiResponse(null);
+      }
+
+      // Handle Best Performing Countries data
+      if (countriesRes && countriesRes.data && countriesRes.data.success) {
+        setCountriesApiData(countriesRes.data.data || []);
+      } else {
+        setCountriesApiData(null);
       }
 
       // Handle notification badge counts
@@ -352,14 +491,16 @@ const AnalyticsScreen = () => {
         setNotificationCount(unreadList.length);
       }
     } catch (error) {
-      console.error("Failed fetching analytics data:", error);
+      console.error("[Analytics] General analytics fetch error:", error);
       setApiData(null);
       setApiResponse(null);
       setStoresApiData(null);
       setStoresApiResponse(null);
+      setCountriesApiData(null);
     } finally {
       setLoading(false);
       setStoresLoading(false);
+      setCountriesLoading(false);
       setRefreshing(false);
     }
   }, [user?.token, selectedPeriod]);
@@ -409,9 +550,14 @@ const AnalyticsScreen = () => {
         };
       }
     }
-
-    // Robust Mock Data Fallback
-    return MOCK_DATA[selectedPeriod] || MOCK_DATA[PERIODS.DAYS_7];
+    return {
+      total: "0",
+      totalFormatted: "0",
+      change: "0%",
+      isNegative: false,
+      dateRange: "",
+      points: [],
+    };
   }, [apiData, apiResponse, selectedPeriod]);
 
   // Compile Best Performing Stores data
@@ -429,17 +575,9 @@ const AnalyticsScreen = () => {
       };
     }
 
-    // Robust Mock Data Fallback
-    const fallbackStores = MOCK_BEST_STORES[selectedPeriod] || MOCK_BEST_STORES[PERIODS.DAYS_7];
-    const totalSum = fallbackStores.reduce(
-      (sum, item) => sum + (item.totalUnits || 0),
-      0
-    );
-    const totalStr = formatTotalUnitsLabel(totalSum);
-
     return {
-      total: totalStr,
-      data: fallbackStores,
+      total: "0",
+      data: [],
     };
   }, [storesApiData, selectedPeriod]);
 
@@ -615,6 +753,11 @@ const AnalyticsScreen = () => {
                   points={activeDataset.points}
                 />
 
+                {/* Best Performing Countries Card */}
+                <BestPerformingCountries
+                  data={countriesApiData || []}
+                  loading={countriesLoading && !refreshing}
+                />
                 {/* Best Performing Stores Component (SVG Donut Chart) */}
                 <BestPerformingStores
                   data={bestPerformingStoresDataset.data}
@@ -622,38 +765,82 @@ const AnalyticsScreen = () => {
                   totalStreams={bestPerformingStoresDataset.total}
                   isEarnings={true}
                 />
+
               </View>
             )}
           </View>
         ) : (
-          /* Sales Report Tab: Premium empty state visual placeholder */
+          /* Sales Report Tab: Premium mockup date selector form & placeholder */
           <View style={styles.salesContainer}>
-            <View style={styles.salesCard}>
-              <View style={styles.salesIconWrapper}>
-                <Ionicons
-                  name="document-text-outline"
-                  size={52}
-                  color={Colors.primary}
-                />
+            <View style={styles.salesFormCard}>
+              <View style={styles.salesInputGroup}>
+                <Text style={styles.salesInputLabel}>From</Text>
+                <TouchableOpacity
+                  style={styles.salesDateSelector}
+                  onPress={() => openDatePicker("from")}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    style={[
+                      styles.salesDateText,
+                      !fromDate && styles.salesDatePlaceholder,
+                    ]}
+                  >
+                    {fromDate || "MM/YY"}
+                  </Text>
+                  <Ionicons name="calendar-outline" size={20} color={Colors.gray} />
+                </TouchableOpacity>
               </View>
-              <Text style={styles.salesTitle}>Sales Report</Text>
-              <Text style={styles.salesSubtitle}>
-                No financial transactions or sales records are currently
-                available. Reports are compiled monthly after processing.
-              </Text>
+
+              <View style={styles.salesInputGroup}>
+                <Text style={styles.salesInputLabel}>To</Text>
+                <TouchableOpacity
+                  style={styles.salesDateSelector}
+                  onPress={() => openDatePicker("to")}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    style={[
+                      styles.salesDateText,
+                      !toDate && styles.salesDatePlaceholder,
+                    ]}
+                  >
+                    {toDate || "MM/YY"}
+                  </Text>
+                  <Ionicons name="calendar-outline" size={20} color={Colors.gray} />
+                </TouchableOpacity>
+              </View>
 
               <TouchableOpacity
-                style={styles.salesActionButton}
-                onPress={() =>
-                  navigation.navigate("MusicTab", {
-                    screen: "NewRelease",
-                    params: { step: 0 },
-                  })
-                }
+                style={styles.salesRequestBtn}
+                onPress={handleRequestReport}
+                activeOpacity={0.8}
               >
-                <Text style={styles.salesActionText}>Distribute Music</Text>
-                <Ionicons name="arrow-forward-outline" size={16} color={Colors.white} />
+                <Text style={styles.salesRequestBtnText}>Request Report</Text>
               </TouchableOpacity>
+
+              {reports.length === 0 ? (
+                <View style={styles.salesDashedBox}>
+                  <Text style={styles.salesDashedText}>No Reports Generated Yet</Text>
+                </View>
+              ) : (
+                <View style={styles.reportsListContainer}>
+                  {reports.map((report) => (
+                    <View key={report.id} style={styles.reportListCard}>
+                      <Text style={styles.reportCardDateText}>
+                        {report.from} To {report.to}
+                      </Text>
+                      <TouchableOpacity
+                        style={styles.reportDownloadBtn}
+                        onPress={() => Alert.alert("Download", `Downloading report for ${report.from} to ${report.to}...`)}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={styles.reportDownloadBtnText}>Download</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
           </View>
         )}
@@ -704,6 +891,103 @@ const AnalyticsScreen = () => {
               </TouchableOpacity>
             ))}
           </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Custom Month/Year Picker Modal */}
+      <Modal
+        visible={pickerVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setPickerVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.pickerOverlay}
+          activeOpacity={1}
+          onPress={() => setPickerVisible(false)}
+        >
+          <TouchableOpacity
+            style={styles.pickerContainer}
+            activeOpacity={1}
+          >
+            <Text style={styles.pickerTitle}>
+              Select Month & Year ({pickerTarget === "from" ? "From" : "To"})
+            </Text>
+
+            {/* Year Selector Row */}
+            <View style={styles.yearSelectorRow}>
+              <TouchableOpacity
+                onPress={handlePrevYear}
+                style={styles.yearNavBtn}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="chevron-back" size={20} color={Colors.primary} />
+              </TouchableOpacity>
+              <Text style={styles.yearText}>20{tempYear}</Text>
+              <TouchableOpacity
+                onPress={handleNextYear}
+                style={styles.yearNavBtn}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="chevron-forward" size={20} color={Colors.primary} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Month Grid */}
+            <View style={styles.monthGrid}>
+              {[
+                { label: "Jan", value: "01" },
+                { label: "Feb", value: "02" },
+                { label: "Mar", value: "03" },
+                { label: "Apr", value: "04" },
+                { label: "May", value: "05" },
+                { label: "Jun", value: "06" },
+                { label: "Jul", value: "07" },
+                { label: "Aug", value: "08" },
+                { label: "Sep", value: "09" },
+                { label: "Oct", value: "10" },
+                { label: "Nov", value: "11" },
+                { label: "Dec", value: "12" },
+              ].map((m) => {
+                const isActive = tempMonth === m.value;
+                return (
+                  <TouchableOpacity
+                    key={m.value}
+                    style={[
+                      styles.monthGridItem,
+                      isActive && styles.monthGridItemActive,
+                    ]}
+                    onPress={() => setTempMonth(m.value)}
+                    activeOpacity={0.7}
+                  >
+                    <Text
+                      style={[
+                        styles.monthGridItemText,
+                        isActive && styles.monthGridItemTextActive,
+                      ]}
+                    >
+                      {m.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            <View style={styles.pickerActions}>
+              <TouchableOpacity
+                style={[styles.pickerActionBtn, styles.pickerCancelBtn]}
+                onPress={() => setPickerVisible(false)}
+              >
+                <Text style={styles.pickerCancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.pickerActionBtn, styles.pickerOkBtn]}
+                onPress={handleConfirmDate}
+              >
+                <Text style={styles.pickerOkBtnText}>OK</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
     </SafeAreaView>
@@ -916,66 +1200,213 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   salesContainer: {
-    paddingTop: 30,
-    alignItems: "center",
+    width: "100%",
   },
-  salesCard: {
+  salesFormCard: {
     backgroundColor: Colors.white,
-    borderRadius: 24,
-    padding: 30,
-    borderWidth: 1,
-    borderColor: "#F0EFFB",
-    shadowColor: "#6739B7",
-    shadowOffset: { width: 0, height: 8 },
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    shadowRadius: 16,
+    shadowRadius: 8,
     elevation: 3,
-    alignItems: "center",
   },
-  salesIconWrapper: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: Colors.lightPrimary,
-    justifyContent: "center",
+  salesInputGroup: {
+    marginBottom: 16,
+  },
+  salesInputLabel: {
+    fontSize: 13,
+    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontWeight: "600",
+    color: Colors.gray,
+    marginBottom: 8,
+  },
+  salesDateSelector: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#E5E5E5",
+    borderRadius: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: Colors.white,
+  },
+  salesDateText: {
+    fontSize: 15,
+    fontFamily: "Poppins_400Regular",
+    color: "#2C2C2C",
+  },
+  salesDatePlaceholder: {
+    color: Colors.gray,
+  },
+  salesRequestBtn: {
+    backgroundColor: Colors.primary,
+    borderRadius: 24,
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  salesRequestBtnText: {
+    color: Colors.white,
+    fontSize: 15,
+    fontFamily: "PlusJakartaSans_700Bold",
+    fontWeight: "700",
+  },
+  salesDashedBox: {
+    borderStyle: "dashed",
+    borderWidth: 1.5,
+    borderColor: "#D2D2D2",
+    borderRadius: 12,
+    paddingVertical: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 8,
+  },
+  salesDashedText: {
+    color: "#9A9A9A",
+    fontSize: 14,
+    fontFamily: "Poppins_400Regular",
+  },
+  pickerOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    justifyContent: "flex-end",
+  },
+  pickerContainer: {
+    backgroundColor: Colors.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 20,
+    paddingBottom: 40,
+    paddingHorizontal: 24,
+  },
+  pickerTitle: {
+    fontSize: 17,
+    fontFamily: "PlusJakartaSans_700Bold",
+    fontWeight: "700",
+    color: "#2C2C2C",
+    textAlign: "center",
     marginBottom: 20,
   },
-  salesTitle: {
+  reportsListContainer: {
+    marginTop: 16,
+    width: "100%",
+  },
+  reportListCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#F0EFFB",
+  },
+  reportCardDateText: {
+    fontSize: 14,
+    fontFamily: "PlusJakartaSans_600SemiBold",
+    color: "#2C2C2C",
+  },
+  reportDownloadBtn: {
+    backgroundColor: Colors.primary,
+    borderRadius: 24,
+    paddingVertical: 8,
+    paddingHorizontal: 22,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  reportDownloadBtnText: {
+    color: Colors.white,
+    fontSize: 12,
+    fontFamily: "PlusJakartaSans_700Bold",
+    fontWeight: "700",
+  },
+  yearSelectorRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    columnGap: 24,
+    marginBottom: 20,
+    backgroundColor: "#F8F8F8",
+    borderRadius: 12,
+    paddingVertical: 8,
+  },
+  yearNavBtn: {
+    padding: 8,
+  },
+  yearText: {
     fontSize: 18,
     fontFamily: "PlusJakartaSans_700Bold",
     fontWeight: "700",
-    color: "#1A1A1A",
-    marginBottom: 8,
-  },
-  salesSubtitle: {
-    fontSize: 13,
-    fontFamily: "Poppins_400Regular",
-    color: Colors.gray,
+    color: "#2C2C2C",
+    minWidth: 60,
     textAlign: "center",
-    lineHeight: 22,
-    marginBottom: 24,
-    paddingHorizontal: 10,
   },
-  salesActionButton: {
+  monthGrid: {
     flexDirection: "row",
-    alignItems: "center",
-    columnGap: 8,
-    backgroundColor: Colors.primary,
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    rowGap: 12,
+    marginBottom: 24,
   },
-  salesActionText: {
+  monthGridItem: {
+    width: "30%",
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: "#FAFAFA",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#F0EFFB",
+  },
+  monthGridItemActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  monthGridItemText: {
     fontSize: 14,
     fontFamily: "PlusJakartaSans_600SemiBold",
+    color: "#3A3A3A",
+  },
+  monthGridItemTextActive: {
     color: Colors.white,
+    fontFamily: "PlusJakartaSans_700Bold",
+    fontWeight: "700",
+  },
+  pickerActions: {
+    flexDirection: "row",
+    columnGap: 12,
+  },
+  pickerActionBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pickerCancelBtn: {
+    backgroundColor: "#F0EFFB",
+  },
+  pickerCancelBtnText: {
+    color: Colors.primary,
+    fontFamily: "PlusJakartaSans_600SemiBold",
     fontWeight: "600",
+    fontSize: 15,
+  },
+  pickerOkBtn: {
+    backgroundColor: Colors.primary,
+  },
+  pickerOkBtnText: {
+    color: Colors.white,
+    fontFamily: "PlusJakartaSans_700Bold",
+    fontWeight: "700",
+    fontSize: 15,
   },
   modalOverlay: {
     flex: 1,

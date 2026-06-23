@@ -5,13 +5,7 @@ import {
   StyleSheet,
   Dimensions,
 } from "react-native";
-import Svg, {
-  Path,
-  Defs,
-  LinearGradient as SvgLinearGradient,
-  Stop,
-  Line,
-} from "react-native-svg";
+import { LineChart } from "react-native-gifted-charts";
 
 import { Colors } from "@/theme/colors";
 
@@ -27,57 +21,25 @@ interface AnalyticsChartProps {
 }
 
 const AnalyticsChart: React.FC<AnalyticsChartProps> = ({ points }) => {
-  // Measure SVG dynamic width
+  // Measure dynamic width
   const defaultChartWidth = screenWidth - 88;
   const [chartWidth, setChartWidth] = useState<number>(defaultChartWidth);
   const chartHeight = 140;
 
-  // Calculate coordinates for Svg path
-  const chartPoints = useMemo(() => {
-    if (points.length === 0) return [];
+  const spacing = useMemo(() => {
+    if (points.length <= 1) return chartWidth;
+    return chartWidth / (points.length - 1);
+  }, [points.length, chartWidth]);
 
-    const values = points.map((p) => p.value);
-    const maxVal = Math.max(...values);
-    const minVal = Math.min(...values);
-
-    return points.map((p, i) => {
-      const x =
-        points.length > 1
-          ? i * (chartWidth / (points.length - 1))
-          : chartWidth / 2;
-      const yRange = chartHeight - 30; // 15px padding top/bottom
-      const valScale =
-        maxVal === minVal ? 0.5 : (p.value - minVal) / (maxVal - minVal);
-      const y = chartHeight - 15 - valScale * yRange;
-      return { x, y };
-    });
-  }, [points, chartWidth, chartHeight]);
-
-  // Generate cubic bezier curve path
-  const bezierPath = useMemo(() => {
-    if (chartPoints.length === 0) return "";
-    let path = `M ${chartPoints[0].x} ${chartPoints[0].y}`;
-    for (let i = 0; i < chartPoints.length - 1; i++) {
-      const p0 = chartPoints[i];
-      const p1 = chartPoints[i + 1];
-      const cp1x = p0.x + (p1.x - p0.x) / 3;
-      const cp1y = p0.y;
-      const cp2x = p0.x + (2 * (p1.x - p0.x)) / 3;
-      const cp2y = p1.y;
-      path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p1.x} ${p1.y}`;
-    }
-    return path;
-  }, [chartPoints]);
-
-  // Closed path for SVG area gradient fill
-  const fillPath = useMemo(() => {
-    if (chartPoints.length === 0) return "";
-    return `${bezierPath} L ${chartPoints[chartPoints.length - 1].x} ${chartHeight} L ${chartPoints[0].x} ${chartHeight} Z`;
-  }, [bezierPath, chartPoints, chartHeight]);
+  const chartData = useMemo(() => {
+    return points.map((p) => ({
+      value: p.value,
+    }));
+  }, [points]);
 
   return (
     <View style={styles.chartCard}>
-      {/* Chart Svg Line */}
+      {/* Chart Line */}
       <View
         style={styles.chartWrapper}
         onLayout={(e) => setChartWidth(e.nativeEvent.layout.width)}
@@ -90,47 +52,36 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({ points }) => {
           </View>
         ) : (
           <>
-            <Svg width={chartWidth} height={chartHeight}>
-              <Defs>
-                {/* Area Fill Gradient under the bezier curve */}
-                <SvgLinearGradient id="chartFillGrad" x1="0" y1="0" x2="0" y2="1">
-                  <Stop offset="0%" stopColor={Colors.primary} stopOpacity="0.22" />
-                  <Stop offset="100%" stopColor={Colors.primary} stopOpacity="0.00" />
-                </SvgLinearGradient>
-              </Defs>
+            <LineChart
+              data={chartData}
+              width={chartWidth}
+              height={chartHeight}
+              initialSpacing={0}
+              endSpacing={0}
+              spacing={spacing}
+              yAxisThickness={0}
+              xAxisThickness={0}
+              yAxisLabelWidth={0}
+              hideYAxisText={true}
+              hideRules={false}
+              rulesColor="#F0EFFB"
+              rulesThickness={1.5}
+              rulesType="dashed"
+              dashWidth={4}
+              dashGap={4}
+              noOfSections={4}
+              hideDataPoints={true}
+              curved={true}
+              areaChart={true}
+              color={Colors.primary}
+              thickness={3.5}
+              startFillColor={Colors.primary}
+              endFillColor={Colors.primary}
+              startOpacity={0.22}
+              endOpacity={0.00}
+            />
 
-              {/* 5 Horizontal Dashed Grid lines */}
-              {Array.from({ length: 5 }).map((_, index) => {
-                const yVal = (index * chartHeight) / 5 + 10;
-                return (
-                  <Line
-                    key={`grid-${index}`}
-                    x1="0"
-                    y1={yVal}
-                    x2={chartWidth}
-                    y2={yVal}
-                    stroke="#F0EFFB" // Soft purple-tinted grid line
-                    strokeWidth="1.5"
-                    strokeDasharray="4 4" // Dashed line
-                  />
-                );
-              })}
-
-              {/* Smooth Area Spline Fill */}
-              {fillPath !== "" && <Path d={fillPath} fill="url(#chartFillGrad)" />}
-
-              {/* Smooth Spline Stroke Line */}
-              {bezierPath !== "" && (
-                <Path
-                  d={bezierPath}
-                  stroke={Colors.primary}
-                  strokeWidth="3.5"
-                  fill="none"
-                />
-              )}
-            </Svg>
-
-            {/* Horizontal X Axis Labels matching SVG grid spacing */}
+            {/* Horizontal X Axis Labels matching spacing */}
             <View style={styles.xLabelRow}>
               {points.map((pt, i) => {
                 // Determine whether to display this label to prevent crowding
@@ -142,7 +93,7 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({ points }) => {
 
                 if (!showLabel) return null;
 
-                const x = chartPoints[i]?.x ?? 0;
+                const x = i * spacing;
                 const labelWidth = 50;
                 let leftPosition = x - labelWidth / 2;
                 // Clamp label position to stay within the chart boundaries
@@ -200,3 +151,4 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 });
+

@@ -110,4 +110,5 @@ export const ENDPOINTS = {
   CHANGE_PASSWORD: `${BASE_URL}/api/change-password`,
   TOTAL_STREAMS: `${BASE_URL}/api/daily-trends/streams-overview`,
   TOTAL_STREAM_PER_PLATFORM: `${BASE_URL}/api/daily-trends/best-performing-stores`,
+  BEST_PERFORMING_COUNTRIES: `${BASE_URL}/api/daily-trends/best-performing-countries`,
 };

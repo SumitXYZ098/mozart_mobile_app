@@ -78,6 +78,9 @@ const BestPerformingStores: React.FC<BestPerformingStoresProps> = ({
 
   const centerDisplayValue = useMemo(() => {
     if (isEarnings) {
+      if (totalStreams === "0" || !totalStreams) {
+        return "₹0";
+      }
       if (
         totalStreams === "9.8K" ||
         totalStreams === "9,842" ||
@@ -96,7 +99,7 @@ const BestPerformingStores: React.FC<BestPerformingStoresProps> = ({
         const kEarnings = Math.round((streamsNum * 3.25) / 1000);
         return `₹${kEarnings}K`;
       }
-      return "₹32K";
+      return "₹0";
     }
     return totalStreams;
   }, [totalStreams, isEarnings]);
@@ -191,7 +194,7 @@ const BestPerformingStores: React.FC<BestPerformingStoresProps> = ({
             {/* Centered Donut Hole Content */}
             <View style={styles.chartCenter}>
               <Text style={styles.centerValue}>
-                {isEarnings ? "₹32K" : centerDisplayValue}
+                {centerDisplayValue}
               </Text>
               <Text style={styles.centerLabel}>
                 {isEarnings ? "Total earnings" : "Total Streams"}

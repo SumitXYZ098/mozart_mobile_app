@@ -6,7 +6,7 @@ import { Colors } from "@/theme/colors";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import dayjs from "dayjs";
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Animated,
   FlatList,
@@ -16,6 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { Audio } from "expo-av";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const MyTrackScreen = (routes: any) => {
@@ -23,6 +24,170 @@ const MyTrackScreen = (routes: any) => {
   const pubId = routes?.route.params?.routeId;
   const { currentTrack, loading } = usePublishTrackById(pubId);
   const shimmerAnimation = new Animated.Value(0);
+
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const [playingTrackId, setPlayingTrackId] = useState<number | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [playbackPosition, setPlaybackPosition] = useState(0);
+  const [playbackDuration, setPlaybackDuration] = useState(0);
+  const [progressBarWidth, setProgressBarWidth] = useState(0);
+  const isScrubbingRef = useRef(false);
+  const soundRef = useRef<Audio.Sound | null>(null);
+  const progressBarLeftRef = useRef(0);
+
+  const getAudioUrl = (upload: any) => {
+    if (!upload) return null;
+    if (typeof upload === "string") return upload;
+    if (typeof upload === "object" && upload.url) return upload.url;
+    return null;
+  };
+
+  const onPlaybackStatusUpdate = (status: any) => {
+    if (status.isLoaded) {
+      if (!isScrubbingRef.current) {
+        setPlaybackPosition(status.positionMillis || 0);
+      }
+      setPlaybackDuration(status.durationMillis || 0);
+      setIsPlaying(status.isPlaying);
+      if (status.didJustFinish) {
+        setIsPlaying(false);
+        setPlaybackPosition(0);
+        if (soundRef.current) {
+          soundRef.current.unloadAsync().catch((err) => console.log("Error unloading on finish", err));
+          soundRef.current = null;
+        }
+        setSound(null);
+        setPlayingTrackId(null);
+      }
+    } else if (status.error) {
+      console.error(`Playback error: ${status.error}`);
+    }
+  };
+
+  const handleProgressTouchStart = async (e: any) => {
+    const { pageX, locationX } = e.nativeEvent;
+    progressBarLeftRef.current = pageX - locationX;
+    isScrubbingRef.current = true;
+
+    const activeSound = soundRef.current;
+    if (!activeSound || playbackDuration <= 0 || progressBarWidth <= 0) return;
+    const percentage = Math.max(0, Math.min(1, locationX / progressBarWidth));
+    const seekMillis = percentage * playbackDuration;
+    setPlaybackPosition(seekMillis);
+    try {
+      await activeSound.setPositionAsync(seekMillis);
+    } catch (err) {
+      console.log("Error seeking on touch start", err);
+    }
+  };
+
+  const handleProgressTouchMove = (e: any) => {
+    if (playbackDuration <= 0 || progressBarWidth <= 0) return;
+    const { pageX } = e.nativeEvent;
+    const touchX = pageX - progressBarLeftRef.current;
+    const percentage = Math.max(0, Math.min(1, touchX / progressBarWidth));
+    const seekMillis = percentage * playbackDuration;
+    setPlaybackPosition(seekMillis);
+  };
+
+  const handleProgressTouchEnd = async (e: any) => {
+    const activeSound = soundRef.current;
+    if (!activeSound || playbackDuration <= 0 || progressBarWidth <= 0) return;
+    const { pageX } = e.nativeEvent;
+    const touchX = pageX - progressBarLeftRef.current;
+    const percentage = Math.max(0, Math.min(1, touchX / progressBarWidth));
+    const seekMillis = percentage * playbackDuration;
+    
+    isScrubbingRef.current = false;
+    setPlaybackPosition(seekMillis);
+    try {
+      await activeSound.setPositionAsync(seekMillis);
+    } catch (err) {
+      console.log("Error seeking on touch end", err);
+    }
+  };
+
+  const playSound = async (trackId: number, uri: string) => {
+    try {
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        playsInSilentModeIOS: true,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
+        staysActiveInBackground: true,
+      });
+
+      if (soundRef.current) {
+        await soundRef.current.stopAsync();
+        await soundRef.current.unloadAsync();
+        setSound(null);
+        soundRef.current = null;
+        setIsPlaying(false);
+      }
+
+      const { sound: newSound } = await Audio.Sound.createAsync(
+        { uri },
+        { shouldPlay: true },
+        onPlaybackStatusUpdate
+      );
+
+      setSound(newSound);
+      soundRef.current = newSound;
+      setPlayingTrackId(trackId);
+      setIsPlaying(true);
+    } catch (error) {
+      console.error("Error playing sound:", error);
+    }
+  };
+
+  const togglePlayback = async () => {
+    const activeSound = soundRef.current;
+    if (!activeSound) return;
+    try {
+      if (isPlaying) {
+        await activeSound.pauseAsync();
+        setIsPlaying(false);
+      } else {
+        await activeSound.playAsync();
+        setIsPlaying(true);
+      }
+    } catch (error) {
+      console.error("Error toggling playback:", error);
+    }
+  };
+
+  const formatTime = (millis: number) => {
+    const totalSeconds = millis / 1000;
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = Math.floor(totalSeconds % 60);
+    return `${minutes.toString().padStart(2, "0")}:${seconds
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("blur", () => {
+      if (soundRef.current) {
+        soundRef.current.stopAsync()
+          .then(() => {
+            soundRef.current?.unloadAsync();
+            soundRef.current = null;
+          })
+          .catch((err) => console.log("Error stopping sound on blur", err));
+        setSound(null);
+        setIsPlaying(false);
+        setPlayingTrackId(null);
+      }
+    });
+
+    return () => {
+      unsubscribe();
+      if (soundRef.current) {
+        soundRef.current.unloadAsync().catch((err) => console.log("Error unloading sound on unmount", err));
+        soundRef.current = null;
+      }
+    };
+  }, [navigation]);
 
   // Shimmer animation effect
   useEffect(() => {
@@ -55,9 +220,27 @@ const MyTrackScreen = (routes: any) => {
     const primaryArtist =
       item.RoleCredits?.find((rc) => rc.roleName === "Primary Artist")
         ?.artistName || "Unknown";
+
+    const audioUrl = getAudioUrl(item.TrackUpload);
+    const hasAudio = !!audioUrl;
+    const isCurrentPlaying = playingTrackId === item.id;
+    const progressPct = playbackDuration > 0 ? playbackPosition / playbackDuration : 0;
+
+    const handlePlayPress = () => {
+      if (!audioUrl) return;
+      const fullUrl = audioUrl.startsWith("http")
+        ? audioUrl
+        : `${process.env.EXPO_PUBLIC_API_URL}${audioUrl}`;
+      if (isCurrentPlaying && soundRef.current) {
+        togglePlayback();
+      } else {
+        playSound(item.id, fullUrl);
+      }
+    };
+
     return (
       <View style={styles.updateCard}>
-        <View style={{ flexDirection: "column", gap: 4 }}>
+        <View style={{ flexDirection: "column", gap: 8 }}>
           <View
             style={{
               flexDirection: "row",
@@ -66,10 +249,28 @@ const MyTrackScreen = (routes: any) => {
             }}
           >
             <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <LazyImage
-                uri={currentTrack?.CoverArt?.formats?.small?.url ?? ""}
-                style={styles.albumImage}
-              />
+              {/* Cover Art with Play Overlay */}
+              <TouchableOpacity
+                onPress={handlePlayPress}
+                disabled={!hasAudio}
+                activeOpacity={0.8}
+                style={styles.imageContainer}
+              >
+                <LazyImage
+                  uri={currentTrack?.CoverArt?.formats?.small?.url ?? ""}
+                  style={styles.albumImage}
+                />
+                {hasAudio && (
+                  <View style={styles.playOverlay}>
+                    <Ionicons
+                      name={isCurrentPlaying && isPlaying ? "pause" : "play"}
+                      size={18}
+                      color={Colors.white}
+                    />
+                  </View>
+                )}
+              </TouchableOpacity>
+
               <View style={styles.updateContent}>
                 <Text style={styles.trackName}>{item.TrackName}</Text>
                 <Text style={styles.artistName}>
@@ -87,6 +288,50 @@ const MyTrackScreen = (routes: any) => {
               <StatusBadge status={item.Status} />
             </View>
           </View>
+
+          {/* Progress Bar (Only visible for the active track) */}
+          {isCurrentPlaying && hasAudio && (
+            <View style={styles.playerContainer}>
+              <View
+                style={styles.progressTrack}
+                onLayout={(e) => setProgressBarWidth(e.nativeEvent.layout.width)}
+                onStartShouldSetResponder={() => true}
+                onMoveShouldSetResponder={() => true}
+                onResponderGrant={handleProgressTouchStart}
+                onResponderMove={handleProgressTouchMove}
+                onResponderRelease={handleProgressTouchEnd}
+              >
+                {/* Background Track Line */}
+                <View style={styles.progressBackgroundLine} />
+
+                {/* Active Progress Fill Line */}
+                <View
+                  style={[
+                    styles.progressBarFill,
+                    { width: `${progressPct * 100}%` },
+                  ]}
+                  pointerEvents="none"
+                />
+
+                {/* Slider Knob Thumb */}
+                <View
+                  style={[
+                    styles.progressKnob,
+                    { left: `${progressPct * 100}%` },
+                  ]}
+                  pointerEvents="none"
+                />
+              </View>
+              <View style={styles.timeLabelsRow}>
+                <Text style={styles.timeText}>
+                  {formatTime(playbackPosition)}
+                </Text>
+                <Text style={styles.timeText}>
+                  {formatTime(playbackDuration)}
+                </Text>
+              </View>
+            </View>
+          )}
         </View>
       </View>
     );
@@ -304,5 +549,68 @@ const styles = StyleSheet.create({
     height: 24,
     backgroundColor: Colors.gray,
     borderRadius: 12,
+  },
+  imageContainer: {
+    position: "relative",
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  playOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  playerContainer: {
+    marginTop: 6,
+    paddingTop: 6,
+    borderTopWidth: 0.5,
+    borderColor: "#E5E5E5",
+  },
+  progressTrack: {
+    width: "100%",
+    height: 16,
+    justifyContent: "center",
+    position: "relative",
+    marginBottom: 4,
+  },
+  progressBackgroundLine: {
+    height: 4,
+    width: "100%",
+    backgroundColor: "#F0F0F0",
+    borderRadius: 2,
+    position: "absolute",
+  },
+  progressBarFill: {
+    height: 4,
+    backgroundColor: Colors.primary,
+    borderRadius: 2,
+    position: "absolute",
+  },
+  progressKnob: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: Colors.primary,
+    borderWidth: 2,
+    borderColor: Colors.white,
+    position: "absolute",
+    top: 2,
+    transform: [{ translateX: -6 }],
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  timeLabelsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  timeText: {
+    fontSize: 9,
+    fontFamily: "PlusJakartaSans_600SemiBold",
+    color: Colors.gray,
   },
 });

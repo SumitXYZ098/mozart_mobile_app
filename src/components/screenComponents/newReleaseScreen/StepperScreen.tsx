@@ -440,6 +440,7 @@ const StepperScreen = () => {
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: 20 }}
+        showsVerticalScrollIndicator={false}
       >
         {steps[activeStep]}
 
