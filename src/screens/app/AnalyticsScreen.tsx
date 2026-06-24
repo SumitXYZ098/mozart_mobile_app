@@ -9,6 +9,8 @@ import {
   RefreshControl,
   Modal,
   Alert,
+  Linking,
+  Share,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -50,6 +52,8 @@ const STORES = [
   "Amazon Music",
   "Deezer",
 ];
+
+
 
 // Beautiful Mock datasets corresponding to 7 Days, 14 Days, 30 Days periods
 const MOCK_DATA: Record<
@@ -245,6 +249,17 @@ const AnalyticsScreen = () => {
   const isFocused = useIsFocused();
   const { user } = useAuthStore();
 
+  // Dynamically generate years from 2000 up to the current year
+  const YEARS = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const startYear = 2000;
+    const length = currentYear - startYear + 1;
+    return Array.from({ length }, (_, i) => {
+      const yr = startYear + i;
+      return { label: String(yr), value: String(yr - startYear).padStart(2, "0") };
+    });
+  }, []);
+
   // Screen State
   const [activeTab, setActiveTab] = useState<"trends" | "sales">("trends");
   const [selectedPeriod, setSelectedPeriod] = useState<string>(PERIODS.DAYS_7);
@@ -257,17 +272,13 @@ const AnalyticsScreen = () => {
 
   // Reports list state
   interface SalesReport {
-    id: string;
+    id: string | number;
     from: string;
     to: string;
   }
 
-  const [reports, setReports] = useState<SalesReport[]>([
-    { id: "1", from: "2025-12", to: "2026-02" },
-    { id: "2", from: "2025-12", to: "2026-02" },
-    { id: "3", from: "2025-12", to: "2026-02" },
-    { id: "4", from: "2025-12", to: "2026-02" },
-  ]);
+  const [reports, setReports] = useState<SalesReport[]>([]);
+  const [reportsLoading, setReportsLoading] = useState<boolean>(false);
 
   // Custom Month Picker Modal State
   const [pickerVisible, setPickerVisible] = useState<boolean>(false);
@@ -275,7 +286,67 @@ const AnalyticsScreen = () => {
   const [tempMonth, setTempMonth] = useState<string>("06");
   const [tempYear, setTempYear] = useState<string>("26");
 
+  const isYearDisabled = (yValue: string) => {
+    const yearNum = 2000 + parseInt(yValue, 10);
+    const now = new Date();
+    const currentYear = now.getFullYear();
+
+    // Rule 1: Cannot select future years
+    if (yearNum > currentYear) {
+      return true;
+    }
+
+    // Rule 2: Validation against other selected target
+    if (pickerTarget === "from" && toDate) {
+      const [, toYearStr] = toDate.split("/");
+      const toYearNum = 2000 + parseInt(toYearStr, 10);
+      if (yearNum > toYearNum) return true;
+    } else if (pickerTarget === "to" && fromDate) {
+      const [, fromYearStr] = fromDate.split("/");
+      const fromYearNum = 2000 + parseInt(fromYearStr, 10);
+      if (yearNum < fromYearNum) return true;
+    }
+
+    return false;
+  };
+
+  const isMonthDisabled = (mValue: string) => {
+    const monthNum = parseInt(mValue, 10);
+    const tempYearNum = 2000 + parseInt(tempYear, 10);
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+
+    // Rule 1: Cannot select future months
+    if (tempYearNum > currentYear) {
+      return true;
+    }
+    if (tempYearNum === currentYear && monthNum > currentMonth) {
+      return true;
+    }
+
+    // Rule 2: Validation against other selected target
+    if (pickerTarget === "from" && toDate) {
+      const [toMonthStr, toYearStr] = toDate.split("/");
+      const toYearNum = 2000 + parseInt(toYearStr, 10);
+      const toMonthNum = parseInt(toMonthStr, 10);
+      if (tempYearNum === toYearNum && monthNum > toMonthNum) {
+        return true;
+      }
+    } else if (pickerTarget === "to" && fromDate) {
+      const [fromMonthStr, fromYearStr] = fromDate.split("/");
+      const fromYearNum = 2000 + parseInt(fromYearStr, 10);
+      const fromMonthNum = parseInt(fromMonthStr, 10);
+      if (tempYearNum === fromYearNum && monthNum < fromMonthNum) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
   const openDatePicker = (target: "from" | "to") => {
+    console.log("[Analytics] openDatePicker called for target:", target);
     setPickerTarget(target);
     const currentDate = target === "from" ? fromDate : toDate;
     if (currentDate) {
@@ -291,22 +362,9 @@ const AnalyticsScreen = () => {
     setPickerVisible(true);
   };
 
-  const handlePrevYear = () => {
-    const yrInt = parseInt(tempYear, 10);
-    if (yrInt > 24) {
-      setTempYear(String(yrInt - 1).padStart(2, "0"));
-    }
-  };
-
-  const handleNextYear = () => {
-    const yrInt = parseInt(tempYear, 10);
-    if (yrInt < 30) {
-      setTempYear(String(yrInt + 1).padStart(2, "0"));
-    }
-  };
-
   const handleConfirmDate = () => {
     const formattedDate = `${tempMonth}/${tempYear}`;
+    console.log("[Analytics] handleConfirmDate called. Selected Month/Year:", formattedDate, "for:", pickerTarget);
     if (pickerTarget === "from") {
       setFromDate(formattedDate);
     } else {
@@ -323,26 +381,118 @@ const AnalyticsScreen = () => {
     return dateStr;
   };
 
-  const handleRequestReport = () => {
+  const fetchReports = useCallback(async () => {
+    if (!user?.token) return;
+    setReportsLoading(true);
+    try {
+      const response = await axios.get(ENDPOINTS.GET_MY_CSV_LOGS, {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      });
+      if (response.data && response.data.success) {
+        const rawData = response.data.data || [];
+        const mapped: SalesReport[] = rawData.map((item: any) => ({
+          id: item.id,
+          from: item.startMonth,
+          to: item.endMonth,
+        }));
+        setReports(mapped);
+      } else {
+        setReports([]);
+      }
+    } catch (error) {
+      console.error("[Analytics] Fetch reports error:", error);
+      setReports([]);
+    } finally {
+      setReportsLoading(false);
+    }
+  }, [user?.token]);
+
+  const handleRequestReport = async () => {
     if (!fromDate || !toDate) {
       Alert.alert("Required Fields", "Please select both 'From' and 'To' dates.");
+      return;
+    }
+    if (!user?.token) {
+      Alert.alert("Authentication", "Please log in to generate reports.");
       return;
     }
 
     const formattedFrom = formatToYYYYMM(fromDate);
     const formattedTo = formatToYYYYMM(toDate);
+    console.log("[Analytics] handleRequestReport called. Requesting report from:", formattedFrom, "to:", formattedTo);
 
-    const newReport: SalesReport = {
-      id: Date.now().toString(),
-      from: formattedFrom,
-      to: formattedTo,
-    };
+    setReportsLoading(true);
+    try {
+      const response = await axios.get(
+        ENDPOINTS.GENERATE_CSV_REPORT,
+        {
+          params: {
+            startMonth: formattedFrom,
+            endMonth: formattedTo,
+          },
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        }
+      );
 
-    setReports([newReport, ...reports]);
-    Alert.alert(
-      "Report Requested",
-      `Your sales report from ${fromDate} to ${toDate} has been successfully requested.`
-    );
+      if (response.data && response.data.success) {
+        Alert.alert(
+          "Report Generated",
+          `Your sales report from ${fromDate} to ${toDate} has been successfully generated.`
+        );
+        fetchReports();
+        setFromDate(null);
+        setToDate(null);
+      } else {
+        Alert.alert("Error", response.data?.message || "Failed to generate report.");
+      }
+    } catch (error: any) {
+      console.error("[Analytics] Request report error:", error);
+      Alert.alert(
+        "Error",
+        error?.response?.data?.message || "Failed to generate report."
+      );
+    } finally {
+      setReportsLoading(false);
+    }
+  };
+
+  const handleDownloadReport = async (id: number | string) => {
+    if (!user?.token) {
+      Alert.alert("Authentication", "Please log in to download reports.");
+      return;
+    }
+    setReportsLoading(true);
+    try {
+      const url = ENDPOINTS.DOWNLOAD_CSV_REPORT(id);
+      console.log("[Analytics] Fetching CSV report content from:", url);
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      });
+
+      if (response.data) {
+        console.log("[Analytics] Opening share sheet for CSV report...");
+        await Share.share({
+          message: response.data,
+          title: "Royalty Report CSV",
+        });
+      } else {
+        Alert.alert("Error", "No report data returned from server.");
+      }
+    } catch (error: any) {
+      console.error("[Analytics] Download report error:", error);
+      Alert.alert(
+        "Error",
+        error?.response?.data?.message || "Failed to download report content."
+      );
+    } finally {
+      setReportsLoading(false);
+    }
   };
 
   // Badge notifications count
@@ -505,17 +655,25 @@ const AnalyticsScreen = () => {
     }
   }, [user?.token, selectedPeriod]);
 
-  // Fetch when screen loads/changes period
+  // Fetch when screen loads/changes period or active tab
   useEffect(() => {
     if (isFocused) {
-      fetchAnalyticsData();
+      if (activeTab === "trends") {
+        fetchAnalyticsData();
+      } else {
+        fetchReports();
+      }
     }
-  }, [isFocused, selectedPeriod, fetchAnalyticsData]);
+  }, [isFocused, selectedPeriod, activeTab, fetchAnalyticsData, fetchReports]);
 
   // Pull to refresh action
   const onRefresh = () => {
     setRefreshing(true);
-    fetchAnalyticsData();
+    if (activeTab === "trends") {
+      fetchAnalyticsData();
+    } else {
+      fetchReports();
+    }
   };
 
   // Compile active report card values (API values with mock fallbacks)
@@ -664,6 +822,7 @@ const AnalyticsScreen = () => {
       <ScrollView
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
+        nestedScrollEnabled={true}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -677,7 +836,7 @@ const AnalyticsScreen = () => {
           <View>
             {/* Title Section */}
             <Text style={styles.sectionTitle}>Your Streams & Downloads</Text>
-            <Text style={styles.sectionSubtitle}>Preforming Store</Text>
+            <Text style={styles.sectionSubtitle}>Performing Store</Text>
 
             {/* Store Dropdown Trigger */}
             <TouchableOpacity
@@ -763,7 +922,7 @@ const AnalyticsScreen = () => {
                   data={bestPerformingStoresDataset.data}
                   loading={storesLoading && !refreshing}
                   totalStreams={bestPerformingStoresDataset.total}
-                  isEarnings={true}
+                  isEarnings={false}
                 />
 
               </View>
@@ -793,7 +952,7 @@ const AnalyticsScreen = () => {
               </View>
 
               <View style={styles.salesInputGroup}>
-                <Text style={styles.salesInputLabel}>To</Text>
+                <Text style={styles.salesInputLabel}></Text>
                 <TouchableOpacity
                   style={styles.salesDateSelector}
                   onPress={() => openDatePicker("to")}
@@ -819,7 +978,11 @@ const AnalyticsScreen = () => {
                 <Text style={styles.salesRequestBtnText}>Request Report</Text>
               </TouchableOpacity>
 
-              {reports.length === 0 ? (
+              {reportsLoading && !refreshing ? (
+                <View style={styles.loaderContainer}>
+                  <ActivityIndicator size="large" color={Colors.primary} />
+                </View>
+              ) : reports.length === 0 ? (
                 <View style={styles.salesDashedBox}>
                   <Text style={styles.salesDashedText}>No Reports Generated Yet</Text>
                 </View>
@@ -832,7 +995,7 @@ const AnalyticsScreen = () => {
                       </Text>
                       <TouchableOpacity
                         style={styles.reportDownloadBtn}
-                        onPress={() => Alert.alert("Download", `Downloading report for ${report.from} to ${report.to}...`)}
+                        onPress={() => handleDownloadReport(report.id)}
                         activeOpacity={0.8}
                       >
                         <Text style={styles.reportDownloadBtnText}>Download</Text>
@@ -914,25 +1077,46 @@ const AnalyticsScreen = () => {
               Select Month & Year ({pickerTarget === "from" ? "From" : "To"})
             </Text>
 
-            {/* Year Selector Row */}
-            <View style={styles.yearSelectorRow}>
-              <TouchableOpacity
-                onPress={handlePrevYear}
-                style={styles.yearNavBtn}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="chevron-back" size={20} color={Colors.primary} />
-              </TouchableOpacity>
-              <Text style={styles.yearText}>20{tempYear}</Text>
-              <TouchableOpacity
-                onPress={handleNextYear}
-                style={styles.yearNavBtn}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="chevron-forward" size={20} color={Colors.primary} />
-              </TouchableOpacity>
+            <Text style={styles.pickerSubTitle}>Select Year</Text>
+            <View style={{ height: 120, marginBottom: 16 }}>
+              <ScrollView nestedScrollEnabled={true} showsVerticalScrollIndicator={true}>
+                <View style={styles.yearGrid}>
+                  {YEARS.map((y) => {
+                    const isActive = tempYear === y.value;
+                    const isDisabled = isYearDisabled(y.value);
+                    return (
+                      <TouchableOpacity
+                        key={y.value}
+                        disabled={isDisabled}
+                        style={[
+                          styles.monthGridItem,
+                          isActive && styles.monthGridItemActive,
+                          isDisabled && styles.monthGridItemDisabled,
+                          { width: "30%", marginBottom: 10 }
+                        ]}
+                        onPress={() => {
+                          console.log("[Analytics] Selected Year:", y.label, "value:", y.value);
+                          setTempYear(y.value);
+                        }}
+                        activeOpacity={isDisabled ? 1 : 0.7}
+                      >
+                        <Text
+                          style={[
+                            styles.monthGridItemText,
+                            isActive && styles.monthGridItemTextActive,
+                            isDisabled && styles.monthGridItemTextDisabled,
+                          ]}
+                        >
+                          {y.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </ScrollView>
             </View>
 
+            <Text style={styles.pickerSubTitle}>Select Month</Text>
             {/* Month Grid */}
             <View style={styles.monthGrid}>
               {[
@@ -950,20 +1134,27 @@ const AnalyticsScreen = () => {
                 { label: "Dec", value: "12" },
               ].map((m) => {
                 const isActive = tempMonth === m.value;
+                const isDisabled = isMonthDisabled(m.value);
                 return (
                   <TouchableOpacity
                     key={m.value}
+                    disabled={isDisabled}
                     style={[
                       styles.monthGridItem,
                       isActive && styles.monthGridItemActive,
+                      isDisabled && styles.monthGridItemDisabled,
                     ]}
-                    onPress={() => setTempMonth(m.value)}
-                    activeOpacity={0.7}
+                    onPress={() => {
+                      console.log("[Analytics] Selected Month:", m.label, "value:", m.value);
+                      setTempMonth(m.value);
+                    }}
+                    activeOpacity={isDisabled ? 1 : 0.7}
                   >
                     <Text
                       style={[
                         styles.monthGridItemText,
                         isActive && styles.monthGridItemTextActive,
+                        isDisabled && styles.monthGridItemTextDisabled,
                       ]}
                     >
                       {m.label}
@@ -1232,6 +1423,8 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     backgroundColor: Colors.white,
+    
+     
   },
   salesDateText: {
     fontSize: 15,
@@ -1323,7 +1516,7 @@ const styles = StyleSheet.create({
   },
   reportDownloadBtnText: {
     color: Colors.white,
-    fontSize: 12,
+    fontSize: 14,
     fontFamily: "PlusJakartaSans_700Bold",
     fontWeight: "700",
   },
@@ -1460,5 +1653,26 @@ const styles = StyleSheet.create({
     fontFamily: "PlusJakartaSans_600SemiBold",
     fontWeight: "600",
     color: Colors.primary,
+  },
+  pickerSubTitle: {
+    fontSize: 14,
+    fontFamily: "PlusJakartaSans_700Bold",
+    fontWeight: "700",
+    color: "#2C2C2C",
+    marginBottom: 10,
+    marginTop: 10,
+  },
+  yearGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+  },
+  monthGridItemDisabled: {
+    backgroundColor: "#F9F9FB",
+    borderColor: "#EAEAEA",
+    opacity: 0.45,
+  },
+  monthGridItemTextDisabled: {
+    color: "#BBBBBB",
   },
 });

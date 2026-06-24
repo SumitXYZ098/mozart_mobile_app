@@ -8,6 +8,8 @@
     "icon": "./assets/splash.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "jsEngine": "hermes",
+
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.mozart-mobile-app",
@@ -17,6 +19,7 @@
       }
     },
     "android": {
+      "icon": "./assets/icon.png",
       "adaptiveIcon": {
         "foregroundImage": "./assets/splash.png",
         "backgroundColor": "#6739B7"

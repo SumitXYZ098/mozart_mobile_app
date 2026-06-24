@@ -111,4 +111,7 @@ export const ENDPOINTS = {
   TOTAL_STREAMS: `${BASE_URL}/api/daily-trends/streams-overview`,
   TOTAL_STREAM_PER_PLATFORM: `${BASE_URL}/api/daily-trends/best-performing-stores`,
   BEST_PERFORMING_COUNTRIES: `${BASE_URL}/api/daily-trends/best-performing-countries`,
+  GET_MY_CSV_LOGS: `${BASE_URL}/api/csv-report-logs/my-logs`,
+  GENERATE_CSV_REPORT: `${BASE_URL}/api/royalty-report/export-csv`,
+  DOWNLOAD_CSV_REPORT: (id: number | string) => `${BASE_URL}/api/csv-report/download/${id}`,
 };

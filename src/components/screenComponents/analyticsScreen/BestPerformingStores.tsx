@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
-import Svg, { Path, Circle } from "react-native-svg";
+import Svg, { Path, Circle, G, Text as SVGText } from "react-native-svg";
 
 import { Colors } from "@/theme/colors";
 
@@ -60,7 +60,7 @@ const BestPerformingStores: React.FC<BestPerformingStoresProps> = ({
   const R = 82;
   const C = 2 * Math.PI * R; // ~515.22
   const strokeWidth = 34; // Perfectly chunky segments
-  const size = 250;
+  const size = 330;
   const center = size / 2;
 
   // Sorting order mapping mockup starting from Top-Right
@@ -78,35 +78,20 @@ const BestPerformingStores: React.FC<BestPerformingStoresProps> = ({
 
   const centerDisplayValue = useMemo(() => {
     if (isEarnings) {
-      if (totalStreams === "0" || !totalStreams) {
+      const totalUnitsSum = data.reduce((sum, item) => sum + (item.totalUnits || 0), 0);
+      if (totalUnitsSum <= 0) {
         return "₹0";
       }
-      if (
-        totalStreams === "9.8K" ||
-        totalStreams === "9,842" ||
-        totalStreams === "9,476"
-      ) {
-        return "₹32K";
-      }
-      if (totalStreams === "24,000") {
-        return "₹78K";
-      }
-      if (totalStreams === "69,000") {
-        return "₹224K";
-      }
-      const streamsNum = parseFloat(totalStreams.replace(/,/g, "")) || 0;
-      if (streamsNum > 0) {
-        const kEarnings = Math.round((streamsNum * 3.25) / 1000);
-        return `₹${kEarnings}K`;
-      }
-      return "₹0";
+      const kEarnings = (totalUnitsSum * 3.25) / 1000;
+      const formatted = kEarnings >= 10 ? Math.round(kEarnings) : kEarnings.toFixed(1);
+      return `₹${formatted}K`;
     }
     return totalStreams;
-  }, [totalStreams, isEarnings]);
+  }, [data, totalStreams, isEarnings]);
 
   return (
     <View style={styles.card}>
-      <Text style={styles.cardTitle}>Best Preforming Stores</Text>
+      <Text style={styles.cardTitle}>Best Performing Stores</Text>
 
       {loading ? (
         <View style={styles.loaderContainer}>
@@ -178,15 +163,70 @@ const BestPerformingStores: React.FC<BestPerformingStoresProps> = ({
                 const pathD = `M ${x1} ${y1} A ${rOut} ${rOut} 0 ${largeArcFlag} 1 ${x2} ${y2} L ${x3} ${y3} A ${rIn} ${rIn} 0 ${largeArcFlag} 0 ${x4} ${y4} Z`;
                 const color = getChannelColor(item.channel, index);
 
+                // --- dynamic label pointer logic ---
+                const midAngle = (startAngle + endAngle) / 2;
+                const xLineStart = center + (rOut + 4) * Math.cos(midAngle);
+                const yLineStart = center + (rOut + 4) * Math.sin(midAngle);
+
+                // Line elbow point extending outward
+                const xElbow = center + (rOut + 22) * Math.cos(midAngle);
+                const yElbow = center + (rOut + 22) * Math.sin(midAngle);
+
+                // Line end point (horizontal line extension)
+                const isRightSide = Math.cos(midAngle) > 0;
+                const xLineEnd = xElbow + (isRightSide ? 15 : -15);
+                const yLineEnd = yElbow;
+
+                const linePathD = `M ${xLineStart} ${yLineStart} L ${xElbow} ${yElbow} L ${xLineEnd} ${yLineEnd}`;
+
+                // Text labels positions
+                const xText = xLineEnd + (isRightSide ? 6 : -6);
+                const textAnchor = isRightSide ? "start" : "end";
+                const formattedUnits = formatUnits(item.totalUnits, isEarnings);
+
                 return (
-                  <Path
-                    key={item.channel}
-                    d={pathD}
-                    fill={color}
-                    stroke={color}
-                    strokeWidth={19}
-                    strokeLinejoin="round"
-                  />
+                  <G key={item.channel}>
+                    <Path
+                      d={pathD}
+                      fill={color}
+                      stroke={color}
+                      strokeWidth={19}
+                      strokeLinejoin="round"
+                    />
+
+                    {/* Dynamic label pointer line */}
+                    <Path
+                      d={linePathD}
+                      fill="none"
+                      stroke="#CCCCCC"
+                      strokeWidth={1.2}
+                    />
+
+                    {/* Bold stream units text */}
+                    <SVGText
+                      x={xText}
+                      y={yLineEnd - 3}
+                      fontSize={12}
+                      fontFamily="PlusJakartaSans_700Bold"
+                      fontWeight="700"
+                      fill="#1C1C1E"
+                      textAnchor={textAnchor}
+                    >
+                      {formattedUnits}
+                    </SVGText>
+
+                    {/* Light gray channel name text */}
+                    <SVGText
+                      x={xText}
+                      y={yLineEnd + 10}
+                      fontSize={10}
+                      fontFamily="Poppins_400Regular"
+                      fill="#8E8E93"
+                      textAnchor={textAnchor}
+                    >
+                      {item.channel}
+                    </SVGText>
+                  </G>
                 );
               })}
             </Svg>
@@ -274,8 +314,8 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   chartWrapper: {
-    width: 250,
-    height: 250,
+    width: 330,
+    height: 330,
     position: "relative",
     justifyContent: "center",
     alignItems: "center",

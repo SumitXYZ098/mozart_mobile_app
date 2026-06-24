@@ -23,6 +23,7 @@ const BestPerformingCountries: React.FC<BestPerformingCountriesProps> = ({
   loading,
 }) => {
   const [chartWidth, setChartWidth] = useState<number>(screenWidth - 68); // Static pixel-perfect initialization to prevent layout jumps on mount
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   // Dynamically calculate maxVal based on data, rounding up to a clean multiple
   const maxVal = useMemo(() => {
@@ -54,59 +55,65 @@ const BestPerformingCountries: React.FC<BestPerformingCountriesProps> = ({
   };
 
   const barWidth = data.length > 5 ? 24 : 32;
-  const availableWidth = chartWidth - 68 - 10;
+  const yAxisLabelWidth = 30;
+  const availableWidth = chartWidth - 20 - yAxisLabelWidth - 10;
   const spacing =
     data.length > 1
       ? (availableWidth - data.length * barWidth) / (data.length - 1)
       : 0;
 
   const barData = useMemo(() => {
-    return data.map((item) => {
+    return data.map((item, index) => {
       const barPct = item.totalUnits / maxVal;
       const barHeightVal = CHART_HEIGHT * barPct;
       const countryName = item.country.toUpperCase();
       const canFitText = barHeightVal > 28;
+      const isSelected = selectedIndex === index;
 
       return {
         value: item.totalUnits,
-        topLabelComponent: () => (
-          <View
-            style={{
-              height: 0,
-              width: barWidth,
-              overflow: "visible",
-              alignItems: "center",
-            }}
-          >
-            <Text
-              style={
-                canFitText
-                  ? {
-                      position: "absolute",
-                      top: barHeightVal / 2 - 7,
-                      color: "#FFFFFF",
-                      fontSize: 12,
-                      fontFamily: "PlusJakartaSans_700Bold",
-                      transform: [{ rotate: "90deg" }],
-                      textAlign: "center",
-                    }
-                  : {
-                      position: "absolute",
-                      top: -20,
-                      color: "#555555",
-                      fontSize: 12,
-                      fontFamily: "PlusJakartaSans_700Bold",
-                      textAlign: "center",
-                    }
-              }
+        topLabelComponent: () => {
+          if (isSelected) return null; // Hide the label when bar is selected to avoid overlap with the tooltip
+
+          return (
+            <View
+              style={{
+                height: 0,
+                width: barWidth,
+                overflow: "visible",
+                alignItems: "center",
+              }}
             >
-              {countryName}
-            </Text>
-          </View>
-        ),
+              <Text
+                style={
+                  canFitText
+                    ? {
+                        position: "absolute",
+                        top: 12,
+                        color: "#FFFFFF",
+                        fontSize: 12,
+                        fontFamily: "PlusJakartaSans_700Bold",
+                        transform: [{ rotate: "90deg" }],
+                        textAlign: "center",
+                      }
+                    : {
+                        position: "absolute",
+                        top: -20,
+                        color: "#555555",
+                        fontSize: 12,
+                        fontFamily: "PlusJakartaSans_700Bold",
+                        textAlign: "center",
+                      }
+                }
+              >
+                {countryName}
+              </Text>
+            </View>
+          );
+        },
       };
     });
-  }, [data, maxVal, barWidth]);
+  }, [data, maxVal, barWidth, selectedIndex]);
 
   const yAxisLabelTexts = useMemo(() => {
     return [
@@ -190,10 +197,15 @@ const BestPerformingCountries: React.FC<BestPerformingCountriesProps> = ({
               barWidth={barWidth}
               spacing={spacing}
               initialSpacing={13}
-              yAxisLabelWidth={55}
+              yAxisLabelWidth={yAxisLabelWidth}
               yAxisThickness={0}
               xAxisThickness={0}
-              hideRules={true}
+              hideRules={false}
+              rulesColor="#F0EFFB"
+              rulesThickness={1.5}
+              rulesType="dashed"
+              dashWidth={4}
+              dashGap={4}
               noOfSections={5}
               maxValue={maxVal}
               yAxisLabelTexts={yAxisLabelTexts}
@@ -202,6 +214,57 @@ const BestPerformingCountries: React.FC<BestPerformingCountriesProps> = ({
               frontColor="#5E25B6"
               gradientColor="#B59BF6"
               barBorderRadius={8}
+              renderTooltip={(item: any, index: number) => {
+                const isFirst = index === 0;
+                const isLast = index === (data?.length || 1) - 1;
+                const countryName = data[index]?.country?.toUpperCase() || "";
+                return (
+                  <View
+                    style={{
+                      backgroundColor: '#FFFFFF',
+                      paddingHorizontal: 8,
+                      paddingVertical: 5,
+                      borderRadius: 6,
+                      borderWidth: 1,
+                      borderColor: '#E2E8F0',
+                      shadowColor: '#000000',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.15,
+                      shadowRadius: 4,
+                      elevation: 4,
+                      marginBottom: 12,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      zIndex: 9999,
+                      marginLeft: isFirst ? 18 : isLast ? -18 : 0,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 9,
+                        fontFamily: 'PlusJakartaSans_600SemiBold',
+                        color: '#7A7A7A',
+                        marginBottom: 1,
+                      }}
+                    >
+                      {countryName}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        fontFamily: 'PlusJakartaSans_700Bold',
+                        fontWeight: '700',
+                        color: '#1A1A1A',
+                      }}
+                    >
+                      {item.value !== undefined ? item.value.toFixed(2) : ""}
+                    </Text>
+                  </View>
+                );
+              }}
+              autoCenterTooltip={true}
+              overflowTop={45}
+              onPress={(item: any, index: number) => setSelectedIndex(index)}
             />
           </View>
         </>
@@ -268,6 +331,8 @@ const styles = StyleSheet.create({
   chartWrapper: {
     width: "100%",
     alignItems: "center",
+    zIndex: 10,
+    elevation: 10,
   },
   loaderContainer: {
     height: 300,
