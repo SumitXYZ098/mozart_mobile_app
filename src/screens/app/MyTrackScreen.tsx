@@ -8,6 +8,7 @@ import { useNavigation } from "@react-navigation/native";
 import dayjs from "dayjs";
 import React, { useEffect, useState, useRef } from "react";
 import {
+  ActivityIndicator,
   Animated,
   FlatList,
   Image,
@@ -28,12 +29,26 @@ const MyTrackScreen = (routes: any) => {
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [playingTrackId, setPlayingTrackId] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [loadingTrackId, setLoadingTrackId] = useState<number | null>(null);
   const [playbackPosition, setPlaybackPosition] = useState(0);
   const [playbackDuration, setPlaybackDuration] = useState(0);
   const [progressBarWidth, setProgressBarWidth] = useState(0);
+
   const isScrubbingRef = useRef(false);
   const soundRef = useRef<Audio.Sound | null>(null);
+  const playingTrackIdRef = useRef<number | null>(null);
+  const loadingTrackIdRef = useRef<number | null>(null);
   const progressBarLeftRef = useRef(0);
+
+  const updatePlayingTrack = (trackId: number | null) => {
+    playingTrackIdRef.current = trackId;
+    setPlayingTrackId(trackId);
+  };
+
+  const updateLoadingTrack = (trackId: number | null) => {
+    loadingTrackIdRef.current = trackId;
+    setLoadingTrackId(trackId);
+  };
 
   const getAudioUrl = (upload: any) => {
     if (!upload) return null;
@@ -42,7 +57,10 @@ const MyTrackScreen = (routes: any) => {
     return null;
   };
 
-  const onPlaybackStatusUpdate = (status: any) => {
+  const createPlaybackStatusUpdateHandler = (trackId: number) => (status: any) => {
+    // Only handle status updates if this track is still the active playing track
+    if (playingTrackIdRef.current !== trackId) return;
+
     if (status.isLoaded) {
       if (!isScrubbingRef.current) {
         setPlaybackPosition(status.positionMillis || 0);
@@ -57,7 +75,7 @@ const MyTrackScreen = (routes: any) => {
           soundRef.current = null;
         }
         setSound(null);
-        setPlayingTrackId(null);
+        updatePlayingTrack(null);
       }
     } else if (status.error) {
       console.error(`Playback error: ${status.error}`);
@@ -108,6 +126,10 @@ const MyTrackScreen = (routes: any) => {
   };
 
   const playSound = async (trackId: number, uri: string) => {
+    updatePlayingTrack(trackId);
+    updateLoadingTrack(trackId);
+    setIsPlaying(false);
+
     try {
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
@@ -118,25 +140,41 @@ const MyTrackScreen = (routes: any) => {
       });
 
       if (soundRef.current) {
-        await soundRef.current.stopAsync();
-        await soundRef.current.unloadAsync();
-        setSound(null);
+        try {
+          await soundRef.current.stopAsync();
+          await soundRef.current.unloadAsync();
+        } catch (err) {
+          console.log("Error unloading previous sound:", err);
+        }
         soundRef.current = null;
-        setIsPlaying(false);
+        setSound(null);
       }
 
       const { sound: newSound } = await Audio.Sound.createAsync(
         { uri },
         { shouldPlay: true },
-        onPlaybackStatusUpdate
+        createPlaybackStatusUpdateHandler(trackId)
       );
+
+      // Verify if the user changed the track or stopped playback during async load
+      if (playingTrackIdRef.current !== trackId) {
+        await newSound.unloadAsync();
+        return;
+      }
 
       setSound(newSound);
       soundRef.current = newSound;
-      setPlayingTrackId(trackId);
       setIsPlaying(true);
     } catch (error) {
       console.error("Error playing sound:", error);
+      if (playingTrackIdRef.current === trackId) {
+        updatePlayingTrack(null);
+        setIsPlaying(false);
+      }
+    } finally {
+      if (loadingTrackIdRef.current === trackId) {
+        updateLoadingTrack(null);
+      }
     }
   };
 
@@ -176,7 +214,11 @@ const MyTrackScreen = (routes: any) => {
           .catch((err) => console.log("Error stopping sound on blur", err));
         setSound(null);
         setIsPlaying(false);
-        setPlayingTrackId(null);
+        updatePlayingTrack(null);
+        updateLoadingTrack(null);
+      } else {
+        updatePlayingTrack(null);
+        updateLoadingTrack(null);
       }
     });
 
@@ -186,6 +228,8 @@ const MyTrackScreen = (routes: any) => {
         soundRef.current.unloadAsync().catch((err) => console.log("Error unloading sound on unmount", err));
         soundRef.current = null;
       }
+      playingTrackIdRef.current = null;
+      loadingTrackIdRef.current = null;
     };
   }, [navigation]);
 
@@ -231,8 +275,19 @@ const MyTrackScreen = (routes: any) => {
       const fullUrl = audioUrl.startsWith("http")
         ? audioUrl
         : `${process.env.EXPO_PUBLIC_API_URL}${audioUrl}`;
-      if (isCurrentPlaying && soundRef.current) {
-        togglePlayback();
+
+      const isCurrentActive = playingTrackIdRef.current === item.id;
+
+      if (isCurrentActive) {
+        if (soundRef.current) {
+          togglePlayback();
+        } else {
+          // If soundRef.current is null but playingTrackIdRef matches, it means it is currently loading.
+          // Clicking it again should cancel loading.
+          updatePlayingTrack(null);
+          updateLoadingTrack(null);
+          setIsPlaying(false);
+        }
       } else {
         playSound(item.id, fullUrl);
       }
@@ -262,11 +317,15 @@ const MyTrackScreen = (routes: any) => {
                 />
                 {hasAudio && (
                   <View style={styles.playOverlay}>
-                    <Ionicons
-                      name={isCurrentPlaying && isPlaying ? "pause" : "play"}
-                      size={18}
-                      color={Colors.white}
-                    />
+                    {loadingTrackId === item.id ? (
+                      <ActivityIndicator size="small" color={Colors.white} />
+                    ) : (
+                      <Ionicons
+                        name={isCurrentPlaying && isPlaying ? "pause" : "play"}
+                        size={18}
+                        color={Colors.white}
+                      />
+                    )}
                   </View>
                 )}
               </TouchableOpacity>

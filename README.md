@@ -34,7 +34,7 @@ npm run web
 ## Project Structure
 
 ```
-mozart_mobile_app/
+amozart/
 ├── App.tsx                 # Main app component with NativeWind examples
 ├── components/             # Reusable components
 │   ├── Button.tsx         # Custom button component

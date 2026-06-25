@@ -1,26 +1,32 @@
 {
   "expo": {
-    "name": "mozart_mobile_app",
+    "name": "Amozart",
     "slug": "mozart_mobile_app",
-    "scheme": "mozart",
+    "scheme": "amozart",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/splash.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "jsEngine": "hermes",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#6739B7"
+    },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.mozart-mobile-app",
+      "bundleIdentifier": "com.anonymous.amozart",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "We need access to your photo library so you can upload pictures.",
         "NSCameraUsageDescription": "We need access to your camera so you can take pictures."
       }
     },
-    "android": {
-      "icon": "./assets/icon.png",
+    "android": { 
+      "icon": "./assets/splash.png",
+      "backgroundColor": "#6739B7",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/splash.png",
+        "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#6739B7"
       },
       "edgeToEdgeEnabled": true,
@@ -31,7 +37,7 @@
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
       ],
-      "package": "com.anonymous.mozart_mobile_app"
+      "package": "com.anonymous.amozart"
     },
     "web": {
       "favicon": "./assets/favicon.png"
