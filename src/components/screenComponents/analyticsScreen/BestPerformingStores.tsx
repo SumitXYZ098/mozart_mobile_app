@@ -193,39 +193,6 @@ const BestPerformingStores: React.FC<BestPerformingStoresProps> = ({
                       strokeWidth={19}
                       strokeLinejoin="round"
                     />
-
-                    {/* Dynamic label pointer line */}
-                    <Path
-                      d={linePathD}
-                      fill="none"
-                      stroke="#CCCCCC"
-                      strokeWidth={1.2}
-                    />
-
-                    {/* Bold stream units text */}
-                    <SVGText
-                      x={xText}
-                      y={yLineEnd - 3}
-                      fontSize={12}
-                      fontFamily="PlusJakartaSans_700Bold"
-                      fontWeight="700"
-                      fill="#1C1C1E"
-                      textAnchor={textAnchor}
-                    >
-                      {formattedUnits}
-                    </SVGText>
-
-                    {/* Light gray channel name text */}
-                    <SVGText
-                      x={xText}
-                      y={yLineEnd + 10}
-                      fontSize={10}
-                      fontFamily="Poppins_400Regular"
-                      fill="#8E8E93"
-                      textAnchor={textAnchor}
-                    >
-                      {item.channel}
-                    </SVGText>
                   </G>
                 );
               })}
@@ -291,7 +258,6 @@ const styles = StyleSheet.create({
     fontFamily: "PlusJakartaSans_700Bold",
     fontWeight: "700",
     color: "#1A1A1A",
-    marginBottom: 24,
     letterSpacing: -0.3,
   },
   loaderContainer: {
@@ -319,7 +285,7 @@ const styles = StyleSheet.create({
     position: "relative",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 32,
+    
   },
   chartCenter: {
     position: "absolute",
@@ -327,7 +293,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   centerValue: {
-    fontSize: 38, // Bigger typography matching the layout hierarchy
+    fontSize: 27, // Bigger typography matching the layout hierarchy
     fontFamily: "PlusJakartaSans_800ExtraBold",
     fontWeight: "800",
     color: "#1C1C1E",
@@ -335,10 +301,10 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   centerLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Poppins_400Regular",
     color: "#8E8E93",
-    marginTop: 2,
+   
   },
   legendContainer: {
     backgroundColor: "#F5F5F7", // Matched light grey container base

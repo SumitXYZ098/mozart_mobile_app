@@ -9,7 +9,6 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "jsEngine": "hermes",
-
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.mozart-mobile-app",
@@ -27,9 +26,10 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "CAMERA"
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
       ],
       "package": "com.anonymous.mozart_mobile_app"
     },
@@ -42,6 +42,11 @@
       "expo-image-picker",
       "expo-localization",
       "expo-web-browser"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "5a4f94d0-e946-4602-b861-40509154e75b"
+      }
+    }
   }
 }

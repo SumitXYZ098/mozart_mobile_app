@@ -9,7 +9,6 @@ import {
   RefreshControl,
   Modal,
   Alert,
-  Linking,
   Share,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -839,13 +838,13 @@ const AnalyticsScreen = () => {
             <Text style={styles.sectionSubtitle}>Performing Store</Text>
 
             {/* Store Dropdown Trigger */}
-            <TouchableOpacity
+            {/* <TouchableOpacity
               onPress={() => setStoreDropdownVisible(true)}
               style={styles.dropdownButton}
             >
               <Text style={styles.dropdownText}>{selectedStore}</Text>
               <Ionicons name="chevron-down" size={18} color={Colors.gray} />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
             {loading && !refreshing ? (
               <View style={styles.loaderContainer}>

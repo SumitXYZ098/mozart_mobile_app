@@ -106,6 +106,7 @@ const getGreetingKey = (): "good_morning" | "good_afternoon" | "good_evening" | 
     >
       <SafeAreaView style={styles.container}>
         <ScrollView
+          showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
           refreshControl={
             <RefreshControl
