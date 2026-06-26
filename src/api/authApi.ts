@@ -18,6 +18,44 @@ export async function login(payload: LoginPayload): Promise<LoginResponse> {
   }
 }
 
+export interface GoogleLoginPayload {
+  idToken: string;
+}
+
+export interface FacebookLoginPayload {
+  accessToken: string;
+  userID: string;
+}
+
+export async function loginWithGoogle(payload: GoogleLoginPayload): Promise<LoginResponse> {
+  try {
+    const response = await axios.post<LoginResponse>(ENDPOINTS.GOOGLE_LOGIN, payload);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const msg = error.response?.data.error?.message ?? error.response?.data?.message ?? "Google login failed";
+      console.error("Google Login API error:", msg);
+      throw new Error(msg);
+    }
+    throw new Error("An unexpected error occurred during Google login");
+  }
+}
+
+export async function loginWithFacebook(payload: FacebookLoginPayload): Promise<LoginResponse> {
+  try {
+    const response = await axios.post<LoginResponse>(ENDPOINTS.FACEBOOK_LOGIN, payload);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const msg = error.response?.data.error?.message ?? error.response?.data?.message ?? "Facebook login failed";
+      console.error("Facebook Login API error:", msg);
+      throw new Error(msg);
+    }
+    throw new Error("An unexpected error occurred during Facebook login");
+  }
+}
+
+
 
 
 // Send OTP for forgot password

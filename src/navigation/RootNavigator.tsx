@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { NavigationContainer, createNavigationContainerRef } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { ActivityIndicator, View, Linking, Modal, Text, TouchableOpacity, StyleSheet } from "react-native";
+import {   View, Linking, Modal, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { Colors } from "@/theme/colors";
 import AuthNavigator from "./AuthNavigator";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -145,10 +145,14 @@ export default function RootNavigator() {
           flex: 1,
           justifyContent: "center",
           alignItems: "center",
-          backgroundColor: Colors.white,
+          backgroundColor: Colors.primary,
         }}
       >
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <Image
+          source={require("../../assets/splash.png")}
+          style={{ width: 172, height: 80 }}
+          resizeMode="contain"
+        />
       </View>
     );
   }

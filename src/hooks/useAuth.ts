@@ -2,7 +2,7 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { login as loginUser } from "@/api/authApi";
+import { login as loginUser, loginWithGoogle, loginWithFacebook } from "@/api/authApi";
 
 export function useLogin() {
   const { setUser } = useAuthStore();
@@ -47,3 +47,75 @@ export function useLogin() {
     },
   });
 }
+
+export function useGoogleLogin() {
+  const { setUser } = useAuthStore();
+
+  return useMutation({
+    mutationFn: loginWithGoogle,
+
+    onSuccess: async (data) => {
+      console.log("GOOGLE LOGIN SUCCESS DATA:", data);
+
+      const userData = {
+        id: data.user.id.toString(),
+        email: data.user.email,
+        username: data.user.username,
+        name: `${data.user.firstName} ${data.user.lastName}`,
+        phoneNumber: data.user.phoneNumber,
+        token: data.jwt,
+
+        isVerified: data.user.confirmed,
+
+        role: data.user.role,
+        Profile_image: data.user.Profile_image,
+        dob: data.user.dob,
+        currency: data.user.currency,
+        blocked: data.user.blocked,
+        latest_subscription: (data.user as any).latest_subscription || null,
+      };
+
+      await setUser(userData, true);
+    },
+
+    onError: (error: unknown) => {
+      console.warn("GOOGLE LOGIN ERROR:", error);
+    },
+  });
+}
+
+export function useFacebookLogin() {
+  const { setUser } = useAuthStore();
+
+  return useMutation({
+    mutationFn: loginWithFacebook,
+
+    onSuccess: async (data) => {
+      console.log("FACEBOOK LOGIN SUCCESS DATA:", data);
+
+      const userData = {
+        id: data.user.id.toString(),
+        email: data.user.email,
+        username: data.user.username,
+        name: `${data.user.firstName} ${data.user.lastName}`,
+        phoneNumber: data.user.phoneNumber,
+        token: data.jwt,
+
+        isVerified: data.user.confirmed,
+
+        role: data.user.role,
+        Profile_image: data.user.Profile_image,
+        dob: data.user.dob,
+        currency: data.user.currency,
+        blocked: data.user.blocked,
+        latest_subscription: (data.user as any).latest_subscription || null,
+      };
+
+      await setUser(userData, true);
+    },
+
+    onError: (error: unknown) => {
+      console.warn("FACEBOOK LOGIN ERROR:", error);
+    },
+  });
+}

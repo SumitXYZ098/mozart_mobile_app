@@ -25,7 +25,7 @@ export type AuthStackParamList = {
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
-export default function AuthNavigator({ initialRoute = "Splash" }: { initialRoute?: keyof AuthStackParamList }) {
+export default function AuthNavigator({ initialRoute = "Onboarding" }: { initialRoute?: keyof AuthStackParamList }) {
   return (
     <Stack.Navigator
       initialRouteName={initialRoute}

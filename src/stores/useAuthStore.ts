@@ -1,10 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { User } from "@/api/type";
 import { getUserDetail } from "@/api/userPublicApi";
 import { storageAPI } from "@/utils/storage";
+import { secureStoreAPI } from "@/utils/secureStore";
 import { create } from "zustand";
-
-
 
 interface AuthStore {
   usersList: User[] | [];
@@ -30,50 +28,67 @@ export const useAuthStore = create<AuthStore>((set) => ({
   setUsersList: (usersList) => set({ usersList }),
 
   /**
-   * Save user in store and AsyncStorage
-   * rememberMe = true => persist indefinitely
-   * rememberMe = false => expire after 60 minutes
+   * Save user in store and AsyncStorage / SecureStore
    */
   setUser: async (user, rememberMe = false) => {
     set({ user });
 
     if (!user) {
       await storageAPI.removeItem(STORAGE_KEY);
+      await secureStoreAPI.removeItem("userToken");
       return;
     }
 
+    // Save token in SecureStore
+    if (user.token) {
+      await secureStoreAPI.setItem("userToken", user.token);
+    } else {
+      await secureStoreAPI.removeItem("userToken");
+    }
+
+    // Strip token from details saved to standard AsyncStorage
+    const { token: _token, ...userToSave } = user;
+
     const ttlMinutes = rememberMe ? undefined : 1440; 
-    await storageAPI.setItem(STORAGE_KEY, JSON.stringify(user), ttlMinutes);
+    await storageAPI.setItem(STORAGE_KEY, JSON.stringify(userToSave), ttlMinutes);
   },
 
   /**
-   * Clear user from store and AsyncStorage
+   * Clear user from store, AsyncStorage, and SecureStore
    */
   logOut: async () => {
     await storageAPI.removeItem(STORAGE_KEY);
+    await secureStoreAPI.removeItem("userToken");
     set({ user: null });
   },
 
   /**
-   * Load user from AsyncStorage on app start
+   * Load user from AsyncStorage and SecureStore on app start
    */
   loadUserFromStorage: async () => {
     try {
+      const savedToken = await secureStoreAPI.getItem("userToken");
       const savedUser = await storageAPI.getItem(STORAGE_KEY);
 
-      if (!savedUser) {
-        set({ isAuthLoaded: true });
+      if (!savedToken || !savedUser) {
+        // If one is missing, clear both to keep state consistent
+        await secureStoreAPI.removeItem("userToken");
+        await storageAPI.removeItem(STORAGE_KEY);
+        set({ user: null, isAuthLoaded: true });
         return;
       }
 
       const parsedUser: User = JSON.parse(savedUser);
+      // Restore token to in-memory user object
+      parsedUser.token = savedToken;
 
       if (parsedUser?.id && parsedUser?.token) {
         try {
           const fullUser = await getUserDetail(parsedUser.id, parsedUser.token);
 
           if (fullUser.blocked) {
-            // blocked users get logged out
+            // Blocked users get logged out
+            await secureStoreAPI.removeItem("userToken");
             await storageAPI.removeItem(STORAGE_KEY);
             set({ user: null, isAuthLoaded: true });
             return;
@@ -82,17 +97,21 @@ export const useAuthStore = create<AuthStore>((set) => ({
           const updatedUser = {
             ...parsedUser,
             ...fullUser,
-            token: parsedUser.token, // preserve token
+            token: parsedUser.token, // preserve token in memory
           };
-          await storageAPI.setItem(STORAGE_KEY, JSON.stringify(updatedUser));
+
+          // Save profile details to AsyncStorage (excluding token)
+          const { token: _token, ...profileToSave } = updatedUser;
+          await storageAPI.setItem(STORAGE_KEY, JSON.stringify(profileToSave));
+
           set({ user: updatedUser, isAuthLoaded: true });
         } catch (apiError) {
-          // failed to fetch full user, fallback to stored data
+          // Failed to fetch full user from network, fallback to stored data in memory
           console.warn("Failed to refresh user:", apiError);
-          set({ user: JSON.parse(savedUser), isAuthLoaded: true });
+          set({ user: parsedUser, isAuthLoaded: true });
         }
       } else {
-        set({ user: JSON.parse(savedUser), isAuthLoaded: true });
+        set({ user: parsedUser, isAuthLoaded: true });
       }
     } catch (err) {
       console.warn("loadUserFromStorage error:", err);

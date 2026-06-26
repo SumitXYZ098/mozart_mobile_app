@@ -4,6 +4,8 @@ export const ENDPOINTS = {
   // Login/Signup Endpoint
   REGISTER: `${BASE_URL}/api/auth/local/register`,
   LOGIN: `${BASE_URL}/api/auth/local`,
+  GOOGLE_LOGIN: `${BASE_URL}/api/google-login`,
+  FACEBOOK_LOGIN: `${BASE_URL}/api/facebook-login`,
   CHECK_EMAIL: (email: string) => `${BASE_URL}/api/email-exists?email=${email}`,
   EMAIL_VERIFICATION: `${BASE_URL}/api/email/send-verification`,
   EMAIL_STATUS: (email: string) =>

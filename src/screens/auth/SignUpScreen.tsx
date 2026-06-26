@@ -18,6 +18,11 @@ import { useSendEmailVerification } from "@/hooks/useUser";
 import { AuthStackParamList } from "@/navigation/AuthNavigator";
 import AuthLayout from "@/components/layout/AuthLayout";
 import InputField from "@/components/modules/InputField";
+import { useGoogleLogin, useFacebookLogin } from "@/hooks/useAuth";
+import GoogleButton from "@/components/modules/GoogleButton";
+import FacebookButton from "@/components/modules/FacebookButton";
+import { googleAuthService } from "@/services/googleAuth";
+import { facebookAuthService } from "@/services/facebookAuth";
 import { Colors } from "@/theme/colors";
 
 type Props = NativeStackScreenProps<AuthStackParamList, "SignUp">;
@@ -37,6 +42,64 @@ export default function SignUpScreen({ navigation }: Props) {
   const { mutateAsync: sendEmailVerification, isPending } =
     useSendEmailVerification();
   const [loading, setLoading] = useState(isPending);
+  const { mutate: loginWithGoogle, isPending: isGooglePending } = useGoogleLogin();
+  const { mutate: loginWithFacebook, isPending: isFacebookPending } = useFacebookLogin();
+
+  const handleGoogleSignup = async () => {
+    console.log("Google Sign-Up: Button pressed.");
+    try {
+      console.log("Google Sign-Up: Triggering native Google Sign-In flow...");
+      const idToken = await googleAuthService.signIn();
+      console.log("Google Sign-Up: Obtained ID Token successfully. Sending to backend...");
+      loginWithGoogle(
+        { idToken },
+        {
+          onSuccess: () => {
+            console.log("Google Sign-Up: Backend verification succeeded.");
+            toast.success("Signed up with Google successfully");
+          },
+          onError: (err: any) => {
+            console.error("Google Sign-Up: Backend verification failed:", err);
+            toast.error(err?.message || "Google Sign Up failed");
+          },
+        }
+      );
+    } catch (err: any) {
+      console.error("Google Sign-Up: Service error caught:", err);
+      if (err.message && !err.message.includes("cancelled")) {
+        toast.error(err.message);
+      }
+    }
+  };
+
+  const handleFacebookSignup = async () => {
+    console.log("Facebook Sign-Up: Button pressed.");
+    try {
+      console.log("Facebook Sign-Up: Triggering native Facebook login...");
+      const credentials = await facebookAuthService.signIn();
+      console.log("Facebook Sign-Up: Obtained Facebook credentials. Sending to backend...");
+      loginWithFacebook(
+        credentials,
+        {
+          onSuccess: () => {
+            console.log("Facebook Sign-Up: Backend verification succeeded.");
+            toast.success("Signed up with Facebook successfully");
+          },
+          onError: (err: any) => {
+            console.error("Facebook Sign-Up: Backend verification failed:", err);
+            toast.error(err?.message || "Facebook Sign Up failed");
+          },
+        }
+      );
+    } catch (err: any) {
+      console.error("Facebook Sign-Up: Service error caught:", err);
+      if (err.message && !err.message.includes("cancelled")) {
+        toast.error(err.message);
+      }
+    }
+  };
+
+  const isAnyLoading = loading || isGooglePending || isFacebookPending;
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -265,28 +328,25 @@ console.log(data, "Form Data");
             />
             <TouchableOpacity
               onPress={handleSubmit(onSubmit)}
-              style={styles.button}
+              style={[styles.button, isAnyLoading && styles.buttonDisabled]}
+              disabled={isAnyLoading}
             >
               <Text style={styles.buttonText}>
                 {loading ? "Please wait..." : "Sign Up"}
               </Text>
             </TouchableOpacity>
             <Divider label="or" />
-            <View className=" flex-1 flex-row items-center gap-x-4 mb-[10px]">
-              <TouchableOpacity className="py-3 bg-[#F3F3F3] flex-grow flex flex-row rounded-3xl justify-center items-center">
-                <Text style={styles.loginText}>Sign Up with</Text>
-                <Image
-                  source={require("../../../assets/images/google.png")}
-                  className="w-6 h-6"
-                />
-              </TouchableOpacity>
-              <TouchableOpacity className="py-3 bg-[#F3F3F3] flex-grow flex-row rounded-3xl justify-center items-center ">
-                <Text style={styles.loginText}>Sign Up with</Text>
-                <Image
-                  source={require("../../../assets/images/apple.png")}
-                  className="w-6 h-6"
-                />
-              </TouchableOpacity>
+            <View style={{ width: "100%", gap: 12, marginBottom: 16 }}>
+              <GoogleButton
+                onPress={handleGoogleSignup}
+                isLoading={isGooglePending}
+                disabled={isAnyLoading}
+              />
+              <FacebookButton
+                onPress={handleFacebookSignup}
+                isLoading={isFacebookPending}
+                disabled={isAnyLoading}
+              />
             </View>
 
             <View style={{ flexDirection: "row", justifyContent: "center" }}>
@@ -331,6 +391,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     paddingVertical: 14,
     borderRadius: 32,
+  },
+  buttonDisabled: {
+    backgroundColor: Colors.lightGray,
+    opacity: 0.7,
   },
   buttonText: {
     color: Colors.white,
