@@ -13,6 +13,9 @@ import NewReleaseScreen from "@/screens/app/NewReleaseScreen";
  import ArtistScreen from "@/screens/app/ArtistScreen";
 import ChangePasswordScreen from "@/screens/app/ChangePasswordScreen";
 import OrderHistoryScreen from "@/screens/app/OrderHistoryScreen";
+import SavedCardsScreen from "@/screens/app/SavedCardsScreen";
+import AddNewCardScreen from "@/screens/app/AddNewCardScreen";
+import PayoutDetailsScreen from "@/screens/app/PayoutDetailsScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -70,6 +73,9 @@ export function ProfileStackNavigator() {
       <Stack.Screen name="ProfileMain" component={ProfileScreen} />
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
       <Stack.Screen name="OrderHistory" component={OrderHistoryScreen} />
+      <Stack.Screen name="SavedCards" component={SavedCardsScreen} />
+      <Stack.Screen name="AddNewCard" component={AddNewCardScreen} />
+      <Stack.Screen name="PayoutDetails" component={PayoutDetailsScreen} />
     </Stack.Navigator>
   );
 }

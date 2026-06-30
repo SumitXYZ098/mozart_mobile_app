@@ -246,7 +246,7 @@ const TabNavigator = () => {
         component={ProfileStackNavigator}
         options={({ route }) => {
           const routeName = getFocusedRouteNameFromRoute(route) ?? "ProfileMain";
-          const hideOnScreens = ["ChangePassword", "ProfileMain", "OrderHistory"];
+          const hideOnScreens = ["ChangePassword", "ProfileMain", "OrderHistory", "SavedCards", "AddNewCard", "PayoutDetails"];
           return {
             tabBarStyle: hideOnScreens.includes(routeName)
               ? { display: "none" }

@@ -212,6 +212,24 @@ export default function ProfileScreen() {
         navigation.navigate("OrderHistory");
       },
     },
+    {
+      title: "Saved Cards",
+      renderIcon: () => (
+        <Ionicons name="card" size={20} color={Colors.primary} />
+      ),
+      onPress: () => {
+        navigation.navigate("SavedCards");
+      },
+    },
+    {
+      title: "Payout Details",
+      renderIcon: () => (
+        <Ionicons name="cash" size={20} color={Colors.primary} />
+      ),
+      onPress: () => {
+        navigation.navigate("PayoutDetails");
+      },
+    },
   ];
 
   const secondaryMenuList = [
