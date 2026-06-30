@@ -149,8 +149,8 @@ export default function RootNavigator() {
         }}
       >
         <Image
-          source={require("../../assets/splash.png")}
-          style={{ width: 172, height: 80 }}
+          source={require("../../assets/icon.png")}
+          style={{ width: 200, height: 120 }}
           resizeMode="contain"
         />
       </View>

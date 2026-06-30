@@ -34,10 +34,10 @@ export default function ReleaseCreditsSection() {
     control,
     name: "ReleaseCredits",
   });
-  
+
   const [limitModalVisible, setLimitModalVisible] = useState(false);
 
-  
+
   useEffect(() => {
     const credits = watch("ReleaseCredits");
     console.log("Current Credits:");
@@ -109,9 +109,9 @@ export default function ReleaseCreditsSection() {
         }
       }
       const artistObj = { name: artistName, role: roleName };
-      
+
       setLocalArtists((prev) => [artistObj, ...prev]);
-    
+
       toast.success("Artist created successfully.");
       return artistObj.name;
     } catch (err: any) {
@@ -234,11 +234,11 @@ export default function ReleaseCreditsSection() {
                     error && styles.inputError,
                     isVisible && styles.inputFocused
                   ]}>
-                    <Ionicons 
-                      name="person-outline" 
-                      size={18} 
-                      color={isVisible ? (Colors.primary || "#6739B7") : "#94A3B8"} 
-                      style={{ marginRight: 10 }} 
+                    <Ionicons
+                      name="person-outline"
+                      size={18}
+                      color={isVisible ? (Colors.primary || "#6739B7") : "#94A3B8"}
+                      style={{ marginRight: 10 }}
                     />
                     <TextInput
                       placeholder="Type or select artist"
@@ -289,6 +289,7 @@ export default function ReleaseCreditsSection() {
                       ) : (
                         <ScrollView
                           keyboardShouldPersistTaps="handled"
+                          nestedScrollEnabled={true}
                           contentContainerStyle={{ paddingVertical: 4 }}
                           style={{ maxHeight: 180 }}
                           showsVerticalScrollIndicator={false}
@@ -343,35 +344,35 @@ export default function ReleaseCreditsSection() {
                               );
                             })}
 
-                        {/* Add new artist option */}
-                        {query.trim().length > 0 && (
-                          <TouchableOpacity
-                            style={styles.createArtistRow}
-                            onPress={async () => {
-                              const currentRole = watch(`ReleaseCredits.${index}.roleName`);
-                              try {
-                                const newArtistName = await handleCreateArtist(
-                                  query.trim(),
-                                  currentRole
-                                );
-                                if (newArtistName) {
-                                  handleArtistSelect(newArtistName);
+                          {/* Add new artist option */}
+                          {query.trim().length > 0 && (
+                            <TouchableOpacity
+                              style={styles.createArtistRow}
+                              onPress={async () => {
+                                const currentRole = watch(`ReleaseCredits.${index}.roleName`);
+                                try {
+                                  const newArtistName = await handleCreateArtist(
+                                    query.trim(),
+                                    currentRole
+                                  );
+                                  if (newArtistName) {
+                                    handleArtistSelect(newArtistName);
+                                  }
+                                } catch {
+                                  // handled inside handleCreateArtist
                                 }
-                              } catch {
-                                // handled inside handleCreateArtist
-                              }
-                            }}
-                          >
-                            <View style={styles.createArtistIconContainer}>
-                              <Ionicons name="person-add" size={16} color={Colors.primary || "#6739B7"} />
-                            </View>
-                            <Text style={styles.createArtistText}>
-                              Create Artist "{query.trim()}"
-                            </Text>
-                          </TouchableOpacity>
-                        )}
-                      </ScrollView>
-                    )}
+                              }}
+                            >
+                              <View style={styles.createArtistIconContainer}>
+                                <Ionicons name="person-add" size={16} color={Colors.primary || "#6739B7"} />
+                              </View>
+                              <Text style={styles.createArtistText}>
+                                Create Artist "{query.trim()}"
+                              </Text>
+                            </TouchableOpacity>
+                          )}
+                        </ScrollView>
+                      )}
                     </View>
                   )}
                 </View>
@@ -409,7 +410,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.03,
     shadowRadius: 10,
-    elevation: 2,
     position: "relative",
   },
   cardHeader: {

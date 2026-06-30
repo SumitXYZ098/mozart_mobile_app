@@ -176,3 +176,18 @@ export async function addOnArtist(
   );
   return response.data;
 }
+
+/**
+ * Fetches the user's payment logs.
+ */
+export async function getMyPaymentLogs(token: string): Promise<any[]> {
+  const response = await axios.get(
+    ENDPOINTS.MY_PAYMENT_LOGS,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  return response.data;
+}

@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { View, Text, StyleSheet, Image, Dimensions, ActivityIndicator } from "react-native";
 import { BarChart } from "react-native-gifted-charts";
 import { Colors } from "@/theme/colors";
+import FolderEmptyState from "./FolderEmptyState";
 
 const { width: screenWidth } = Dimensions.get("window");
 
@@ -138,9 +139,7 @@ const BestPerformingCountries: React.FC<BestPerformingCountriesProps> = ({
           <ActivityIndicator size="large" color={Colors.primary} />
         </View>
       ) : data.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No country data available</Text>
-        </View>
+        <FolderEmptyState title="No Country Data Available" />
       ) : (
         <>
           {/* Dotted World Map with Overlay Markers */}

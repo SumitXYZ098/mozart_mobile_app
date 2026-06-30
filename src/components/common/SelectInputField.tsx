@@ -18,6 +18,8 @@ interface ISelectInputFieldProps {
   errorMessage?: string;
   zIndex?: number;
   style?: any;
+  onFocus?: () => void;
+  onBlur?: () => void;
 }
 
 const SelectInputField: React.FC<ISelectInputFieldProps> = ({
@@ -33,6 +35,8 @@ const SelectInputField: React.FC<ISelectInputFieldProps> = ({
   errorMessage,
   zIndex = 10,
   style,
+  onFocus,
+  onBlur,
 }) => {
   const [dropdownItems] = useState(
     items.map((item) => ({ label: String(item), value: item }))
@@ -122,6 +126,8 @@ const SelectInputField: React.FC<ISelectInputFieldProps> = ({
           searchPlaceholder="Search..."
           value={multiple ? null : displayValue}
           onChange={(item) => handleSelect(item, fieldOnChange)}
+          onFocus={onFocus}
+          onBlur={onBlur}
           renderItem={(item) => {
             const selected = multiple
               ? (internalValue as any[])?.includes(item.value)

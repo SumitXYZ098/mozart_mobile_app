@@ -22,6 +22,8 @@ import { ENDPOINTS } from "@/api/endpoints";
 import AnalyticsChart from "@/components/screenComponents/analyticsScreen/AnalyticsChart";
 import BestPerformingStores from "@/components/screenComponents/analyticsScreen/BestPerformingStores";
 import BestPerformingCountries from "@/components/screenComponents/analyticsScreen/BestPerformingCountries";
+import FolderEmptyState from "@/components/screenComponents/analyticsScreen/FolderEmptyState";
+import Svg, { Path, G, Rect, Circle as SVGCircle } from "react-native-svg";
 
 // Constants for Period selector matching User Dashboard Specs
 const PERIODS = {
@@ -195,6 +197,13 @@ const parseDateString = (dateStr: string) => {
       const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
       return `${months[month - 1]} ${day}`;
     }
+  } else if (parts.length === 2) {
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    if (!isNaN(year) && !isNaN(month) && month >= 1 && month <= 12) {
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      return `${months[month - 1]} ${year}`;
+    }
   }
 
   // Fallback to native parsing
@@ -216,6 +225,7 @@ const mapApiData = (apiData: any[], period: string) => {
   return apiData.map((item: any) => {
     let label = "";
     if (item.label) label = item.label;
+    else if (item.month) label = item.month;
     else if (item.day) label = parseDateString(item.day);
     else if (item.date) {
       label = parseDateString(item.date);
@@ -242,6 +252,8 @@ const formatTotalUnitsLabel = (units: number) => {
   }
   return String(units);
 };
+
+
 
 const AnalyticsScreen = () => {
   const navigation = useNavigation<any>();
@@ -512,6 +524,14 @@ const AnalyticsScreen = () => {
   const [countriesLoading, setCountriesLoading] = useState<boolean>(false);
   const [countriesApiData, setCountriesApiData] = useState<any[] | null>(null);
 
+  // API State: Sales Report Charts
+  const [salesPeriod, setSalesPeriod] = useState<"1month" | "3months" | "6months">("3months");
+  const [salesLoading, setSalesLoading] = useState<boolean>(false);
+  const [salesStreamsData, setSalesStreamsData] = useState<DataPoint[] | null>(null);
+  const [salesStoresData, setSalesStoresData] = useState<StoreChannel[] | null>(null);
+  const [salesCountriesData, setSalesCountriesData] = useState<any[] | null>(null);
+  const [salesStreamsResponse, setSalesStreamsResponse] = useState<any>(null);
+
   // Call daily-trends endpoints and notifications
   const fetchAnalyticsData = useCallback(async () => {
     console.log("[Analytics] fetchAnalyticsData started. Selected period:", selectedPeriod);
@@ -654,6 +674,121 @@ const AnalyticsScreen = () => {
     }
   }, [user?.token, selectedPeriod]);
 
+  // Call sales report endpoints
+  const fetchSalesReportData = useCallback(async () => {
+    console.log("[Analytics] fetchSalesReportData started. Selected period:", salesPeriod);
+    if (!user?.token) {
+      console.warn("[Analytics] Cannot fetch sales analytics: user token is missing");
+      return;
+    }
+    setSalesLoading(true);
+
+    try {
+      const rangeVal = salesPeriod === "1month" ? "1M" : salesPeriod === "3months" ? "3M" : "6M";
+      const apiParams = {
+        range: rangeVal,
+      };
+
+      console.log("[Analytics] Sending request to ROYALTY_TOTAL_STREAMS with params:", apiParams);
+      const streamsPromise = axios.get(ENDPOINTS.ROYALTY_TOTAL_STREAMS, {
+        params: apiParams,
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+
+      console.log("[Analytics] Sending request to ROYALTY_PLATFORM_STREAMS with params:", apiParams);
+      const storesPromise = axios.get(ENDPOINTS.ROYALTY_PLATFORM_STREAMS, {
+        params: apiParams,
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+
+      console.log("[Analytics] Sending request to ROYALTY_COUNTRY_STREAMS with params:", apiParams);
+      const countriesPromise = axios.get(ENDPOINTS.ROYALTY_COUNTRY_STREAMS, {
+        params: apiParams,
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+
+      // Run parallel requests
+      const [streamsRes, storesRes, countriesRes] = await Promise.all([
+        streamsPromise.catch((e) => {
+          console.error("[Analytics] Royalty total streams request error:", e?.response?.data || e?.message || e);
+          return null;
+        }),
+        storesPromise.catch((e) => {
+          console.error("[Analytics] Royalty platform streams request error:", e?.response?.data || e?.message || e);
+          return null;
+        }),
+        countriesPromise.catch((e) => {
+          console.error("[Analytics] Royalty country streams request error:", e?.response?.data || e?.message || e);
+          return null;
+        }),
+      ]);
+
+      // Helper function to extract array content from standard wrapper object properties
+      const extractArrayData = (res: any) => {
+        if (!res || !res.data) return [];
+        const rawData = res.data.data || res.data || {};
+        if (Array.isArray(rawData)) {
+          return rawData;
+        }
+        if (rawData && typeof rawData === "object") {
+          // Look for any property that contains an array (e.g. 'platforms', 'countries', 'data')
+          const arrayKey = Object.keys(rawData).find(key => Array.isArray(rawData[key]));
+          if (arrayKey) {
+            return rawData[arrayKey];
+          }
+        }
+        return [];
+      };
+
+      // 1. Process ROYALTY_TOTAL_STREAMS
+      if (streamsRes && streamsRes.data && streamsRes.data.success) {
+        setSalesStreamsResponse(streamsRes.data);
+        const dataArr = extractArrayData(streamsRes);
+        const mapped = mapApiData(dataArr, salesPeriod);
+        setSalesStreamsData(mapped || []);
+      } else {
+        setSalesStreamsData([]);
+        setSalesStreamsResponse(null);
+      }
+
+      // 2. Process ROYALTY_PLATFORM_STREAMS
+      if (storesRes && storesRes.data && storesRes.data.success) {
+        const rawStores = extractArrayData(storesRes);
+        const mappedStores: StoreChannel[] = rawStores.map((item: any) => ({
+          channel: item.channel || item.platform || item.store || "Unknown",
+          totalUnits: typeof item.totalUnits === "number" ? item.totalUnits : (parseFloat(item.streams || item.totalStreams || item.value || 0) || 0),
+          percentage: String(item.percentage || "0"),
+        }));
+        setSalesStoresData(mappedStores);
+      } else {
+        setSalesStoresData([]);
+      }
+
+      // 3. Process ROYALTY_COUNTRY_STREAMS
+      if (countriesRes && countriesRes.data && countriesRes.data.success) {
+        const rawCountries = extractArrayData(countriesRes);
+        const mappedCountries: any[] = rawCountries.map((item: any) => ({
+          country: item.country || item.countryCode || "Unknown",
+          totalUnits: typeof item.totalUnits === "number" ? item.totalUnits : (parseFloat(item.streams || item.totalStreams || item.value || 0) || 0),
+          percentage: String(item.percentage || "0"),
+        }));
+        setSalesCountriesData(mappedCountries);
+      } else {
+        setSalesCountriesData([]);
+      }
+
+    } catch (error) {
+      console.error("[Analytics] General sales analytics fetch error:", error);
+      setSalesStreamsData([]);
+      setSalesStoresData([]);
+      setSalesCountriesData([]);
+      setSalesStreamsResponse(null);
+    } finally {
+      setSalesLoading(false);
+      setRefreshing(false);
+    }
+  }, [user?.token, salesPeriod]);
+
   // Fetch when screen loads/changes period or active tab
   useEffect(() => {
     if (isFocused) {
@@ -661,9 +796,10 @@ const AnalyticsScreen = () => {
         fetchAnalyticsData();
       } else {
         fetchReports();
+        fetchSalesReportData();
       }
     }
-  }, [isFocused, selectedPeriod, activeTab, fetchAnalyticsData, fetchReports]);
+  }, [isFocused, selectedPeriod, salesPeriod, activeTab, fetchAnalyticsData, fetchReports, fetchSalesReportData]);
 
   // Pull to refresh action
   const onRefresh = () => {
@@ -672,6 +808,7 @@ const AnalyticsScreen = () => {
       fetchAnalyticsData();
     } else {
       fetchReports();
+      fetchSalesReportData();
     }
   };
 
@@ -738,6 +875,15 @@ const AnalyticsScreen = () => {
     };
   }, [storesApiData, selectedPeriod]);
 
+  // Compile active Sales Report total streams and formatted string
+  const salesTotalStreamsFormatted = useMemo(() => {
+    if (salesStreamsData && salesStreamsData.length > 0) {
+      const sum = salesStreamsData.reduce((total, dp) => total + dp.value, 0);
+      return sum.toLocaleString();
+    }
+    return "0";
+  }, [salesStreamsData]);
+
   const getPeriodLabel = () => {
     switch (selectedPeriod) {
       case PERIODS.DAYS_14:
@@ -798,25 +944,29 @@ const AnalyticsScreen = () => {
       <View style={styles.tabBar}>
         <TouchableOpacity
           onPress={() => setActiveTab("trends")}
-          style={[styles.tabItem, activeTab === "trends" && styles.tabItemActive]}
+          style={styles.tabItem}
         >
           <Text
             style={[styles.tabText, activeTab === "trends" && styles.tabTextActive]}
           >
             Daily Trends
           </Text>
+          {activeTab === "trends" && <View style={styles.tabIndicator} />}
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => setActiveTab("sales")}
-          style={[styles.tabItem, activeTab === "sales" && styles.tabItemActive]}
+          style={styles.tabItem}
         >
           <Text
             style={[styles.tabText, activeTab === "sales" && styles.tabTextActive]}
           >
             Sales Report
           </Text>
+          {activeTab === "sales" && <View style={styles.tabIndicator} />}
         </TouchableOpacity>
       </View>
+
+
 
       <ScrollView
         contentContainerStyle={styles.contentContainer}
@@ -846,163 +996,277 @@ const AnalyticsScreen = () => {
               <Ionicons name="chevron-down" size={18} color={Colors.gray} />
             </TouchableOpacity> */}
 
-            {loading && !refreshing ? (
-              <View style={styles.loaderContainer}>
-                <ActivityIndicator size="large" color={Colors.primary} />
-              </View>
-            ) : (
-              <View style={styles.cardsStack}>
-                {/* Sub Period selector tabs outside the chart, above the report card */}
-                <View style={styles.chartPeriodBar}>
-                  {(
-                    [
-                      { label: "7 Days", value: PERIODS.DAYS_7 },
-                      { label: "14 Days", value: PERIODS.DAYS_14 },
-                      { label: "30 Days", value: PERIODS.DAYS_30 },
-                    ] as const
-                  ).map((item, index, arr) => {
-                    const isActive = selectedPeriod === item.value;
-                    const showDivider =
-                      index > 0 &&
-                      !isActive &&
-                      selectedPeriod !== arr[index - 1].value;
+            <View style={styles.cardsStack}>
+              {/* Sub Period selector tabs outside the chart, above the report card */}
+              <View style={styles.chartPeriodBar}>
+                {(
+                  [
+                    { label: "7 Days", value: PERIODS.DAYS_7 },
+                    { label: "14 Days", value: PERIODS.DAYS_14 },
+                    { label: "30 Days", value: PERIODS.DAYS_30 },
+                  ] as const
+                ).map((item, index, arr) => {
+                  const isActive = selectedPeriod === item.value;
+                  const showDivider =
+                    index > 0 &&
+                    !isActive &&
+                    selectedPeriod !== arr[index - 1].value;
 
-                    return (
-                      <React.Fragment key={item.value}>
-                        {showDivider && <View style={styles.divider} />}
-                        <TouchableOpacity
-                          onPress={() => setSelectedPeriod(item.value)}
+                  return (
+                    <React.Fragment key={item.value}>
+                      {showDivider && <View style={styles.divider} />}
+                      <TouchableOpacity
+                        onPress={() => setSelectedPeriod(item.value)}
+                        style={[
+                          styles.periodButton,
+                          isActive && styles.periodButtonActive,
+                        ]}
+                        activeOpacity={0.8}
+                      >
+                        <Text
                           style={[
-                            styles.periodButton,
-                            isActive && styles.periodButtonActive,
+                            styles.periodButtonText,
+                            isActive && styles.periodButtonTextActive,
                           ]}
-                          activeOpacity={0.8}
                         >
-                          <Text
-                            style={[
-                              styles.periodButtonText,
-                              isActive && styles.periodButtonTextActive,
-                            ]}
-                          >
-                            {item.label}
-                          </Text>
-                        </TouchableOpacity>
-                      </React.Fragment>
-                    );
-                  })}
-                </View>
+                          {item.label}
+                        </Text>
+                      </TouchableOpacity>
+                    </React.Fragment>
+                  );
+                })}
+              </View>
 
-                {/* Metric Summary Card: Left purple accent bar and brand shadows */}
-                <View style={styles.reportCard}>
-                  <View style={styles.reportRow}>
-                    <View style={styles.reportLeftColumn}>
-                      <Text style={styles.reportTitle}>Streaming Report</Text>
-                      <Text style={styles.reportSubtitle}>Last Reporting Days</Text>
-                    </View>
-                    <View style={styles.reportRightColumn}>
-                      <Text style={styles.reportValue}>{activeDataset.total}</Text>
-                      <Text style={styles.reportMetricLabel}>Total Streams</Text>
-                    </View>
+              {/* Metric Summary Card: Left purple accent bar and brand shadows */}
+              <View style={styles.reportCard}>
+                <View style={styles.reportRow}>
+                  <View style={styles.reportLeftColumn}>
+                    <Text style={styles.reportTitle}>Streaming Report</Text>
+                    <Text style={styles.reportSubtitle}>Last Reporting Days</Text>
+                  </View>
+                  <View style={styles.reportRightColumn}>
+                    <Text style={styles.reportValue}>{activeDataset.total}</Text>
+                    <Text style={styles.reportMetricLabel}>Total Streams</Text>
                   </View>
                 </View>
-
-                {/* SVG Chart Component */}
-                <AnalyticsChart
-                  points={activeDataset.points}
-                />
-
-                {/* Best Performing Countries Card */}
-                <BestPerformingCountries
-                  data={countriesApiData || []}
-                  loading={countriesLoading && !refreshing}
-                />
-                {/* Best Performing Stores Component (SVG Donut Chart) */}
-                <BestPerformingStores
-                  data={bestPerformingStoresDataset.data}
-                  loading={storesLoading && !refreshing}
-                  totalStreams={bestPerformingStoresDataset.total}
-                  isEarnings={false}
-                />
-
-              </View>
-            )}
-          </View>
-        ) : (
-          /* Sales Report Tab: Premium mockup date selector form & placeholder */
-          <View style={styles.salesContainer}>
-            <View style={styles.salesFormCard}>
-              <View style={styles.salesInputGroup}>
-                <Text style={styles.salesInputLabel}>From</Text>
-                <TouchableOpacity
-                  style={styles.salesDateSelector}
-                  onPress={() => openDatePicker("from")}
-                  activeOpacity={0.7}
-                >
-                  <Text
-                    style={[
-                      styles.salesDateText,
-                      !fromDate && styles.salesDatePlaceholder,
-                    ]}
-                  >
-                    {fromDate || "MM/YY"}
-                  </Text>
-                  <Ionicons name="calendar-outline" size={20} color={Colors.gray} />
-                </TouchableOpacity>
               </View>
 
-              <View style={styles.salesInputGroup}>
-                <Text style={styles.salesInputLabel}></Text>
-                <TouchableOpacity
-                  style={styles.salesDateSelector}
-                  onPress={() => openDatePicker("to")}
-                  activeOpacity={0.7}
-                >
-                  <Text
-                    style={[
-                      styles.salesDateText,
-                      !toDate && styles.salesDatePlaceholder,
-                    ]}
-                  >
-                    {toDate || "MM/YY"}
-                  </Text>
-                  <Ionicons name="calendar-outline" size={20} color={Colors.gray} />
-                </TouchableOpacity>
-              </View>
-
-              <TouchableOpacity
-                style={styles.salesRequestBtn}
-                onPress={handleRequestReport}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.salesRequestBtnText}>Request Report</Text>
-              </TouchableOpacity>
-
-              {reportsLoading && !refreshing ? (
+              {/* SVG Chart Component */}
+              {loading && !refreshing ? (
                 <View style={styles.loaderContainer}>
                   <ActivityIndicator size="large" color={Colors.primary} />
                 </View>
-              ) : reports.length === 0 ? (
-                <View style={styles.salesDashedBox}>
-                  <Text style={styles.salesDashedText}>No Reports Generated Yet</Text>
-                </View>
+              ) : activeDataset.points && activeDataset.points.length > 0 ? (
+                <AnalyticsChart
+                  points={activeDataset.points}
+                />
               ) : (
-                <View style={styles.reportsListContainer}>
-                  {reports.map((report) => (
-                    <View key={report.id} style={styles.reportListCard}>
-                      <Text style={styles.reportCardDateText}>
-                        {report.from} To {report.to}
-                      </Text>
+                <FolderEmptyState title="No Data Available" />
+              )}
+
+              {/* Best Performing Countries Card */}
+              <BestPerformingCountries
+                data={countriesApiData || []}
+                loading={countriesLoading && !refreshing}
+              />
+              {/* Best Performing Stores Component (SVG Donut Chart) */}
+              <BestPerformingStores
+                data={bestPerformingStoresDataset.data}
+                loading={storesLoading && !refreshing}
+                totalStreams={bestPerformingStoresDataset.total}
+                isEarnings={false}
+              />
+            </View>
+          </View>
+        ) : (
+          /* Sales Report Tab: Premium analytics visualization + report generator */
+          <View style={styles.salesContainer}>
+            <View style={styles.cardsStack}>
+              {/* Sales Period selector tabs outside the chart, above the report card */}
+              <View style={styles.chartPeriodBar}>
+                {(
+                  [
+                    { label: "1 Month", value: "1month" },
+                    { label: "3 Months", value: "3months" },
+                    { label: "6 Months", value: "6months" },
+                  ] as const
+                ).map((item, index, arr) => {
+                  const isActive = salesPeriod === item.value;
+                  const showDivider =
+                    index > 0 &&
+                    !isActive &&
+                    salesPeriod !== arr[index - 1].value;
+
+                  return (
+                    <React.Fragment key={item.value}>
+                      {showDivider && <View style={styles.divider} />}
                       <TouchableOpacity
-                        style={styles.reportDownloadBtn}
-                        onPress={() => handleDownloadReport(report.id)}
+                        onPress={() => setSalesPeriod(item.value)}
+                        style={[
+                          styles.periodButton,
+                          isActive && styles.periodButtonActive,
+                        ]}
                         activeOpacity={0.8}
                       >
-                        <Text style={styles.reportDownloadBtnText}>Download</Text>
+                        <Text
+                          style={[
+                            styles.periodButtonText,
+                            isActive && styles.periodButtonTextActive,
+                          ]}
+                        >
+                          {item.label}
+                        </Text>
                       </TouchableOpacity>
-                    </View>
-                  ))}
+                    </React.Fragment>
+                  );
+                })}
+              </View>
+
+              {/* Streams Section */}
+              <View>
+                <Text style={styles.sectionTitle}>Streams</Text>
+                {salesLoading && !refreshing ? (
+                  <View style={styles.loaderContainer}>
+                    <ActivityIndicator size="large" color={Colors.primary} />
+                  </View>
+                ) : salesStreamsData && salesStreamsData.length > 0 ? (
+                  <AnalyticsChart points={salesStreamsData} />
+                ) : (
+                  <FolderEmptyState title="No Data Available" />
+                )}
+              </View>
+
+              {/* Streaming Report Card */}
+              <View style={styles.reportCard}>
+                <View style={styles.reportRow}>
+                  <View style={styles.reportLeftColumn}>
+                    <Text style={styles.reportTitle}>Streaming Report</Text>
+                    <Text style={styles.reportSubtitle}>
+                      {salesPeriod === "1month"
+                        ? "Last 1 Month"
+                        : salesPeriod === "3months"
+                          ? "Last 3 Months"
+                          : "Last 6 Months"}
+                    </Text>
+                  </View>
+                  <View style={styles.reportRightColumn}>
+                    <Text style={styles.reportValue}>{salesTotalStreamsFormatted}</Text>
+                    <Text style={styles.reportMetricLabel}>Total Streams</Text>
+                  </View>
                 </View>
-              )}
+              </View>
+
+              {/* Best Performing Countries */}
+              <View>
+                <Text style={styles.sectionTitle}>Best Preforming Countries</Text>
+                {salesLoading && !refreshing ? (
+                  <View style={styles.loaderContainer}>
+                    <ActivityIndicator size="large" color={Colors.primary} />
+                  </View>
+                ) : salesCountriesData && salesCountriesData.length > 0 ? (
+                  <BestPerformingCountries data={salesCountriesData} loading={false} />
+                ) : (
+                  <FolderEmptyState title="No Country Data Available" />
+                )}
+              </View>
+
+              {/* Best Performing Stores */}
+              <View>
+                <Text style={styles.sectionTitle}>Best Preforming Stores</Text>
+                {salesLoading && !refreshing ? (
+                  <View style={styles.loaderContainer}>
+                    <ActivityIndicator size="large" color={Colors.primary} />
+                  </View>
+                ) : salesStoresData && salesStoresData.length > 0 ? (
+                  <BestPerformingStores
+                    data={salesStoresData}
+                    loading={false}
+                    totalStreams={salesTotalStreamsFormatted}
+                    isEarnings={false}
+                  />
+                ) : (
+                  <FolderEmptyState title="No Store Data Available" />
+                )}
+              </View>
+
+              {/* Request & Download Section at the bottom */}
+              <View style={{ marginTop: 12 }}>
+                <Text style={styles.sectionTitle}>Request & Download Reports</Text>
+                <View style={styles.salesFormCard}>
+                  <View style={styles.salesInputGroup}>
+                    <Text style={styles.salesInputLabel}>From</Text>
+                    <TouchableOpacity
+                      style={styles.salesDateSelector}
+                      onPress={() => openDatePicker("from")}
+                      activeOpacity={0.7}
+                    >
+                      <Text
+                        style={[
+                          styles.salesDateText,
+                          !fromDate && styles.salesDatePlaceholder,
+                        ]}
+                      >
+                        {fromDate || "MM/YY"}
+                      </Text>
+                      <Ionicons name="calendar-outline" size={20} color={Colors.gray} />
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.salesInputGroup}>
+                    <Text style={styles.salesInputLabel}>To</Text>
+                    <TouchableOpacity
+                      style={styles.salesDateSelector}
+                      onPress={() => openDatePicker("to")}
+                      activeOpacity={0.7}
+                    >
+                      <Text
+                        style={[
+                          styles.salesDateText,
+                          !toDate && styles.salesDatePlaceholder,
+                        ]}
+                      >
+                        {toDate || "MM/YY"}
+                      </Text>
+                      <Ionicons name="calendar-outline" size={20} color={Colors.gray} />
+                    </TouchableOpacity>
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.salesRequestBtn}
+                    onPress={handleRequestReport}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.salesRequestBtnText}>Request Report</Text>
+                  </TouchableOpacity>
+
+                  {reportsLoading && !refreshing ? (
+                    <View style={styles.loaderContainer}>
+                      <ActivityIndicator size="large" color={Colors.primary} />
+                    </View>
+                  ) : reports.length === 0 ? (
+                    <View style={styles.salesDashedBox}>
+                      <Text style={styles.salesDashedText}>No Reports Generated Yet</Text>
+                    </View>
+                  ) : (
+                    <View style={styles.reportsListContainer}>
+                      {reports.map((report) => (
+                        <View key={report.id} style={styles.reportListCard}>
+                          <Text style={styles.reportCardDateText}>
+                            {report.from} To {report.to}
+                          </Text>
+                          <TouchableOpacity
+                            style={styles.reportDownloadBtn}
+                            onPress={() => handleDownloadReport(report.id)}
+                            activeOpacity={0.8}
+                          >
+                            <Text style={styles.reportDownloadBtnText}>Download</Text>
+                          </TouchableOpacity>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              </View>
             </View>
           </View>
         )}
@@ -1252,11 +1516,18 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     paddingVertical: 14,
-    borderBottomWidth: 3,
-    borderBottomColor: "transparent",
+    position: "relative",
   },
-  tabItemActive: {
-    borderBottomColor: Colors.primary,
+  tabIndicator: {
+    position: "absolute",
+    bottom: -1.5,
+    left: 0,
+    right: 0,
+    height: 3.5,
+    backgroundColor: Colors.primary,
+    borderTopLeftRadius: 3.5,
+    borderTopRightRadius: 3.5,
+
   },
   tabText: {
     fontSize: 15,
@@ -1422,8 +1693,8 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     backgroundColor: Colors.white,
-    
-     
+
+
   },
   salesDateText: {
     fontSize: 15,
@@ -1674,4 +1945,71 @@ const styles = StyleSheet.create({
   monthGridItemTextDisabled: {
     color: "#BBBBBB",
   },
+  tabsAndPeriodRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderBottomWidth: 1.5,
+    borderColor: "#F0EFFB",
+  },
+  salesTabButtons: {
+    flexDirection: "row",
+    justifyContent: "center",
+    columnGap: 10,
+  },
+  salesTabBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    backgroundColor: "#F1F1F1",
+  },
+  salesTabBtnActive: {
+    backgroundColor: Colors.primary,
+  },
+  salesTabBtnText: {
+    fontSize: 13,
+    fontFamily: "PlusJakartaSans_600SemiBold",
+    color: "#555555",
+  },
+  salesTabBtnTextActive: {
+    color: Colors.white,
+    fontFamily: "PlusJakartaSans_700Bold",
+  },
+  salesPeriodContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#E5E5E5",
+    borderRadius: 20,
+    padding: 2,
+    backgroundColor: Colors.white,
+  },
+  salesPeriodBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  salesPeriodBtnText: {
+    fontSize: 11,
+    fontFamily: "PlusJakartaSans_600SemiBold",
+    color: "#7A7A7A",
+  },
+  salesPeriodBtnTextActive: {
+    color: Colors.primary,
+    fontFamily: "PlusJakartaSans_700Bold",
+  },
+  salesPeriodDivider: {
+    width: 1,
+    height: 12,
+    backgroundColor: "#E5E5E5",
+  },
+  salesPeriodRowBelow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 4,
+  },
+
 });

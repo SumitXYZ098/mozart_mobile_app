@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/useAuthStore";
 import {
   subscribeToPlan,
@@ -9,7 +9,7 @@ import {
   verifyPriorityPayment,
   addOnArtist,
   createUpgradeSession,
-   
+  getMyPaymentLogs,
 } from "@/api/subscriptionApi";
 import { toast } from "@/stores/useToastStore";
 
@@ -215,6 +215,24 @@ export function useAddOnArtist() {
         error instanceof Error ? error.message : "Failed to purchase artist addon.";
       toast.error(message);
     },
+  });
+}
+
+/**
+ * Hook to fetch user's payment logs.
+ */
+export function useMyPaymentLogs() {
+  const { user } = useAuthStore();
+
+  return useQuery({
+    queryKey: ["myPaymentLogs"],
+    queryFn: async () => {
+      if (!user || !user.token) {
+        throw new Error("You must be logged in to view payment logs.");
+      }
+      return getMyPaymentLogs(user.token);
+    },
+    enabled: !!(user && user.token),
   });
 }
 

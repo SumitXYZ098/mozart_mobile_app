@@ -7,9 +7,6 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
-  Dimensions,
-  Linking,
-  Modal,
   AppState,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -123,7 +120,7 @@ export default function ChoosePlanScreen() {
   const [termsVisible, setTermsVisible] = useState(false);
 
   const [contactModalVisible, setContactModalVisible] = useState(false);
-  const [pendingSessionId, setPendingSessionId] = useState("");
+  const [pendingSessionId, setPendingSessionId] = useState(""); 
   const [isLoadingOverlay, setIsLoadingOverlay] = useState(false);
   const [paymentPlanName, setPaymentPlanName] = useState("");
 
@@ -156,7 +153,7 @@ export default function ChoosePlanScreen() {
 
     // Check if they are already on this plan
     const isCurrentPlan =
-      isSubscribed && user?.latest_subscription?.plan?.name === plan.name;
+      isSubscribed && user?.latest_subscription?.plan ?.name === plan.name;
     if (isCurrentPlan) {
       toast.error("You are already subscribed to this plan!");
       return;

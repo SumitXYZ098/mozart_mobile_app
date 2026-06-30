@@ -55,6 +55,7 @@ export default function OnboardingScreen({ navigation }: Props) {
         source={require("../../../assets/icon.png")}
         style={[
           styles.logo,
+          
           {
             opacity: logoFade,
             transform: [{ translateY: logoTranslateY }],
@@ -121,11 +122,11 @@ const styles = StyleSheet.create({
     fontFamily: 'PlusJakartaSans_700Bold'
   },
   logo: {
-    width: 172,
-    height: 80,
+    width: 250,
+    height: 160,
     position: "absolute",
     left: "50%",
-    marginLeft: -86, // -(width/2)
+    marginLeft: -120, // -(width/2)
     top: 94,
   },
   buttonsWrapper: {

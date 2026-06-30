@@ -12,6 +12,7 @@ import MyReleaseScreen from "@/screens/app/MyReleaseScreen";
 import NewReleaseScreen from "@/screens/app/NewReleaseScreen";
  import ArtistScreen from "@/screens/app/ArtistScreen";
 import ChangePasswordScreen from "@/screens/app/ChangePasswordScreen";
+import OrderHistoryScreen from "@/screens/app/OrderHistoryScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -68,6 +69,7 @@ export function ProfileStackNavigator() {
     >
       <Stack.Screen name="ProfileMain" component={ProfileScreen} />
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
+      <Stack.Screen name="OrderHistory" component={OrderHistoryScreen} />
     </Stack.Navigator>
   );
 }

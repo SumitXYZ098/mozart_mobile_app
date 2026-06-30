@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import Svg, { Path, Circle, G, Text as SVGText } from "react-native-svg";
 
 import { Colors } from "@/theme/colors";
+import FolderEmptyState from "./FolderEmptyState";
 
 interface ChannelData {
   channel: string;
@@ -98,9 +99,7 @@ const BestPerformingStores: React.FC<BestPerformingStoresProps> = ({
           <ActivityIndicator size="large" color={Colors.primary} />
         </View>
       ) : data.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No store data available</Text>
-        </View>
+        <FolderEmptyState title="No Store Data Available" />
       ) : (
         <View style={styles.container}>
           {/* SVG Donut Chart */}

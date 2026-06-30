@@ -107,6 +107,7 @@ export const ENDPOINTS = {
   VERIFY_PRIORITY_PAYMENT: `${BASE_URL}/api/priority-payment/verify`,
   UPGRADE_PLAN: `${BASE_URL}/api/subscription/create-upgrade-session`,
   ARTIST_ADDON: `${BASE_URL}/api/artist-addon`,
+  MY_PAYMENT_LOGS: `${BASE_URL}/api/my-payment-logs`,
   NOTIFICATIONS: `${BASE_URL}/api/notifications`,
   MARK_NOTIFICATION_AS_READ: (id: number | string) => `${BASE_URL}/api/notifications/${id}/read`,
   CHANGE_PASSWORD: `${BASE_URL}/api/change-password`,
@@ -116,4 +117,7 @@ export const ENDPOINTS = {
   GET_MY_CSV_LOGS: `${BASE_URL}/api/csv-report-logs/my-logs`,
   GENERATE_CSV_REPORT: `${BASE_URL}/api/royalty-report/export-csv`,
   DOWNLOAD_CSV_REPORT: (id: number | string) => `${BASE_URL}/api/csv-report/download/${id}`,
+  ROYALTY_COUNTRY_STREAMS: `${BASE_URL}/api/user/best-streaming-countries`,
+  ROYALTY_PLATFORM_STREAMS: `${BASE_URL}/api/user/best-streaming-platforms`,
+  ROYALTY_TOTAL_STREAMS: `${BASE_URL}/api/user/total-streams`,
 };

@@ -203,6 +203,15 @@ export default function ProfileScreen() {
         navigation.navigate("ChangePassword");
       },
     },
+    {
+      title: "Order History",
+      renderIcon: () => (
+        <Ionicons name="receipt" size={20} color={Colors.primary} />
+      ),
+      onPress: () => {
+        navigation.navigate("OrderHistory");
+      },
+    },
   ];
 
   const secondaryMenuList = [
