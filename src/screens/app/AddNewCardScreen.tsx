@@ -15,14 +15,34 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/theme/colors";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { usePaymentStore } from "@/stores/usePaymentStore";
+import { usePaymentStore, Card } from "@/stores/usePaymentStore";
 import { toast } from "@/stores/useToastStore";
 import { useEffect } from "react";
+import { LinearGradient } from "expo-linear-gradient";
+import Svg, { Rect, Path } from "react-native-svg";
+import { deleteBankDetails, getBankDetails } from "@/api/userApi";
+import { storageAPI } from "@/utils/storage";
+
+// Golden card chip SVG representation
+const CardChip = () => (
+  <Svg width={30} height={20} viewBox="0 0 30 22" fill="none">
+    <Rect width={30} height={22} rx={4} fill="#FFB703" />
+    <Path d="M0 6h30M0 11h30M0 16h30" stroke="#4A3B00" strokeWidth={0.5} opacity={0.3} />
+    <Path d="M7 0v22M15 0v22M23 0v22" stroke="#4A3B00" strokeWidth={0.5} opacity={0.3} />
+  </Svg>
+);
+
+const maskCardNumber = (num: string) => {
+  const cleaned = num.replace(/\s/g, "");
+  if (cleaned.length < 4) return num;
+  const last4 = cleaned.slice(-4);
+  return `••••  ••••  ••••  ${last4}`;
+};
 
 export default function AddNewCardScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const { cards, addCard, updateCard } = usePaymentStore();
+  const { cards, addCard, updateCard, removeCard } = usePaymentStore();
 
   const cardId = route.params?.cardId;
   const isEditing = !!cardId;
@@ -50,8 +70,23 @@ export default function AddNewCardScreen() {
         setIsPrimary(card.isPrimary);
         setEnableAutopay(card.enableAutopay);
       }
+    } else if (!isEditing) {
+      if (route.params?.payoutHolderName) {
+        setCardHolder(route.params.payoutHolderName);
+      }
+      if (route.params?.payoutAccountNumber) {
+        const cleaned = route.params.payoutAccountNumber.replace(/\D/g, "");
+        let formatted = "";
+        for (let i = 0; i < cleaned.length && i < 16; i++) {
+          if (i > 0 && i % 4 === 0) {
+            formatted += " ";
+          }
+          formatted += cleaned[i];
+        }
+        setCardNumber(formatted);
+      }
     }
-  }, [cardId, cards, isEditing]);
+  }, [cardId, cards, isEditing, route.params]);
 
   // Format Card Number (adds spaces every 4 digits)
   const handleCardNumberChange = (text: string) => {
@@ -121,6 +156,7 @@ export default function AddNewCardScreen() {
           enableAutopay,
         });
         toast.success("Card updated successfully!");
+        navigation.goBack();
       } else {
         await addCard({
           cardHolder: cardHolder.trim(),
@@ -131,13 +167,76 @@ export default function AddNewCardScreen() {
           enableAutopay,
         });
         toast.success("Card added successfully!");
+        // Reset form inputs for next entry
+        setCardHolder("");
+        setCardNumber("");
+        setExpiryDate("");
+        setCvv("");
+        setIsPrimary(false);
+        setEnableAutopay(true);
       }
-      navigation.goBack();
     } catch (error) {
       console.error("Failed to save card:", error);
       Alert.alert("Error", "Failed to save card. Please try again.");
     }
   };
+
+  const handleDeleteCard = (card: Card) => {
+    Alert.alert(
+      "Delete Card",
+      `Are you sure you want to delete the card ending in ${card.cardNumber.slice(-4)}?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            if (card.isBankAccount) {
+              try {
+                let bankId = card.bankDetailsId;
+                if (!bankId) {
+                  const resp = await getBankDetails();
+                  if (resp && resp.id) {
+                    bankId = resp.id;
+                  }
+                }
+                if (bankId) {
+                  await deleteBankDetails(bankId);
+                } else {
+                  await deleteBankDetails();
+                }
+                usePaymentStore.setState({ bankDetails: null });
+                await storageAPI.removeItem("user_bank_details");
+              } catch (err: any) {
+                console.warn("Failed to delete bank details from server:", err);
+                const errMsg = err.response?.data?.error?.message || err.response?.data?.message || err.message;
+                Alert.alert(
+                  "Server Delete Failed",
+                  `Could not delete bank details from server. Error: ${errMsg}\n\nDo you want to force delete it locally anyway?`,
+                  [
+                    { text: "No", style: "cancel" },
+                    { 
+                      text: "Yes, Delete Locally", 
+                      style: "destructive",
+                      onPress: async () => {
+                        await removeCard(card.id);
+                        toast.success("Card deleted successfully!");
+                      } 
+                    }
+                  ]
+                );
+                return;
+              }
+            }
+            await removeCard(card.id);
+            toast.success("Card deleted successfully!");
+          },
+        },
+      ]
+    );
+  };
+
+  const creditCardsOnly = cards.filter((c) => !c.isBankAccount);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -255,17 +354,7 @@ export default function AddNewCardScreen() {
           {/* Save Card As Section */}
           <Text style={[styles.sectionHeader, { marginTop: 24 }]}>Save Card As</Text>
 
-          {/* Set as Primary Checkbox */}
-          <TouchableOpacity
-            style={styles.checkboxContainer}
-            onPress={() => setIsPrimary(!isPrimary)}
-            activeOpacity={0.8}
-          >
-            <View style={[styles.checkbox, isPrimary && styles.checkboxChecked]}>
-              {isPrimary && <Ionicons name="checkmark" size={14} color={Colors.white} />}
-            </View>
-            <Text style={styles.checkboxLabel}>Set as primary card</Text>
-          </TouchableOpacity>
+
 
           {/* Autopay Toggle Card */}
           <View style={styles.autopayCard}>
@@ -291,6 +380,62 @@ export default function AddNewCardScreen() {
           >
             <Text style={styles.saveButtonText}>Save</Text>
           </TouchableOpacity>
+
+          {/* Saved Cards Section */}
+          {creditCardsOnly.length > 0 && (
+            <View style={styles.savedCardsSection}>
+              <View style={styles.sectionDivider} />
+              <Text style={styles.sectionHeader}>Saved Cards</Text>
+              {creditCardsOnly.map((item) => (
+                <View key={item.id} style={styles.cardContainerMini}>
+                  <LinearGradient
+                    colors={["#4916A0", "#110825"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.creditCardMini}
+                  >
+                    {/* Card Top Row */}
+                    <View style={styles.cardHeaderMini}>
+                      <View style={styles.chipBrandMini}>
+                        <CardChip />
+                        <Text style={styles.brandTextMini}>AMOZART PAY</Text>
+                      </View>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                        {item.enableAutopay && (
+                          <Ionicons name="checkmark-circle" size={18} color="#10B981" />
+                        )}
+                        <TouchableOpacity
+                          style={styles.actionIconBtnMini}
+                          onPress={() => handleDeleteCard(item)}
+                          activeOpacity={0.7}
+                        >
+                          <Ionicons name="trash" size={18} color="rgba(255,255,255,0.85)" />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+
+                    {/* Card Number */}
+                    <Text style={styles.cardNumberTextMini}>{maskCardNumber(item.cardNumber)}</Text>
+
+                    {/* Card Details Footer */}
+                    <View style={styles.cardFooterMini}>
+                      <View style={styles.footerColMini}>
+                        <Text style={styles.footerLabelMini}>HOLDER</Text>
+                        <Text style={styles.footerValueMini} numberOfLines={1}>
+                          {item.cardHolder.toUpperCase()}
+                        </Text>
+                      </View>
+
+                      <View style={styles.footerColMini}>
+                        <Text style={styles.footerLabelMini}>EXPIRY</Text>
+                        <Text style={styles.footerValueMini}>{item.expiryDate}</Text>
+                      </View>
+                    </View>
+                  </LinearGradient>
+                </View>
+              ))}
+            </View>
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -436,5 +581,91 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     fontFamily: "PlusJakartaSans_700Bold",
+  },
+  savedCardsSection: {
+    marginTop: 32,
+  },
+  sectionDivider: {
+    height: 1,
+    backgroundColor: "#E2E8F0",
+    marginBottom: 24,
+  },
+  cardContainerMini: {
+    borderRadius: 16,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
+    marginBottom: 16,
+  },
+  creditCardMini: {
+    padding: 20,
+    aspectRatio: 1.58,
+    justifyContent: "space-between",
+    position: "relative",
+  },
+  cardHeaderMini: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  chipBrandMini: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  brandTextMini: {
+    color: Colors.white,
+    fontSize: 12,
+    fontWeight: "700",
+    fontFamily: "PlusJakartaSans_700Bold",
+    letterSpacing: 1,
+  },
+  primaryBadgeMini: {
+    backgroundColor: "rgba(255,255,255,0.2)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  primaryBadgeTextMini: {
+    color: Colors.white,
+    fontSize: 8,
+    fontWeight: "700",
+    fontFamily: "PlusJakartaSans_700Bold",
+  },
+  cardNumberTextMini: {
+    color: Colors.white,
+    fontSize: 18,
+    fontWeight: "700",
+    fontFamily: "PlusJakartaSans_700Bold",
+    letterSpacing: 2,
+    textAlign: "center",
+    marginVertical: 10,
+  },
+  cardFooterMini: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingRight: 20,
+  },
+  footerColMini: {
+    gap: 2,
+  },
+  footerLabelMini: {
+    color: "rgba(255,255,255,0.6)",
+    fontSize: 8,
+    fontFamily: "Poppins_400Regular",
+    letterSpacing: 0.5,
+  },
+  footerValueMini: {
+    color: Colors.white,
+    fontSize: 12,
+    fontWeight: "600",
+    fontFamily: "PlusJakartaSans_600SemiBold",
+  },
+  actionIconBtnMini: {
+    padding: 4,
   },
 });

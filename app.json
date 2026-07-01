@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Amozart",
-    "slug": "mozart_mobile_app",
+    "slug": "amozart",
     "scheme": "amozart",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -68,7 +68,7 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "5a4f94d0-e946-4602-b861-40509154e75b"
+        "projectId": "12fa2796-ccd5-45d5-9ca4-6d4aa65d493c"
       }
     }
   }

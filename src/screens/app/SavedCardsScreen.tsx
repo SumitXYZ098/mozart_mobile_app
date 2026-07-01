@@ -11,10 +11,12 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/theme/colors";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Rect, Path } from "react-native-svg";
 import { usePaymentStore, Card } from "@/stores/usePaymentStore";
+import { deleteBankDetails, getBankDetails } from "@/api/userApi";
+import { storageAPI } from "@/utils/storage";
 
 // Golden card chip SVG representation
 const CardChip = () => (
@@ -34,7 +36,11 @@ const maskCardNumber = (num: string) => {
 
 export default function SavedCardsScreen() {
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
   const { cards, loadPaymentState, removeCard } = usePaymentStore();
+
+  const payoutHolderName = route.params?.payoutHolderName;
+  const payoutAccountNumber = route.params?.payoutAccountNumber;
 
   useEffect(() => {
     loadPaymentState();
@@ -50,6 +56,42 @@ export default function SavedCardsScreen() {
           text: "Delete",
           style: "destructive",
           onPress: async () => {
+            if (card.isBankAccount) {
+              try {
+                let bankId = card.bankDetailsId;
+                if (!bankId) {
+                  const resp = await getBankDetails();
+                  if (resp && resp.id) {
+                    bankId = resp.id;
+                  }
+                }
+                if (bankId) {
+                  await deleteBankDetails(bankId);
+                } else {
+                  await deleteBankDetails();
+                }
+                usePaymentStore.setState({ bankDetails: null });
+                await storageAPI.removeItem("user_bank_details");
+              } catch (err: any) {
+                console.warn("Failed to delete bank details from server:", err);
+                const errMsg = err.response?.data?.error?.message || err.response?.data?.message || err.message;
+                Alert.alert(
+                  "Server Delete Failed",
+                  `Could not delete bank details from server. Error: ${errMsg}\n\nDo you want to force delete it locally anyway?`,
+                  [
+                    { text: "No", style: "cancel" },
+                    {
+                      text: "Yes, Delete Locally",
+                      style: "destructive",
+                      onPress: async () => {
+                        await removeCard(card.id);
+                      }
+                    }
+                  ]
+                );
+                return;
+              }
+            }
             await removeCard(card.id);
           },
         },
@@ -58,10 +100,88 @@ export default function SavedCardsScreen() {
   };
 
   const renderCardItem = ({ item }: { item: Card }) => {
+    if (item.isBankAccount) {
+      let codeLabel = "IFSC";
+      let codeValue = item.ifscCode;
+
+      if (item.system === "ABA") {
+        codeLabel = "ROUTING";
+        codeValue = item.routingNumber;
+      } else if (item.system === "TRANSIT") {
+        codeLabel = "TRANSIT/INST";
+        codeValue = `${item.transitNumber}-${item.institutionNumber}`;
+      } else if (item.system === "SORT") {
+        codeLabel = "SORT CODE";
+        codeValue = item.sortCode;
+      } else if (item.system === "IBAN") {
+        codeLabel = "IBAN";
+        codeValue = item.iban;
+      } else if (item.system === "SWIFT") {
+        codeLabel = "SWIFT";
+        codeValue = item.swiftCode;
+      }
+
+      return (
+        <View style={styles.cardContainer}>
+          <LinearGradient
+            colors={["#0F172A", "#2563EB"]} // premium dark blue gradient for bank accounts
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.creditCard}
+          >
+            {/* Card Top Row */}
+            <View style={styles.cardHeader}>
+              <View style={styles.chipBrand}>
+                <CardChip />
+                <Text style={styles.brandText} numberOfLines={1}>
+                  {item.bankName ? item.bankName.toUpperCase() : "BANK ACCOUNT"}
+                </Text>
+              </View>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
+                <TouchableOpacity
+                  style={styles.actionIconBtn}
+                  onPress={() => navigation.navigate("PayoutDetails", { editCard: item })}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="create-outline" size={18} color="rgba(255,255,255,0.85)" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.actionIconBtn}
+                  onPress={() => handleDeleteCard(item)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="trash-outline" size={18} color="rgba(255,255,255,0.85)" />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Card Number (Account Number) */}
+            <Text
+              style={[styles.cardNumberText, { fontSize: 22 }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
+              {maskCardNumber(item.cardNumber)}
+            </Text>
+
+            {/* Card Details Footer */}
+            <View style={styles.cardFooter}>
+              <View style={styles.footerCol}>
+                <Text style={styles.footerLabel}>ACCOUNT HOLDER</Text>
+                <Text style={styles.footerValue} numberOfLines={1}>
+                  {item.cardHolder.toUpperCase()}
+                </Text>
+              </View>
+            </View>
+          </LinearGradient>
+        </View>
+      );
+    }
+
     return (
       <View style={styles.cardContainer}>
         <LinearGradient
-          colors={["#4916A0", "#7B3AE5"]}
+          colors={["#4916A0", "#110825"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.creditCard}
@@ -72,28 +192,40 @@ export default function SavedCardsScreen() {
               <CardChip />
               <Text style={styles.brandText}>AMOZART PAY</Text>
             </View>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-              {item.isPrimary && (
-                <View style={styles.primaryBadge}>
-                  <Text style={styles.primaryBadgeText}>PRIMARY</Text>
-                </View>
-              )}
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
               {item.enableAutopay && (
-                <View style={[styles.primaryBadge, { backgroundColor: "#10B981" }]}>
-                  <Text style={styles.primaryBadgeText}>AUTOPAY</Text>
-                </View>
+                <Ionicons name="checkmark-circle" size={22} color="#10B981" />
               )}
-              <Text style={styles.cardTypeText}>CARD</Text>
+              <TouchableOpacity
+                style={styles.actionIconBtn}
+                onPress={() => navigation.navigate("AddNewCard", { cardId: item.id })}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="pencil" size={18} color="rgba(255,255,255,0.85)" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.actionIconBtn}
+                onPress={() => handleDeleteCard(item)}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="trash" size={18} color="rgba(255,255,255,0.85)" />
+              </TouchableOpacity>
             </View>
           </View>
 
           {/* Card Number */}
-          <Text style={styles.cardNumberText}>{maskCardNumber(item.cardNumber)}</Text>
+          <Text
+            style={styles.cardNumberText}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+          >
+            {maskCardNumber(item.cardNumber)}
+          </Text>
 
           {/* Card Details Footer */}
           <View style={styles.cardFooter}>
             <View style={styles.footerCol}>
-              <Text style={styles.footerLabel}>CARD HOLDER</Text>
+              <Text style={styles.footerLabel}>HOLDER</Text>
               <Text style={styles.footerValue} numberOfLines={1}>
                 {item.cardHolder.toUpperCase()}
               </Text>
@@ -101,36 +233,21 @@ export default function SavedCardsScreen() {
 
             <View style={styles.footerCol}>
               <Text style={styles.footerLabel}>CVV</Text>
-              <Text style={styles.footerValue}>{item.cvv}</Text>
+              <Text style={styles.footerValue}>•••</Text>
             </View>
 
             <View style={styles.footerCol}>
-              <Text style={styles.footerLabel}>EXPIRES</Text>
+              <Text style={styles.footerLabel}>EXPIRY</Text>
               <Text style={styles.footerValue}>{item.expiryDate}</Text>
             </View>
-          </View>
-
-          {/* Action Icons overlay */}
-          <View style={styles.actionButtonsContainer}>
-            <TouchableOpacity
-              style={styles.actionIconBtn}
-              onPress={() => navigation.navigate("AddNewCard", { cardId: item.id })}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="create-outline" size={18} color="rgba(255,255,255,0.85)" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.actionIconBtn}
-              onPress={() => handleDeleteCard(item)}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="trash-outline" size={18} color="rgba(255,255,255,0.85)" />
-            </TouchableOpacity>
           </View>
         </LinearGradient>
       </View>
     );
   };
+
+  const payoutBankCards = cards.filter((c) => c.isBankAccount);
+  const creditCards = cards.filter((c) => !c.isBankAccount);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -152,34 +269,81 @@ export default function SavedCardsScreen() {
       >
         <Text style={styles.subtitle}>Your cards are secure and encrypted</Text>
 
-        <FlatList
-          data={cards}
-          keyExtractor={(item) => item.id}
-          renderItem={renderCardItem}
-          scrollEnabled={false}
-          contentContainerStyle={styles.cardsList}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Ionicons name="card-outline" size={48} color={Colors.gray} />
-              <Text style={styles.emptyText}>No cards saved yet.</Text>
+        {/* 1. Payout Bank Account Section */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.cardListSectionHeader}>Payout Bank Account</Text>
+          {payoutBankCards.length > 0 ? (
+            <FlatList
+              data={payoutBankCards}
+              keyExtractor={(item) => item.id}
+              renderItem={renderCardItem}
+              scrollEnabled={false}
+              contentContainerStyle={styles.cardsList}
+            />
+          ) : (
+            <View style={[styles.emptyContainer, { marginBottom: 10 }]}>
+              <Ionicons name="business-outline" size={48} color={Colors.gray} />
+              <Text style={styles.emptyText}>No payout bank account saved yet.</Text>
             </View>
-          }
-        />
+          )}
 
-        {/* Add New Card Button */}
-        <TouchableOpacity
-          style={styles.addNewCardButton}
-          activeOpacity={0.8}
-          onPress={() => navigation.navigate("AddNewCard")}
-        >
-          <View style={styles.addButtonLeft}>
-            <View style={styles.plusIconWrapper}>
-              <Ionicons name="add" size={20} color={Colors.primary} />
+          {/* Add / Edit Payout Details Button directly under Payout section */}
+          <TouchableOpacity
+            style={[styles.addNewCardButton, { marginTop: 10 }]}
+            activeOpacity={0.8}
+            onPress={() => navigation.navigate("PayoutDetails")}
+          >
+            <View style={styles.addButtonLeft}>
+              <View style={styles.plusIconWrapper}>
+                <Ionicons
+                  name={payoutBankCards.length > 0 ? "create-outline" : "add"}
+                  size={18}
+                  color={Colors.primary}
+                />
+              </View>
+              <Text style={styles.addNewCardText}>
+                {payoutBankCards.length > 0 ? "Payout Bank Details" : "Add Payout Bank Details"}
+              </Text>
             </View>
-            <Text style={styles.addNewCardText}>Add New Card</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color={Colors.primary} />
-        </TouchableOpacity>
+            <Ionicons name="chevron-forward" size={18} color={Colors.primary} />
+          </TouchableOpacity>
+        </View>
+
+        {/* 2. Credit Cards Section */}
+        <View style={[styles.sectionContainer, { marginTop: 24 }]}>
+          <Text style={styles.cardListSectionHeader}>Credit Cards</Text>
+          <FlatList
+            data={creditCards}
+            keyExtractor={(item) => item.id}
+            renderItem={renderCardItem}
+            scrollEnabled={false}
+            contentContainerStyle={styles.cardsList}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Ionicons name="card-outline" size={48} color={Colors.gray} />
+                <Text style={styles.emptyText}>No credit cards saved yet.</Text>
+              </View>
+            }
+          />
+
+          {/* Add New Card Button directly under Credit Cards section */}
+          <TouchableOpacity
+            style={[styles.addNewCardButton, { marginTop: 14 }]}
+            activeOpacity={0.8}
+            onPress={() => navigation.navigate("AddNewCard", {
+              payoutHolderName,
+              payoutAccountNumber,
+            })}
+          >
+            <View style={styles.addButtonLeft}>
+              <View style={styles.plusIconWrapper}>
+                <Ionicons name="add" size={20} color={Colors.primary} />
+              </View>
+              <Text style={styles.addNewCardText}>Add New Card</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={Colors.primary} />
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -189,6 +353,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.white,
+  },
+  cardListSectionHeader: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#1A1A1A",
+    fontFamily: "PlusJakartaSans_700Bold",
+    marginBottom: 8,
+  },
+  sectionContainer: {
+    marginVertical: 8,
   },
   header: {
     flexDirection: "row",

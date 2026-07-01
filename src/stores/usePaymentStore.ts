@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { storageAPI } from "@/utils/storage";
+import { getBillingCards, submitBillingCard, updateBillingCard, deleteBillingCard } from "@/api/userApi";
 
 export interface Card {
   id: string;
@@ -9,9 +10,21 @@ export interface Card {
   cvv: string;
   isPrimary: boolean;
   enableAutopay: boolean;
+  isBankAccount?: boolean;
+  bankDetailsId?: number;
+  bankName?: string;
+  system?: string;
+  ifscCode?: string;
+  routingNumber?: string;
+  transitNumber?: string;
+  institutionNumber?: string;
+  sortCode?: string;
+  iban?: string;
+  swiftCode?: string;
 }
 
 export interface BankDetails {
+  id?: number;
   country: string;
   transferMethod: string;
   currency: string;
@@ -83,12 +96,23 @@ export const usePaymentStore = create<PaymentStore>((set, get) => ({
       const savedCardsRaw = await storageAPI.getItem(CARDS_STORAGE_KEY);
       const savedBankRaw = await storageAPI.getItem(BANK_STORAGE_KEY);
 
-      let cards = DEFAULT_CARDS;
-      if (savedCardsRaw) {
-        cards = JSON.parse(savedCardsRaw);
-      } else {
-        // Save defaults if not already present
-        await storageAPI.setItem(CARDS_STORAGE_KEY, JSON.stringify(DEFAULT_CARDS));
+      let cardsList = savedCardsRaw ? JSON.parse(savedCardsRaw) : [];
+
+      try {
+        const serverCards = await getBillingCards();
+        if (serverCards && serverCards.length > 0) {
+          // Merge server cards with local bank cards (payout bank account)
+          const bankCards = cardsList.filter((c: any) => c.isBankAccount);
+          cardsList = [...serverCards, ...bankCards];
+          await storageAPI.setItem(CARDS_STORAGE_KEY, JSON.stringify(cardsList));
+        } else if (serverCards && serverCards.length === 0) {
+          // Server returned empty cards list, so filter out any non-bank cards locally
+          const bankCards = cardsList.filter((c: any) => c.isBankAccount);
+          cardsList = bankCards;
+          await storageAPI.setItem(CARDS_STORAGE_KEY, JSON.stringify(cardsList));
+        }
+      } catch (err) {
+        console.warn("Failed to load cards from server, using local fallback:", err);
       }
 
       let bankDetails = DEFAULT_BANK_DETAILS;
@@ -96,22 +120,46 @@ export const usePaymentStore = create<PaymentStore>((set, get) => ({
         bankDetails = JSON.parse(savedBankRaw);
       }
 
-      set({ cards, bankDetails, isLoaded: true });
+      set({ cards: cardsList, bankDetails, isLoaded: true });
     } catch (error) {
       console.warn("Failed to load payment state from storage:", error);
-      // Fallback to defaults
-      set({ cards: DEFAULT_CARDS, bankDetails: DEFAULT_BANK_DETAILS, isLoaded: true });
+      set({ cards: [], bankDetails: DEFAULT_BANK_DETAILS, isLoaded: true });
     }
   },
 
   addCard: async (newCardData) => {
     const { cards } = get();
-    const id = `card-${Date.now()}`;
-    const newCard: Card = { ...newCardData, id };
+    
+    const [month, year] = newCardData.expiryDate.split("/");
+    const expiryMonthVal = month ? month.trim() : "";
+    let expiryYearVal = year ? year.trim() : "";
+    if (expiryYearVal.length === 2) {
+      expiryYearVal = `20${expiryYearVal}`;
+    }
+
+    const apiPayload = {
+      card_holder_name: newCardData.cardHolder,
+      card_number: newCardData.cardNumber.replace(/\s/g, ""),
+      expiry_month: expiryMonthVal,
+      expiry_year: expiryYearVal,
+      cvv: newCardData.cvv,
+      enable_autopay: newCardData.enableAutopay,
+      is_primary: newCardData.isPrimary,
+    };
+    
+    const resp = await submitBillingCard(apiPayload);
+    let serverId = `card-${Date.now()}`;
+    if (resp && resp.data && resp.data.id) {
+      serverId = String(resp.data.id);
+    }
+    
+    const newCard: Card = {
+      ...newCardData,
+      id: serverId,
+    };
 
     let updatedCards = [...cards];
     if (newCard.isPrimary) {
-      // Set all other cards as non-primary
       updatedCards = updatedCards.map((c) => ({ ...c, isPrimary: false }));
     }
 
@@ -121,10 +169,17 @@ export const usePaymentStore = create<PaymentStore>((set, get) => ({
   },
 
   removeCard: async (id) => {
-    const { cards } = get();
-    const updatedCards = cards.filter((c) => c.id !== id);
+    const { cards } = get();        
     
-    // If the removed card was primary and we have other cards left, make the first one primary
+    if (!id.startsWith("card-")) {
+      try {
+        await deleteBillingCard(id);
+      } catch (err) {
+        console.warn("Failed to delete billing card from server:", err);
+      }
+    }
+    
+    const updatedCards = cards.filter((c) => c.id !== id);
     if (cards.find((c) => c.id === id)?.isPrimary && updatedCards.length > 0) {
       updatedCards[0].isPrimary = true;
     }
@@ -145,12 +200,32 @@ export const usePaymentStore = create<PaymentStore>((set, get) => ({
 
   updateCard: async (id, updatedCardData) => {
     const { cards } = get();
+    
+    if (!id.startsWith("card-")) {
+      const [month, year] = updatedCardData.expiryDate.split("/");
+      const expiryMonthVal = month ? month.trim() : "";
+      let expiryYearVal = year ? year.trim() : "";
+      if (expiryYearVal.length === 2) {
+        expiryYearVal = `20${expiryYearVal}`;
+      }
+
+      const apiPayload = {
+        card_holder_name: updatedCardData.cardHolder,
+        card_number: updatedCardData.cardNumber.replace(/\s/g, ""),
+        expiry_month: expiryMonthVal,
+        expiry_year: expiryYearVal,
+        cvv: updatedCardData.cvv,
+        enable_autopay: updatedCardData.enableAutopay,
+        is_primary: updatedCardData.isPrimary,
+      };
+      await updateBillingCard(id, apiPayload);
+    }
+    
     let updatedCards = cards.map((c) =>
       c.id === id ? { ...updatedCardData, id } : c
     );
 
     if (updatedCardData.isPrimary) {
-      // Set all other cards as non-primary
       updatedCards = updatedCards.map((c) =>
         c.id === id ? c : { ...c, isPrimary: false }
       );

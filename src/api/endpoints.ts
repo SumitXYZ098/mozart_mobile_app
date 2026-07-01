@@ -95,6 +95,10 @@ export const ENDPOINTS = {
   USER_DETAIL_BY_ID: (userId: string) => `${BASE_URL}/api/users/${userId}`,
   TRACK_COUNT_BY_USER: (userId: string) =>
     `${BASE_URL}/api/distribute-tracks/count/user/${userId}`,
+  BANK_DETAILS: `${BASE_URL}/api/user-payout-details`,
+  BANK_DETAILS_BY_ID: (id: number) => `${BASE_URL}/api/user-payout-details/${id}`,
+  BILLING_CARDS: `${BASE_URL}/api/billing-cards`,
+  BILLING_CARD_BY_ID: (id: number) => `${BASE_URL}/api/billing-cards/${id}`,
 
   // Dashboard Counts
   DASHBOARD_COUNTS: `${BASE_URL}/api/admin/dashboardcounts`,
@@ -120,4 +124,12 @@ export const ENDPOINTS = {
   ROYALTY_COUNTRY_STREAMS: `${BASE_URL}/api/user/best-streaming-countries`,
   ROYALTY_PLATFORM_STREAMS: `${BASE_URL}/api/user/best-streaming-platforms`,
   ROYALTY_TOTAL_STREAMS: `${BASE_URL}/api/user/total-streams`,
+
+  // Wallet / Earnings
+  TOTAL_EARNINGS: (range: "1M" | "3M" | "6M" = "1M") =>
+    `${BASE_URL}/api/user/earnings-per-month?range=${range}`,
+  AVAILABLE_WITHDRAW_BALANCE: `${BASE_URL}/api/payout-requests/my-balance`,
+  PAYOUT_REQUESTS: `${BASE_URL}/api/payout-requests`,
+  PAYOUT_REQUEST_BY_ID: (id: number | string) =>
+    `${BASE_URL}/api/payout-requests/${id}`,
 };

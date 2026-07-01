@@ -94,4 +94,209 @@ export const updateUserClientsDetail = async (
   return transformUser(response.data);
 };
 
+export const submitBankDetails = async (payload: any): Promise<any> => {
+  const { user } = useAuthStore.getState();
+  const response = await axios.post(
+    ENDPOINTS.BANK_DETAILS,
+    { data: payload },
+    {
+      headers: {
+        Authorization: `Bearer ${user?.token}`,
+      },
+    }
+  );
+  return response.data;
+};
+
+export const getBankDetails = async (): Promise<any> => {
+  const { user } = useAuthStore.getState();
+  const response = await axios.get(ENDPOINTS.BANK_DETAILS, {
+    headers: {
+      Authorization: `Bearer ${user?.token}`,
+    },
+  });
+  
+  const respData = response.data;
+  if (respData && respData.data) {
+    if (Array.isArray(respData.data)) {
+      if (respData.data.length > 0) {
+        const item = respData.data[0];
+        return item.attributes ? { ...item.attributes, id: item.id } : item;
+      }
+      return null;
+    } else {
+      const item = respData.data;
+      return item.attributes ? { ...item.attributes, id: item.id } : item;
+    }
+  }
+  return respData;
+};
+
+export const updateBankDetails = async (id: number, payload: any): Promise<any> => {
+  const { user } = useAuthStore.getState();
+  try {
+    const response = await axios.put(
+      ENDPOINTS.BANK_DETAILS_BY_ID(id),
+      { data: payload },
+      {
+        headers: {
+          Authorization: `Bearer ${user?.token}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    console.warn("PUT with ID failed, checking status for fallback...", error);
+    if (error.response?.status === 405) {
+      return submitBankDetails(payload);
+    }
+    try {
+      const response = await axios.put(
+        ENDPOINTS.BANK_DETAILS,
+        { data: payload },
+        {
+          headers: {
+            Authorization: `Bearer ${user?.token}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (fallbackError: any) {
+      if (fallbackError.response?.status === 405) {
+        return submitBankDetails(payload);
+      }
+      throw fallbackError;
+    }
+  }
+};
+
+export const deleteBankDetails = async (id?: number): Promise<any> => {
+  const { user } = useAuthStore.getState();
+  
+  if (id) {
+    try {
+      const response = await axios.delete(
+        ENDPOINTS.BANK_DETAILS_BY_ID(id),
+        {
+          headers: {
+            Authorization: `Bearer ${user?.token}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.warn("DELETE with ID failed, trying singular DELETE fallback...", error);
+    }
+  }
+
+  const response = await axios.delete(
+    ENDPOINTS.BANK_DETAILS,
+    {
+      headers: {
+        Authorization: `Bearer ${user?.token}`,
+      },
+    }
+  );
+  return response.data;
+};
+
+export const getBillingCards = async (): Promise<any[]> => {
+  const { user } = useAuthStore.getState();
+  const response = await axios.get(ENDPOINTS.BILLING_CARDS, {
+    headers: {
+      Authorization: `Bearer ${user?.token}`,
+    },
+  });
+  
+  const respData = response.data;
+  if (respData && respData.data) {
+    return respData.data.map((item: any) => {
+      const attrs = item.attributes || {};
+      const expiryMonth = attrs.expiry_month || attrs.expiryMonth || "";
+      const expiryYear = String(attrs.expiry_year || attrs.expiryYear || "");
+      const yearShort = expiryYear.length === 4 ? expiryYear.slice(-2) : expiryYear;
+      const expiryDate = expiryMonth && yearShort ? `${expiryMonth}/${yearShort}` : "";
+
+      return {
+        id: String(item.id),
+        cardHolder: attrs.card_holder_name || attrs.cardHolderName || attrs.card_holder || attrs.cardHolder || "",
+        cardNumber: attrs.card_number || attrs.cardNumber || "",
+        expiryDate,
+        cvv: attrs.cvv || "",
+        enableAutopay: attrs.enable_autopay ?? attrs.enableAutopay ?? true,
+        isPrimary: attrs.is_primary ?? attrs.isPrimary ?? false,
+      };
+    });
+  }
+  return [];
+};
+
+export const submitBillingCard = async (payload: any): Promise<any> => {
+  const { user } = useAuthStore.getState();
+  const response = await axios.post(
+    ENDPOINTS.BILLING_CARDS,
+    { data: payload },
+    {
+      headers: {
+        Authorization: `Bearer ${user?.token}`,
+      },
+    }
+  );
+  return response.data;
+};
+
+export const updateBillingCard = async (id: string | number, payload: any): Promise<any> => {
+  const { user } = useAuthStore.getState();
+  try {
+    const response = await axios.put(
+      ENDPOINTS.BILLING_CARD_BY_ID(Number(id)),
+      { data: payload },
+      {
+        headers: {
+          Authorization: `Bearer ${user?.token}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.warn("PUT billing card with ID failed, trying singular PUT fallback...", error);
+    const response = await axios.put(
+      ENDPOINTS.BILLING_CARDS,
+      { data: payload },
+      {
+        headers: {
+          Authorization: `Bearer ${user?.token}`,
+        },
+      }
+    );
+    return response.data;
+  }
+};
+
+export const deleteBillingCard = async (id: string | number): Promise<any> => {
+  const { user } = useAuthStore.getState();
+  try {
+    const response = await axios.delete(
+      ENDPOINTS.BILLING_CARD_BY_ID(Number(id)),
+      {
+        headers: {
+          Authorization: `Bearer ${user?.token}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.warn("DELETE billing card with ID failed, trying singular DELETE fallback...", error);
+    const response = await axios.delete(
+      ENDPOINTS.BILLING_CARDS,
+      {
+        headers: {
+          Authorization: `Bearer ${user?.token}`,
+        },
+      }
+    );
+    return response.data;
+  }
+};
+
 // moved to userPublicApi.ts to avoid store import cycle
