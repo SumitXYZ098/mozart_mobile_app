@@ -48,6 +48,13 @@ export const googleAuthService = {
         GoogleSignin.configure({ webClientId, offlineAccess: true });
       }
 
+      // Force the account selection screen to show by signing out of local session first
+      try {
+        await GoogleSignin.signOut();
+      } catch (err) {
+        // Ignore if user was not logged in
+      }
+
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
       const userInfo = await GoogleSignin.signIn();
       

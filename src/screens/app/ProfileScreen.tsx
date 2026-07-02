@@ -149,7 +149,7 @@ export default function ProfileScreen() {
 
       setUploading(true);
 
-      const uploaded = await uploadFile(file, () => {});
+      const uploaded = await uploadFile(file, () => { });
       const imageId = uploaded?.id;
 
       if (imageId && user?.id) {
@@ -234,9 +234,21 @@ export default function ProfileScreen() {
 
   const secondaryMenuList = [
     {
-      title: t("tc_privacy"),
+      title: "Terms of Service",
+      renderIcon: () => (
+        <Ionicons name="document-text" size={20} color={Colors.primary} />
+      ),
       onPress: () => {
-        Alert.alert("T&C & Privacy Policy", "Terms & Conditions and Privacy Policy will be open soon.");
+        navigation.navigate("TermsOfService" as never);
+      },
+    },
+    {
+      title: "Privacy Policy",
+      renderIcon: () => (
+        <Ionicons name="shield-checkmark" size={20} color={Colors.primary} />
+      ),
+      onPress: () => {
+        Alert.alert("Privacy Policy", "Our full Privacy Policy will be available soon. For queries, contact support@amozart.com.");
       },
     },
     {
@@ -350,7 +362,7 @@ export default function ProfileScreen() {
                     style={{
                       width: "100%",
                       height: 1,
-                     
+
                     }}
                   />
                 )}
@@ -456,10 +468,10 @@ const styles = StyleSheet.create({
     fontFamily: "PlusJakartaSans_700Bold",
   },
   placeholder: {
-    width: 38,  
+    width: 38,
   },
   scrollContent: {
-    paddingBottom: 40,                                                                                               
+    paddingBottom: 40,
   },
   profileSection: {
     alignItems: "center",

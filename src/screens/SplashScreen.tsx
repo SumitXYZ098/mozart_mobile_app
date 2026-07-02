@@ -18,7 +18,7 @@ export default function SplashScreen({ navigation }: Props) {
   }, []);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: Colors.primary }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: "transparent" }]}>
       <Animated.Image
         source={require('../../assets/icon.png')}
         style={[styles.logo, { opacity: fadeAnim }]}
@@ -30,5 +30,5 @@ export default function SplashScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  logo: { width: 172, height: 176 },
+  logo: { width: 400, height: 400 },
 });

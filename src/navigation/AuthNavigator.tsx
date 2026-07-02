@@ -4,6 +4,7 @@ import SignUpScreen from "@/screens/auth/SignUpScreen";
 import SplashScreen from "@/screens/SplashScreen";
 import VerifiedScreen from "@/screens/auth/VerifiedScreen";
 import VerifyEmailScreen from "@/screens/auth/VerifyEmailScreen";
+import TermsOfServiceScreen from "@/screens/auth/TermsOfServiceScreen";
  
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import ForgotPasswordScreen from "@/screens/auth/ForgotPasswordScreen";
@@ -21,6 +22,7 @@ export type AuthStackParamList = {
   SetNewPassword: { email: string; otp: string };
   VerifyEmail: { email: string };
   Verified: undefined;
+  TermsOfService: { fromSignUp?: boolean } | undefined;
 };
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
@@ -40,6 +42,7 @@ export default function AuthNavigator({ initialRoute = "Onboarding" }: { initial
       <Stack.Screen name="SetNewPassword" component={SetNewPasswordScreen} />
       <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} />
       <Stack.Screen name="Verified" component={VerifiedScreen} />
+      <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
     </Stack.Navigator>
   );
 }

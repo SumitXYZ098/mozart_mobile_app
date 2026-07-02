@@ -355,6 +355,15 @@ console.log(data, "Form Data");
                 <Text style={styles.signupText}> Login</Text>
               </TouchableOpacity>
             </View>
+
+            {/* Terms link */}
+            <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 10 }}>
+              <TouchableOpacity onPress={() => navigation.navigate("TermsOfService", { fromSignUp: true })}>
+                <Text style={[styles.linkText, { textDecorationLine: "underline" }]}>
+                  View Terms of Service & Privacy Policy
+                </Text>
+              </TouchableOpacity>
+            </View>
           </ScrollView>
         </Animated.View>
       </AuthLayout>

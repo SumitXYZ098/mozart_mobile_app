@@ -10,12 +10,13 @@ import CalendarEventScreen from "@/screens/app/CalendarEventScreen";
 import MyTrackScreen from "@/screens/app/MyTrackScreen";
 import MyReleaseScreen from "@/screens/app/MyReleaseScreen";
 import NewReleaseScreen from "@/screens/app/NewReleaseScreen";
- import ArtistScreen from "@/screens/app/ArtistScreen";
+import ArtistScreen from "@/screens/app/ArtistScreen";
 import ChangePasswordScreen from "@/screens/app/ChangePasswordScreen";
 import OrderHistoryScreen from "@/screens/app/OrderHistoryScreen";
 import SavedCardsScreen from "@/screens/app/SavedCardsScreen";
 import AddNewCardScreen from "@/screens/app/AddNewCardScreen";
 import PayoutDetailsScreen from "@/screens/app/PayoutDetailsScreen";
+import TermsOfServiceScreen from "@/screens/auth/TermsOfServiceScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -76,6 +77,7 @@ export function ProfileStackNavigator() {
       <Stack.Screen name="SavedCards" component={SavedCardsScreen} />
       <Stack.Screen name="AddNewCard" component={AddNewCardScreen} />
       <Stack.Screen name="PayoutDetails" component={PayoutDetailsScreen} />
+      <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
     </Stack.Navigator>
   );
 }

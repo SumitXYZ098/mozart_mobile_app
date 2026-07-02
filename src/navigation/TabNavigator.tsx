@@ -246,7 +246,7 @@ const TabNavigator = () => {
         component={ProfileStackNavigator}
         options={({ route }) => {
           const routeName = getFocusedRouteNameFromRoute(route) ?? "ProfileMain";
-          const hideOnScreens = ["ChangePassword", "ProfileMain", "OrderHistory", "SavedCards", "AddNewCard", "PayoutDetails"];
+          const hideOnScreens = ["ChangePassword", "ProfileMain", "OrderHistory", "SavedCards", "AddNewCard", "PayoutDetails", "TermsOfService" ,];
           return {
             tabBarStyle: hideOnScreens.includes(routeName)
               ? { display: "none" }
@@ -275,7 +275,7 @@ const TabNavigator = () => {
                   className="w-10 h-10 rounded-full border-2 overflow-hidden"
                   style={{
                     borderColor: focused ? Colors.primary : "#E8D5FF",
-                    backgroundColor: "#F0F0F0",
+                    backgroundColor: "transparent",
                   }}
                 >
                   <Image

@@ -89,6 +89,8 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({ points }) => {
             spacing={spacing}
             nestedScrollEnabled={true}
             disableScroll={false}
+            isAnimated
+            animationDuration={900}
             yAxisThickness={0}
             xAxisThickness={0}
             yAxisLabelWidth={yAxisLabelWidth}

@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { storageAPI } from "@/utils/storage";
-import { getBillingCards, submitBillingCard, updateBillingCard, deleteBillingCard } from "@/api/userApi";
+import { getBillingCards, submitBillingCard, updateBillingCard, deleteBillingCard, getAllBankDetails } from "@/api/userApi";
 
 export interface Card {
   id: string;
@@ -99,25 +99,52 @@ export const usePaymentStore = create<PaymentStore>((set, get) => ({
       let cardsList = savedCardsRaw ? JSON.parse(savedCardsRaw) : [];
 
       try {
-        const serverCards = await getBillingCards();
-        if (serverCards && serverCards.length > 0) {
-          // Merge server cards with local bank cards (payout bank account)
-          const bankCards = cardsList.filter((c: any) => c.isBankAccount);
-          cardsList = [...serverCards, ...bankCards];
-          await storageAPI.setItem(CARDS_STORAGE_KEY, JSON.stringify(cardsList));
-        } else if (serverCards && serverCards.length === 0) {
-          // Server returned empty cards list, so filter out any non-bank cards locally
-          const bankCards = cardsList.filter((c: any) => c.isBankAccount);
-          cardsList = bankCards;
-          await storageAPI.setItem(CARDS_STORAGE_KEY, JSON.stringify(cardsList));
+        const [serverCards, serverBankList] = await Promise.all([
+          getBillingCards(),
+          getAllBankDetails(),
+        ]);
+
+        const formattedBankCards: Card[] = (serverBankList || []).map((resp: any) => {
+          const rawCardNum = resp.account_number || resp.accountNumber || resp.iban || "0000";
+          const formattedCardNum = rawCardNum.replace(/\s/g, "").replace(/(.{4})/g, "$1 ").trim();
+          return {
+            id: `card-bank-${resp.id}`,
+            cardHolder: resp.account_holder_name || resp.accountHolderName || "Bank Account",
+            cardNumber: formattedCardNum || "0000 0000 0000 0000",
+            expiryDate: "12/29",
+            cvv: "123",
+            isPrimary: false,
+            enableAutopay: true,
+            isBankAccount: true,
+            bankDetailsId: resp.id,
+            bankName: resp.bank_name || resp.bankName || "Bank",
+            system: resp.system || "SWIFT",
+            ifscCode: resp.ifsc_code || resp.ifscCode,
+            routingNumber: resp.routing_number || resp.routingNumber,
+            transitNumber: resp.transit_number || resp.transitNumber,
+            institutionNumber: resp.institution_number || resp.institutionNumber,
+            sortCode: resp.sort_code || resp.sortCode,
+            iban: resp.iban,
+            swiftCode: resp.swift_code || resp.swiftCode,
+          };
+        });
+
+        // Merge server billing cards with server bank details
+        cardsList = [...(serverCards || []), ...formattedBankCards];
+        await storageAPI.setItem(CARDS_STORAGE_KEY, JSON.stringify(cardsList));
+        
+        // Update local bank details storage with the first one as a fallback
+        if (serverBankList && serverBankList.length > 0) {
+          await storageAPI.setItem(BANK_STORAGE_KEY, JSON.stringify(serverBankList[0]));
         }
       } catch (err) {
         console.warn("Failed to load cards from server, using local fallback:", err);
       }
 
       let bankDetails = DEFAULT_BANK_DETAILS;
-      if (savedBankRaw) {
-        bankDetails = JSON.parse(savedBankRaw);
+      const currentBankRaw = await storageAPI.getItem(BANK_STORAGE_KEY);
+      if (currentBankRaw) {
+        bankDetails = JSON.parse(currentBankRaw);
       }
 
       set({ cards: cardsList, bankDetails, isLoaded: true });
