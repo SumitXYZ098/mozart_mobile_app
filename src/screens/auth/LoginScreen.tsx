@@ -105,7 +105,7 @@ export default function LoginScreen({ navigation }: Props) {
       password: "",
       rememberMe: false,
     },
-    mode: "onChange",
+    mode: "onBlur",
   });
 
  const onSubmit = (data: FormValues) => {
@@ -165,11 +165,13 @@ export default function LoginScreen({ navigation }: Props) {
                   placeholder="Enter your email"
                   label="Email"
                   type="email"
-                  value={field.value.toLowerCase()}
-                  onChangeText={field.onChange}
+                  value={field.value}
+                  onChangeText={(text) => field.onChange(text.toLowerCase())}
                   onBlur={field.onBlur}
                   keyboardType="email-address"
                   error={fieldState.error?.message}
+                  autoComplete="email"
+                  textContentType="emailAddress"
                 />
               )}
             />
@@ -193,6 +195,8 @@ export default function LoginScreen({ navigation }: Props) {
                   onBlur={field.onBlur}
                   onChangeText={field.onChange}
                   error={fieldState.error?.message}
+                  autoComplete="password"
+                  textContentType="password"
                 />
               )}
             />

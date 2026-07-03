@@ -14,6 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { verifyPayment } from "@/api/subscriptionApi";
 import { getArtistsLimit } from "@/utils/utils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SplashScreen from 'expo-splash-screen';
 
 export type RootStackParamList = {
   Dashboard: undefined;
@@ -37,6 +38,12 @@ export default function RootNavigator() {
     loadUserFromStorage();
     loadLanguageFromStorage();
   }, []);
+
+  useEffect(() => {
+    if (isAuthLoaded) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [isAuthLoaded]);
 
   useEffect(() => {
     const handleDeepLink = async (url: string) => {

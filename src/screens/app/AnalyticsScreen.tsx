@@ -534,7 +534,7 @@ const AnalyticsScreen = () => {
 
   // Call daily-trends endpoints and notifications
   const fetchAnalyticsData = useCallback(async () => {
-    console.log("[Analytics] fetchAnalyticsData started. Selected period:", selectedPeriod);
+    // console.log("[Analytics] fetchAnalyticsData started. Selected period:", selectedPeriod);
     if (!user?.token) {
       console.warn("[Analytics] Cannot fetch analytics: user token is missing");
       return;
@@ -544,7 +544,7 @@ const AnalyticsScreen = () => {
     setCountriesLoading(true);
 
     try {
-      console.log("[Analytics] Sending request to TOTAL_STREAMS:", ENDPOINTS.TOTAL_STREAMS);
+      // console.log("[Analytics] Sending request to TOTAL_STREAMS:", ENDPOINTS.TOTAL_STREAMS);
       const streamsPromise = axios.get(ENDPOINTS.TOTAL_STREAMS, {
         params: { period: selectedPeriod },
         headers: {
@@ -552,7 +552,7 @@ const AnalyticsScreen = () => {
         },
       });
 
-      console.log("[Analytics] Sending request to TOTAL_STREAM_PER_PLATFORM:", ENDPOINTS.TOTAL_STREAM_PER_PLATFORM);
+      // console.log("[Analytics] Sending request to TOTAL_STREAM_PER_PLATFORM:", ENDPOINTS.TOTAL_STREAM_PER_PLATFORM);
       const storesPromise = axios.get(ENDPOINTS.TOTAL_STREAM_PER_PLATFORM, {
         params: { period: selectedPeriod },
         headers: {
@@ -560,7 +560,7 @@ const AnalyticsScreen = () => {
         },
       });
 
-      console.log("[Analytics] Sending request to BEST_PERFORMING_COUNTRIES:", ENDPOINTS.BEST_PERFORMING_COUNTRIES);
+      // console.log("[Analytics] Sending request to BEST_PERFORMING_COUNTRIES:", ENDPOINTS.BEST_PERFORMING_COUNTRIES);
       const countriesPromise = axios.get(ENDPOINTS.BEST_PERFORMING_COUNTRIES, {
         params: { period: selectedPeriod },
         headers: {
@@ -595,17 +595,17 @@ const AnalyticsScreen = () => {
       ]);
 
       if (streamsRes) {
-        console.log("[Analytics] Streams response received:", streamsRes.status, JSON.stringify(streamsRes.data));
+        // console.log("[Analytics] Streams response received:", streamsRes.status, JSON.stringify(streamsRes.data));
       } else {
         console.warn("[Analytics] Streams response was null or failed");
       }
       if (storesRes) {
-        console.log("[Analytics] Stores response received:", storesRes.status, JSON.stringify(storesRes.data));
+        // console.log("[Analytics] Stores response received:", storesRes.status, JSON.stringify(storesRes.data));
       } else {
         console.warn("[Analytics] Stores response was null or failed");
       }
       if (countriesRes) {
-        console.log("[Analytics] Countries response received:", countriesRes.status, JSON.stringify(countriesRes.data));
+        // console.log("[Analytics] Countries response received:", countriesRes.status, JSON.stringify(countriesRes.data));
       } else {
         console.warn("[Analytics] Countries response was null or failed");
       }
@@ -676,7 +676,7 @@ const AnalyticsScreen = () => {
 
   // Call sales report endpoints
   const fetchSalesReportData = useCallback(async () => {
-    console.log("[Analytics] fetchSalesReportData started. Selected period:", salesPeriod);
+    // console.log("[Analytics] fetchSalesReportData started. Selected period:", salesPeriod);
     if (!user?.token) {
       console.warn("[Analytics] Cannot fetch sales analytics: user token is missing");
       return;
@@ -689,19 +689,19 @@ const AnalyticsScreen = () => {
         range: rangeVal,
       };
 
-      console.log("[Analytics] Sending request to ROYALTY_TOTAL_STREAMS with params:", apiParams);
+      // console.log("[Analytics] Sending request to ROYALTY_TOTAL_STREAMS with params:", apiParams);
       const streamsPromise = axios.get(ENDPOINTS.ROYALTY_TOTAL_STREAMS, {
         params: apiParams,
         headers: { Authorization: `Bearer ${user.token}` },
       });
 
-      console.log("[Analytics] Sending request to ROYALTY_PLATFORM_STREAMS with params:", apiParams);
+      // console.log("[Analytics] Sending request to ROYALTY_PLATFORM_STREAMS with params:", apiParams);
       const storesPromise = axios.get(ENDPOINTS.ROYALTY_PLATFORM_STREAMS, {
         params: apiParams,
         headers: { Authorization: `Bearer ${user.token}` },
       });
 
-      console.log("[Analytics] Sending request to ROYALTY_COUNTRY_STREAMS with params:", apiParams);
+      // console.log("[Analytics] Sending request to ROYALTY_COUNTRY_STREAMS with params:", apiParams);
       const countriesPromise = axios.get(ENDPOINTS.ROYALTY_COUNTRY_STREAMS, {
         params: apiParams,
         headers: { Authorization: `Bearer ${user.token}` },
@@ -710,15 +710,15 @@ const AnalyticsScreen = () => {
       // Run parallel requests
       const [streamsRes, storesRes, countriesRes] = await Promise.all([
         streamsPromise.catch((e) => {
-          console.error("[Analytics] Royalty total streams request error:", e?.response?.data || e?.message || e);
+          // console.error("[Analytics] Royalty total streams request error:", e?.response?.data || e?.message || e);
           return null;
         }),
         storesPromise.catch((e) => {
-          console.error("[Analytics] Royalty platform streams request error:", e?.response?.data || e?.message || e);
+          // console.error("[Analytics] Royalty platform streams request error:", e?.response?.data || e?.message || e);
           return null;
         }),
         countriesPromise.catch((e) => {
-          console.error("[Analytics] Royalty country streams request error:", e?.response?.data || e?.message || e);
+          // console.error("[Analytics] Royalty country streams request error:", e?.response?.data || e?.message || e);
           return null;
         }),
       ]);

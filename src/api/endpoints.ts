@@ -73,10 +73,17 @@ export const ENDPOINTS = {
   ADD_LABELS: `${BASE_URL}/api/me/labels/ensure`,
   LABELS_LIST: `${BASE_URL}/api/me/labels`,
 
-  // TicketRaised
-  TICKET_RAISED: `${BASE_URL}/api/ticket-raises`,
-  TICKET_RAISED_BY_ID: (ticketId: number) =>
-    `${BASE_URL}/api/ticket-raises/${ticketId}`,
+  // Support & Ticketing
+  RAISE_TICKET: `${BASE_URL}/api/tickets`,
+  MY_TICKETS: `${BASE_URL}/api/tickets/my`,
+  TICKET_DETAILS: (ticketId: number) =>
+    `${BASE_URL}/api/tickets/${ticketId}`,
+  REPLY_TO_TICKET: (ticketId: number) =>
+    `${BASE_URL}/api/tickets/${ticketId}/reply`,
+  MARK_TICKET_MESSAGE_READ: (ticketId: number) =>
+    `${BASE_URL}/api/ticket-raises/${ticketId}/mark-read`,
+  TICKET_FEEDBACK: (ticketId: number) =>
+    `${BASE_URL}/api/ticket-raises/${ticketId}/feedback`,
 
   // Get Artist Name List
   ARTIST_LIST: (search: string = "") =>

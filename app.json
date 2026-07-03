@@ -5,12 +5,12 @@
     "scheme": "amozart",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/splash.png",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "jsEngine": "hermes",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#6739B7"
     },
@@ -19,11 +19,27 @@
       "bundleIdentifier": "com.anonymous.amozart",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "We need access to your photo library so you can upload pictures.",
-        "NSCameraUsageDescription": "We need access to your camera so you can take pictures."
+        "NSCameraUsageDescription": "We need access to your camera so you can take pictures.",
+        "NSUserTrackingUsageDescription": "This identifier will be used to deliver personalized ads to you.",
+        "SKAdNetworkItems": [
+          {
+            "SKAdNetworkIdentifier": "v9wttpbfk9.skadnetwork"
+          },
+          {
+            "SKAdNetworkIdentifier": "n38lu8286q.skadnetwork"
+          },
+          {
+            "SKAdNetworkIdentifier": "v9wttpbfk9.skadnetwork"
+          },
+          {
+            "SKAdNetworkIdentifier": "n38lu8286q.skadnetwork"
+          }
+        ],
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-      "icon": "./assets/splash.png",
+      "icon": "./assets/icon.png",
       "backgroundColor": "#6739B7",
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
@@ -35,7 +51,8 @@
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.INTERNET"
       ],
       "package": "com.anonymous.amozart"
     },

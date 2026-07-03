@@ -248,7 +248,7 @@ export default function ProfileScreen() {
         <Ionicons name="shield-checkmark" size={20} color={Colors.primary} />
       ),
       onPress: () => {
-        Alert.alert("Privacy Policy", "Our full Privacy Policy will be available soon. For queries, contact support@amozart.com.");
+        navigation.navigate("PrivacyPolicy" as never);
       },
     },
     {

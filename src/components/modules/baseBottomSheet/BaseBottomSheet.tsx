@@ -16,6 +16,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { Colors } from "@/theme/colors";
+import BottomSheetKeyboardAwareScrollView from "./BottomSheetKeyboardAwareScrollView";
 
 export type BaseBottomSheetRef = {
   present: () => void;
@@ -32,10 +33,12 @@ type Props = {
   snapPoints?: (string | number)[];
   /** Optional: Start open or closed */
   initialIndex?: number;
+  /** Optional: Use keyboard aware scrollview */
+  scrollable?: boolean;
 };
 
 const BaseBottomSheet = forwardRef<BaseBottomSheetRef, Props>(
-  ({ title, children, snapPoints, initialIndex = -1 }, ref) => {
+  ({ title, children, snapPoints, initialIndex = -1, scrollable = false }, ref) => {
     const bottomSheetRef = useRef<BottomSheet>(null);
     const [isOpen, setIsOpen] = useState(false);
     const opacity = useSharedValue(0);
@@ -111,10 +114,20 @@ const BaseBottomSheet = forwardRef<BaseBottomSheetRef, Props>(
           keyboardBlurBehavior="restore"
           android_keyboardInputMode="adjustResize"
         >
-          <BottomSheetView style={styles.contentContainer}>
-            {title && <Text style={styles.title}>{title}</Text>}
-            {children}
-          </BottomSheetView>
+          {scrollable ? (
+            <BottomSheetKeyboardAwareScrollView
+              contentContainerStyle={styles.contentContainer}
+              keyboardShouldPersistTaps="handled"
+            >
+              {title && <Text style={styles.title}>{title}</Text>}
+              {children}
+            </BottomSheetKeyboardAwareScrollView>
+          ) : (
+            <BottomSheetView style={styles.contentContainer}>
+              {title && <Text style={styles.title}>{title}</Text>}
+              {children}
+            </BottomSheetView>
+          )}
         </BottomSheet>
       </Portal>
     );

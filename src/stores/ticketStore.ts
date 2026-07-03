@@ -28,7 +28,8 @@ export const useTicketStore = create<TicketStore>((set) => ({
     set({ loading: true, error: null });
     try {
       const res = await getTicketRaised();
-      const transformed: Ticket[] = (res?.results || []).map(transformTicket);
+      const rawList = Array.isArray(res) ? res : (res?.data || res?.results || []);
+      const transformed: Ticket[] = rawList.map(transformTicket);
 
       transformed.sort(
         (a, b) =>
@@ -42,12 +43,16 @@ export const useTicketStore = create<TicketStore>((set) => ({
   },
 
   fetchTicketById: async (ticketId: number) => {
+    console.log(`[ticketStore.fetchTicketById] Starting fetch for ID: ${ticketId}`);
     set({ selectLoading: true, error: null });
     try {
       const res = await getTicketRaisedById(ticketId);
+      console.log(`[ticketStore.fetchTicketById] Raw API Response:`, JSON.stringify(res));
       const transformed: Ticket = transformTicket(res);
+      console.log(`[ticketStore.fetchTicketById] Transformed Ticket:`, JSON.stringify(transformed));
       set({ selectedTicket: transformed, selectLoading: false });
     } catch (err: any) {
+      console.error(`[ticketStore.fetchTicketById] Error in store:`, err);
       set({ error: err.message, selectLoading: false });
     }
   },

@@ -119,7 +119,7 @@ export default function SignUpScreen({ navigation }: Props) {
       confirmPassword: "",
       role: "Client",
     },
-    mode: "onChange",
+    mode: "onBlur",
   });
 
   const password = watch("password");
@@ -190,140 +190,153 @@ console.log(data, "Form Data");
                     /^[A-Z]/.test(value) || "First letter must be capital",
                 }}
                 render={({ field, fieldState }) => (
-                  <InputField
-                    placeholder="Enter first name"
-                    label="First Name"
-                    value={field.value}
-                    onChangeText={field.onChange}
-                    onBlur={field.onBlur}
-                    keyboardType="default"
-                    error={fieldState.error?.message}
-                    style={{}}
-                  />
-                )}
-              />
+                <InputField
+                  placeholder="Enter first name"
+                  label="First Name"
+                  value={field.value}
+                  onChangeText={field.onChange}
+                  onBlur={field.onBlur}
+                  keyboardType="default"
+                  error={fieldState.error?.message}
+                  style={{}}
+                  autoComplete="name"
+                  textContentType="givenName"
+                />
+              )}
+            />
 
-              {/* Last Name Field */}
-              <Controller
-                control={control}
-                name="lastName"
-                rules={{
-                  required: "Last name is required",
-                  pattern: {
-                    value: /^[a-zA-Z.\s]+$/,
-                    message: "Invalid last name",
-                  },
-                }}
-                render={({ field, fieldState }) => (
-                  <InputField
-                    placeholder="Enter last name"
-                    label="Last Name"
-                    value={field.value}
-                    onChangeText={field.onChange}
-                    onBlur={field.onBlur}
-                    keyboardType="default"
-                    error={fieldState.error?.message}
-                    style={{}}
-                  />
-                )}
-              />
-            </View>
-
-            {/* Email Field */}
+            {/* Last Name Field */}
             <Controller
               control={control}
-              name="email"
+              name="lastName"
               rules={{
-                required: "Email is required",
+                required: "Last name is required",
                 pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: "Invalid email address",
-                },
-                validate: async (value: string) => {
-                  try {
-                    const exists = await checkEmailExists(
-                      value.toLocaleLowerCase()
-                    );
-                    return exists?.exists ? "Email already exists" : true;
-                  } catch (e) {
-                    return true;
-                  }
+                  value: /^[a-zA-Z.\s]+$/,
+                  message: "Invalid last name",
                 },
               }}
               render={({ field, fieldState }) => (
                 <InputField
-                  placeholder="Enter your email"
-                  label="Email"
-                  type="email"
-                  value={field.value.toLocaleLowerCase()}
-                  onChangeText={field.onChange}
-                  keyboardType="email-address"
-                  error={fieldState.error?.message}
-                />
-              )}
-            />
-
-            {/*Phone Number Field */}
-            <Controller
-              control={control}
-              name="phoneNumber"
-              render={({ field, fieldState }) => (
-                <InputField
-                  placeholder="Enter your phone number"
-                  label="Phone number"
-                  type="number"
+                  placeholder="Enter last name"
+                  label="Last Name"
                   value={field.value}
                   onChangeText={field.onChange}
                   onBlur={field.onBlur}
-                  keyboardType="number-pad"
+                  keyboardType="default"
                   error={fieldState.error?.message}
+                  style={{}}
+                  autoComplete="name"
+                  textContentType="familyName"
                 />
               )}
             />
+          </View>
 
-            {/* Password Field */}
-            <Controller
-              control={control}
-              name="password"
-              rules={{
-                required: "Password is required",
-                minLength: {
-                  value: 6,
-                  message: "Password must be at least 6 characters",
-                },
-              }}
-              render={({ field, fieldState }) => (
-                <InputField
-                  placeholder="Enter your password"
-                  label="Password"
-                  type="password"
-                  value={field.value}
-                  onBlur={field.onBlur}
-                  onChangeText={field.onChange}
-                  error={fieldState.error?.message}
-                />
-              )}
-            />
+          {/* Email Field */}
+          <Controller
+            control={control}
+            name="email"
+            rules={{
+              required: "Email is required",
+              pattern: {
+                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                message: "Invalid email address",
+              },
+              validate: async (value: string) => {
+                try {
+                  const exists = await checkEmailExists(
+                    value.toLocaleLowerCase()
+                  );
+                  return exists?.exists ? "Email already exists" : true;
+                } catch (e) {
+                  return true;
+                }
+              },
+            }}
+            render={({ field, fieldState }) => (
+              <InputField
+                placeholder="Enter your email"
+                label="Email"
+                type="email"
+                value={field.value}
+                onChangeText={(text) => field.onChange(text.toLowerCase())}
+                onBlur={field.onBlur}
+                keyboardType="email-address"
+                error={fieldState.error?.message}
+                autoComplete="email"
+                textContentType="emailAddress"
+              />
+            )}
+          />
 
-            {/* Confirm Password Field */}
-            <Controller
-              control={control}
-              name="confirmPassword"
-              rules={{
-                required: "Please confirm your password",
-                validate: (value) =>
-                  value === password || "Passwords do not match",
-              }}
-              render={({ field, fieldState }) => (
-                <InputField
-                  placeholder="Enter your confirm password"
-                  label="Confirm Password"
-                  type="password"
-                  value={field.value}
-                  onBlur={field.onBlur}
-                  onChangeText={field.onChange}
-                  error={fieldState.error?.message}
-                />
+          {/*Phone Number Field */}
+          <Controller
+            control={control}
+            name="phoneNumber"
+            render={({ field, fieldState }) => (
+              <InputField
+                placeholder="Enter your phone number"
+                label="Phone number"
+                type="number"
+                value={field.value}
+                onChangeText={field.onChange}
+                onBlur={field.onBlur}
+                keyboardType="number-pad"
+                error={fieldState.error?.message}
+                autoComplete="tel"
+                textContentType="telephoneNumber"
+              />
+            )}
+          />
+
+          {/* Password Field */}
+          <Controller
+            control={control}
+            name="password"
+            rules={{
+              required: "Password is required",
+              minLength: {
+                value: 6,
+                message: "Password must be at least 6 characters",
+              },
+            }}
+            render={({ field, fieldState }) => (
+              <InputField
+                placeholder="Enter your password"
+                label="Password"
+                type="password"
+                value={field.value}
+                onBlur={field.onBlur}
+                onChangeText={field.onChange}
+                error={fieldState.error?.message}
+                autoComplete="password"
+                textContentType="password"
+              />
+            )}
+          />
+
+          {/* Confirm Password Field */}
+          <Controller
+            control={control}
+            name="confirmPassword"
+            rules={{
+              required: "Please confirm your password",
+              validate: (value) =>
+                value === password || "Passwords do not match",
+            }}
+            render={({ field, fieldState }) => (
+              <InputField
+                placeholder="Enter your confirm password"
+                label="Confirm Password"
+                type="password"
+                value={field.value}
+                onBlur={field.onBlur}
+                onChangeText={field.onChange}
+                error={fieldState.error?.message}
+                autoComplete="password"
+                textContentType="password"
+              />
               )}
             />
             <TouchableOpacity

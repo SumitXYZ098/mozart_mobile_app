@@ -17,6 +17,13 @@ import SavedCardsScreen from "@/screens/app/SavedCardsScreen";
 import AddNewCardScreen from "@/screens/app/AddNewCardScreen";
 import PayoutDetailsScreen from "@/screens/app/PayoutDetailsScreen";
 import TermsOfServiceScreen from "@/screens/auth/TermsOfServiceScreen";
+import PrivacyPolicyScreen from "@/screens/auth/PrivacyPolicyScreen";
+import FAQsScreen from "@/screens/app/FAQsScreen";
+import LiveChatScreen from "@/screens/app/LiveChatScreen";
+import SupportScreen from "@/screens/app/SupportScreen";
+import TicketDetailsScreen from "@/screens/app/TicketDetailsScreen";
+import RaiseTicketScreen from "@/screens/app/RaiseTicketScreen";
+ 
 
 const Stack = createNativeStackNavigator();
 
@@ -29,6 +36,11 @@ export function HomeStackNavigator() {
       <Stack.Screen name="HomeMain" component={HomeScreen} />
       <Stack.Screen name="Notification" component={NotificationScreen} />
       <Stack.Screen name="Artist" component={ArtistScreen} />
+      <Stack.Screen name="FAQs" component={FAQsScreen} />
+      <Stack.Screen name="LiveChat" component={LiveChatScreen} />
+      <Stack.Screen name="Support" component={SupportScreen} />
+      <Stack.Screen name="TicketDetails" component={TicketDetailsScreen} />
+      <Stack.Screen name="RaiseTicket" component={RaiseTicketScreen} />
     </Stack.Navigator>
   );
 }
@@ -78,6 +90,7 @@ export function ProfileStackNavigator() {
       <Stack.Screen name="AddNewCard" component={AddNewCardScreen} />
       <Stack.Screen name="PayoutDetails" component={PayoutDetailsScreen} />
       <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
+      <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
     </Stack.Navigator>
   );
 }

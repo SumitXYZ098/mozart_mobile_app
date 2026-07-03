@@ -1,7 +1,6 @@
 import LoginScreen from "@/screens/auth/LoginScreen";
 import OnboardingScreen from "@/screens/auth/OnboardingScreen";
 import SignUpScreen from "@/screens/auth/SignUpScreen";
-import SplashScreen from "@/screens/SplashScreen";
 import VerifiedScreen from "@/screens/auth/VerifiedScreen";
 import VerifyEmailScreen from "@/screens/auth/VerifyEmailScreen";
 import TermsOfServiceScreen from "@/screens/auth/TermsOfServiceScreen";
@@ -12,7 +11,6 @@ import SetNewPasswordScreen from "@/screens/auth/SetNewPasswordScreen";
  import ResetPasswordScreen from "@/screens/auth/ResetPasswordScreen";
 
 export type AuthStackParamList = {
-  Splash: undefined;
   Onboarding: undefined;
   Login: undefined;
   SignUp: undefined;
@@ -33,7 +31,6 @@ export default function AuthNavigator({ initialRoute = "Onboarding" }: { initial
       initialRouteName={initialRoute}
       screenOptions={{ headerShown: false, animation: "fade" }}
     >
-      <Stack.Screen name="Splash" component={SplashScreen} />
       <Stack.Screen name="Onboarding" component={OnboardingScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="SignUp" component={SignUpScreen} />

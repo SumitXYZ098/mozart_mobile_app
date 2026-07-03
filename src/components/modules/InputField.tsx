@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   TextInput,
   View,
@@ -26,10 +26,26 @@ interface Props extends TextInputProps {
   error?: string;
 }
 
-export default function InputField({ label, type, error, ...props }: Props) {
+export default function InputField({ label, type, error, value: parentValue, onChangeText, ...props }: Props) {
   const [visible, setVisible] = useState(false);
-  // Use value passed from parent (controlled input). react-hook-form will control this.
-  const controlledValue = (props.value as string) ?? "";
+  const [localValue, setLocalValue] = useState((parentValue as string) ?? "");
+
+  // Sync local state when parent value changes externally
+  useEffect(() => {
+    const parentValStr = (parentValue as string) ?? "";
+    if (parentValStr !== localValue) {
+      setLocalValue(parentValStr);
+    }
+  }, [parentValue]);
+
+  const handleChangeText = (text: string) => {
+    setLocalValue(text);
+    if (onChangeText) {
+      onChangeText(text);
+    }
+  };
+
+  const controlledValue = localValue;
 
   const renderLeftIcon = () => {
     switch (type) {
@@ -65,7 +81,7 @@ export default function InputField({ label, type, error, ...props }: Props) {
     if (type === "search" && controlledValue.length > 0) {
       return (
         <Pressable
-          onPress={() => props.onChangeText && props.onChangeText("")}
+          onPress={() => onChangeText && onChangeText("")}
           hitSlop={10}
         >
           <X size={20} color={Colors.gray} />
@@ -97,6 +113,12 @@ export default function InputField({ label, type, error, ...props }: Props) {
           style={styles.input}
           placeholderTextColor="#B3B3B3"
           secureTextEntry={type === "password" && !visible}
+          autoCorrect={false}
+          autoCapitalize={
+            type === "email" || type === "password"
+              ? "none"
+              : props.autoCapitalize ?? "sentences"
+          }
           keyboardType={
             type === "email"
               ? "email-address"
@@ -105,7 +127,7 @@ export default function InputField({ label, type, error, ...props }: Props) {
               : "default"
           }
           value={controlledValue}
-          onChangeText={props.onChangeText}
+          onChangeText={handleChangeText}
         />
 
         <View style={styles.iconRight}>{renderRightIcon()}</View>

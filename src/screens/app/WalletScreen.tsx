@@ -186,10 +186,9 @@ export default function WalletScreen() {
   const fetchEarnings = useCallback(async (r: EarningsRange) => {
     setLoadingChart(true);
     try {
-      console.log(`[WalletScreen] Fetching earnings range: ${r}, URL: ${ENDPOINTS.TOTAL_EARNINGS(r)}`);
+    
       const res = await apiClient.get(ENDPOINTS.TOTAL_EARNINGS(r));
-      console.log("[WalletScreen] fetchEarnings API response data:", JSON.stringify(res.data));
-      
+       
       let rawData = res.data?.data || res.data || [];
       if (!Array.isArray(rawData) && typeof rawData === "object" && rawData !== null) {
         const arrayKey = Object.keys(rawData).find(key => Array.isArray(rawData[key]));
@@ -221,16 +220,13 @@ export default function WalletScreen() {
           })
         : [];
         
-      console.log("[WalletScreen] Mapped earnings data:", JSON.stringify(data));
-      const total = data.reduce((sum: number, p: EarningsPoint) => sum + (p.total || 0), 0);
+       const total = data.reduce((sum: number, p: EarningsPoint) => sum + (p.total || 0), 0);
       setTotalEarnings(total);
       
       const paddedData = padEarningsData(data);
-      console.log("[WalletScreen] Padded earnings data:", JSON.stringify(paddedData));
-      setEarningsData(paddedData);
+       setEarningsData(paddedData);
     } catch (e) {
-      console.error("[WalletScreen] Error fetching earnings:", e);
-      setEarningsData([]);
+       setEarningsData([]);
       setTotalEarnings(0);
     } finally {
       setLoadingChart(false);
@@ -240,8 +236,7 @@ export default function WalletScreen() {
   const fetchBalance = useCallback(async () => {
     setLoadingBalance(true);
     try {
-      console.log(`[WalletScreen] Fetching balance, URL: ${ENDPOINTS.AVAILABLE_WITHDRAW_BALANCE}`);
-      const res = await apiClient.get(ENDPOINTS.AVAILABLE_WITHDRAW_BALANCE);
+       const res = await apiClient.get(ENDPOINTS.AVAILABLE_WITHDRAW_BALANCE);
       setAvailableBalance(
         res.data?.availableBalance ?? 
         res.data?.balance ?? 
@@ -250,8 +245,7 @@ export default function WalletScreen() {
         0
       );
     } catch (e) {
-      console.error("[WalletScreen] Error fetching balance:", e);
-      setAvailableBalance(0);
+       setAvailableBalance(0);
     } finally {
       setLoadingBalance(false);
     }
@@ -260,10 +254,8 @@ export default function WalletScreen() {
   const fetchHistory = useCallback(async () => {
     setLoadingHistory(true);
     try {
-      console.log(`[WalletScreen] Fetching payout history, URL: ${ENDPOINTS.PAYOUT_REQUESTS}`);
-      const res = await apiClient.get(ENDPOINTS.PAYOUT_REQUESTS);
-      console.log("[WalletScreen] fetchHistory API response data:", JSON.stringify(res.data));
-      
+       const res = await apiClient.get(ENDPOINTS.PAYOUT_REQUESTS);
+       
       let rawData = res.data?.data || res.data || [];
       if (!Array.isArray(rawData) && typeof rawData === "object" && rawData !== null) {
         const arrayKey = Object.keys(rawData).find(key => Array.isArray(rawData[key]));
@@ -279,11 +271,9 @@ export default function WalletScreen() {
             .map((item: any) => (item && item.attributes ? { id: item.id, ...item.attributes } : item))
             .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         : [];
-      console.log("[WalletScreen] Mapped and sorted payout history:", JSON.stringify(formattedData));
-      setPayoutHistory(formattedData);
+       setPayoutHistory(formattedData);
     } catch (e) {
-      console.error("[WalletScreen] Error fetching payout history:", e);
-      setPayoutHistory([]);
+       setPayoutHistory([]);
     } finally {
       setLoadingHistory(false);
     }

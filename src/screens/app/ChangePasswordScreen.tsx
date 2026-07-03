@@ -94,8 +94,7 @@ export default function ChangePasswordScreen() {
       setLoading(false);
     }
   };
-
-  console.log("Rendering ChangePasswordScreen");
+ 
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}

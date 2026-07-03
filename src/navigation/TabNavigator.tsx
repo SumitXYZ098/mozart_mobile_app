@@ -71,7 +71,14 @@ const TabNavigator = () => {
         component={HomeStackNavigator}
         options={({ route }) => {
           const routeName = getFocusedRouteNameFromRoute(route) ?? "HomeMain";
-          const hideOnScreens = ["Notification"];
+          const hideOnScreens = [
+            "Notification",
+            "FAQs",
+            "LiveChat",
+            "Support",
+            "TicketDetails",
+            "RaiseTicket",
+          ];
 
           return {
             tabBarStyle: hideOnScreens.includes(routeName)
@@ -246,7 +253,7 @@ const TabNavigator = () => {
         component={ProfileStackNavigator}
         options={({ route }) => {
           const routeName = getFocusedRouteNameFromRoute(route) ?? "ProfileMain";
-          const hideOnScreens = ["ChangePassword", "ProfileMain", "OrderHistory", "SavedCards", "AddNewCard", "PayoutDetails", "TermsOfService" ,];
+          const hideOnScreens = ["ChangePassword", "ProfileMain", "OrderHistory", "SavedCards", "AddNewCard", "PayoutDetails", "TermsOfService", "PrivacyPolicy"];
           return {
             tabBarStyle: hideOnScreens.includes(routeName)
               ? { display: "none" }
