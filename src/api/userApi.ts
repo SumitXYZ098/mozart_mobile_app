@@ -96,9 +96,14 @@ export const updateUserClientsDetail = async (
 
 export const submitBankDetails = async (payload: any): Promise<any> => {
   const { user } = useAuthStore.getState();
+  const enhancedPayload = {
+    ...payload,
+    user: user?.id ? Number(user.id) : undefined,
+    users_permissions_user: user?.id ? Number(user.id) : undefined,
+  };
   const response = await axios.post(
     ENDPOINTS.BANK_DETAILS,
-    { data: payload },
+    { data: enhancedPayload },
     {
       headers: {
         Authorization: `Bearer ${user?.token}`,
@@ -137,7 +142,7 @@ export const getAllBankDetails = async (): Promise<any[]> => {
   if (!user || !user.id) return [];
   
   const response = await axios.get(
-    `${ENDPOINTS.BANK_DETAILS}?populate=user&populate=users_permissions_user`,
+    `${ENDPOINTS.BANK_DETAILS}?populate=*`,
     {
       headers: {
         Authorization: `Bearer ${user?.token}`,
@@ -171,10 +176,15 @@ export const getAllBankDetails = async (): Promise<any[]> => {
 };
 export const updateBankDetails = async (id: number, payload: any): Promise<any> => {
   const { user } = useAuthStore.getState();
+  const enhancedPayload = {
+    ...payload,
+    user: user?.id ? Number(user.id) : undefined,
+    users_permissions_user: user?.id ? Number(user.id) : undefined,
+  };
   try {
     const response = await axios.put(
       ENDPOINTS.BANK_DETAILS_BY_ID(id),
-      { data: payload },
+      { data: enhancedPayload },
       {
         headers: {
           Authorization: `Bearer ${user?.token}`,
@@ -185,12 +195,12 @@ export const updateBankDetails = async (id: number, payload: any): Promise<any> 
   } catch (error: any) {
     console.warn("PUT with ID failed, checking status for fallback...", error);
     if (error.response?.status === 405) {
-      return submitBankDetails(payload);
+      return submitBankDetails(enhancedPayload);
     }
     try {
       const response = await axios.put(
         ENDPOINTS.BANK_DETAILS,
-        { data: payload },
+        { data: enhancedPayload },
         {
           headers: {
             Authorization: `Bearer ${user?.token}`,
@@ -200,7 +210,7 @@ export const updateBankDetails = async (id: number, payload: any): Promise<any> 
       return response.data;
     } catch (fallbackError: any) {
       if (fallbackError.response?.status === 405) {
-        return submitBankDetails(payload);
+        return submitBankDetails(enhancedPayload);
       }
       throw fallbackError;
     }
@@ -239,15 +249,20 @@ export const deleteBankDetails = async (id?: number): Promise<any> => {
 
 export const getBillingCards = async (): Promise<any[]> => {
   const { user } = useAuthStore.getState();
-  const response = await axios.get(ENDPOINTS.BILLING_CARDS, {
-    headers: {
-      Authorization: `Bearer ${user?.token}`,
-    },
-  });
+  if (!user || !user.id) return [];
+
+  const response = await axios.get(
+    `${ENDPOINTS.BILLING_CARDS}?populate=*`,
+    {
+      headers: {
+        Authorization: `Bearer ${user?.token}`,
+      },
+    }
+  );
   
   const respData = response.data;
   if (respData && respData.data) {
-    return respData.data.map((item: any) => {
+    const mapped = respData.data.map((item: any) => {
       const attrs = item.attributes || {};
       const expiryMonth = attrs.expiry_month || attrs.expiryMonth || "";
       const expiryYear = String(attrs.expiry_year || attrs.expiryYear || "");
@@ -262,7 +277,19 @@ export const getBillingCards = async (): Promise<any[]> => {
         cvv: attrs.cvv || "",
         enableAutopay: attrs.enable_autopay ?? attrs.enableAutopay ?? true,
         isPrimary: attrs.is_primary ?? attrs.isPrimary ?? false,
+        user: attrs.user || item.user,
+        users_permissions_user: attrs.users_permissions_user || item.users_permissions_user,
       };
+    });
+
+    // Filter by user relation id
+    return mapped.filter((item: any) => {
+      const relId = item.user?.data?.id || item.user?.id || 
+                    item.users_permissions_user?.data?.id || item.users_permissions_user?.id;
+      if (relId !== undefined && relId !== null) {
+        return String(relId) === String(user.id);
+      }
+      return false;
     });
   }
   return [];
@@ -270,9 +297,14 @@ export const getBillingCards = async (): Promise<any[]> => {
 
 export const submitBillingCard = async (payload: any): Promise<any> => {
   const { user } = useAuthStore.getState();
+  const enhancedPayload = {
+    ...payload,
+    user: user?.id ? Number(user.id) : undefined,
+    users_permissions_user: user?.id ? Number(user.id) : undefined,
+  };
   const response = await axios.post(
     ENDPOINTS.BILLING_CARDS,
-    { data: payload },
+    { data: enhancedPayload },
     {
       headers: {
         Authorization: `Bearer ${user?.token}`,
@@ -284,10 +316,15 @@ export const submitBillingCard = async (payload: any): Promise<any> => {
 
 export const updateBillingCard = async (id: string | number, payload: any): Promise<any> => {
   const { user } = useAuthStore.getState();
+  const enhancedPayload = {
+    ...payload,
+    user: user?.id ? Number(user.id) : undefined,
+    users_permissions_user: user?.id ? Number(user.id) : undefined,
+  };
   try {
     const response = await axios.put(
       ENDPOINTS.BILLING_CARD_BY_ID(Number(id)),
-      { data: payload },
+      { data: enhancedPayload },
       {
         headers: {
           Authorization: `Bearer ${user?.token}`,
@@ -299,7 +336,7 @@ export const updateBillingCard = async (id: string | number, payload: any): Prom
     console.warn("PUT billing card with ID failed, trying singular PUT fallback...", error);
     const response = await axios.put(
       ENDPOINTS.BILLING_CARDS,
-      { data: payload },
+      { data: enhancedPayload },
       {
         headers: {
           Authorization: `Bearer ${user?.token}`,

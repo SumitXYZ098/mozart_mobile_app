@@ -22,6 +22,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Rect, Path } from "react-native-svg";
 import { deleteBankDetails, getBankDetails } from "@/api/userApi";
 import { storageAPI } from "@/utils/storage";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 // Golden card chip SVG representation
 const CardChip = () => (
@@ -205,8 +206,10 @@ export default function AddNewCardScreen() {
                 } else {
                   await deleteBankDetails();
                 }
+                const { user } = useAuthStore.getState();
+                const userId = user?.id || "guest";
                 usePaymentStore.setState({ bankDetails: null });
-                await storageAPI.removeItem("user_bank_details");
+                await storageAPI.removeItem(`user_bank_details_${userId}`);
               } catch (err: any) {
                 console.warn("Failed to delete bank details from server:", err);
                 const errMsg = err.response?.data?.error?.message || err.response?.data?.message || err.message;

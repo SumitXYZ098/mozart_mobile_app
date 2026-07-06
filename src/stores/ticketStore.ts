@@ -41,18 +41,18 @@ export const useTicketStore = create<TicketStore>((set) => ({
       set({ error: err.message, loading: false });
     }
   },
-
+  
   fetchTicketById: async (ticketId: number) => {
     console.log(`[ticketStore.fetchTicketById] Starting fetch for ID: ${ticketId}`);
     set({ selectLoading: true, error: null });
     try {
       const res = await getTicketRaisedById(ticketId);
-      console.log(`[ticketStore.fetchTicketById] Raw API Response:`, JSON.stringify(res));
+      // console.log(`[ticketStore.fetchTicketById] Raw API Response:`, JSON.stringify(res));
       const transformed: Ticket = transformTicket(res);
-      console.log(`[ticketStore.fetchTicketById] Transformed Ticket:`, JSON.stringify(transformed));
+      // console.log(`[ticketStore.fetchTicketById] Transformed Ticket:`, JSON.stringify(transformed));
       set({ selectedTicket: transformed, selectLoading: false });
     } catch (err: any) {
-      console.error(`[ticketStore.fetchTicketById] Error in store:`, err);
+      console.error(`[ticketStore.fetchTicketById] Error in store:`, err);  
       set({ error: err.message, selectLoading: false });
     }
   },

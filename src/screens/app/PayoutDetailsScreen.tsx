@@ -19,6 +19,7 @@ import { usePaymentStore, BankDetails } from "@/stores/usePaymentStore";
 import { toast } from "@/stores/useToastStore";
 import { submitBankDetails, getBankDetails, updateBankDetails } from "@/api/userApi";
 import { storageAPI } from "@/utils/storage";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 // Comprehensive Country list with flag, currency code and localized bank details system
 const COUNTRIES = [
@@ -482,8 +483,10 @@ export default function PayoutDetailsScreen({ route }: any) {
 
       const updatedCards = [newCardObj, ...existingCards];
       
+      const { user } = useAuthStore.getState();
+      const userId = user?.id || "guest";
       usePaymentStore.setState({ cards: updatedCards });
-      await storageAPI.setItem("user_saved_cards", JSON.stringify(updatedCards));
+      await storageAPI.setItem(`user_saved_cards_${userId}`, JSON.stringify(updatedCards));
 
       toast.success("Payout details saved successfully!");
       navigation.navigate("SavedCards", {

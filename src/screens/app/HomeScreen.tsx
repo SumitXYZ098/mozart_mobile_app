@@ -10,7 +10,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
-import { Colors } from "../../theme/colors";
+import { Colors, useThemeColors } from "@/theme/colors";
+import { useThemeStore } from "@/stores/useThemeStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import axios from "axios";
 import { ENDPOINTS } from "@/api/endpoints";
@@ -30,19 +31,22 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = React.useState(false);
   const [refreshTrigger, setRefreshTrigger] = React.useState(0);
 
-const getGreetingKey = (): "good_morning" | "good_afternoon" | "good_evening" | "good_night" => {
-  const hour = new Date().getHours();
+  const colors = useThemeColors();
+  const isDarkMode = useThemeStore((state) => state.isDarkMode);
 
-  if (hour < 12) {
-    return "good_morning";
-  } else if (hour < 17) {
-    return "good_afternoon";
-  } else if (hour < 21) {
-    return "good_evening";
-  } else {
-    return "good_night";
-  }
-};
+  const getGreetingKey = (): "good_morning" | "good_afternoon" | "good_evening" | "good_night" => {
+    const hour = new Date().getHours();
+
+    if (hour < 12) {
+      return "good_morning";
+    } else if (hour < 17) {
+      return "good_afternoon";
+    } else if (hour < 21) {
+      return "good_evening";
+    } else {
+      return "good_night";
+    }
+  };
 
   const fetchNotifications = React.useCallback(async () => {
     if (!user?.token) return;
@@ -81,7 +85,7 @@ const getGreetingKey = (): "good_morning" | "good_afternoon" | "good_evening" | 
       const interval = setInterval(() => {
         fetchNotifications();
       }, 30000); // Poll every 30 seconds
- 
+
       return () => clearInterval(interval);
     }
   }, [isFocused, fetchNotifications]);
@@ -98,8 +102,8 @@ const getGreetingKey = (): "good_morning" | "good_afternoon" | "good_evening" | 
 
   return (
     <LinearGradient
-      colors={["#EDE5F7", "#FFFFFF"]}
-      locations={[0.4044, 1]}
+      colors={isDarkMode ? ["#1C102C", "#121214"] : ["#EDE5F7", "#FFFFFF"]}
+      locations={isDarkMode ? [0.4044, 1] : [0.4044, 1]}
       start={{ x: 0.5, y: 0 }}
       end={{ x: 0.5, y: 1 }}
       style={styles.container}
@@ -112,8 +116,8 @@ const getGreetingKey = (): "good_morning" | "good_afternoon" | "good_evening" | 
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              colors={[Colors.primary]}
-              tintColor={Colors.primary}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
             />
           }
         >
@@ -122,23 +126,23 @@ const getGreetingKey = (): "good_morning" | "good_afternoon" | "good_evening" | 
               onPress={() => {
                 navigation.openDrawer();
               }}
-              style={styles.topButton}
+              style={[styles.topButton, { backgroundColor: colors.white }]}
             >
               <Image
                 source={require("../../../assets/images/hamburger.png")}
                 resizeMode="contain"
-                style={styles.menuIcon}
+                style={[styles.menuIcon, { tintColor: Colors.primary }]}
               />
             </TouchableOpacity>
             <TouchableOpacity
                 onPress={() => navigation.navigate("Notification")}
-                style={styles.topButton}
+                style={[styles.topButton, { backgroundColor: colors.white }]}
               >
                 <View style={styles.notificationWrapper}>
                   <Image
                     source={require("../../../assets/images/notification.png")}
                     resizeMode="contain"
-                    style={styles.menuIcon}
+                    style={[styles.menuIcon, { tintColor: Colors.primary }]}
                   />
                   {notificationCount > 0 && (
                     <View style={styles.badgeContainer}>
@@ -150,8 +154,8 @@ const getGreetingKey = (): "good_morning" | "good_afternoon" | "good_evening" | 
           </View>
 
           <View style={styles.header}>
-            <Text style={styles.title}>{`${t(getGreetingKey())}, ${user?.name}`}</Text>
-            <Text style={styles.subtitle}>{t("welcome_to_mozart")}</Text>
+            <Text style={[styles.title, { color: colors.black }]}>{`${t(getGreetingKey())}, ${user?.name}`}</Text>
+            <Text style={[styles.subtitle, { color: colors.black }]}>{t("welcome_to_mozart")}</Text>
           </View>
 
           <View style={styles.newRelease}>
@@ -165,7 +169,7 @@ const getGreetingKey = (): "good_morning" | "good_afternoon" | "good_evening" | 
                 </Text>
               </View>
               <TouchableOpacity
-                style={styles.topButton}
+                style={[styles.topButton, { backgroundColor: colors.white }]}
                 onPress={() =>
                   navigation.navigate("MusicTab", {
                     screen: "NewRelease",
@@ -173,7 +177,7 @@ const getGreetingKey = (): "good_morning" | "good_afternoon" | "good_evening" | 
                   })
                 }
               >
-                <MaterialIcons name="add" color={Colors.primary} size={24} />
+                <MaterialIcons name="add" color={colors.primary} size={24} />
               </TouchableOpacity>
             </View>
             <View className="w-[64px] h-[64px] rounded-full bg-white opacity-[0.1] absolute -right-[35px] -top-[35px] z-10" />

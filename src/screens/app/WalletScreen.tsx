@@ -13,6 +13,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -25,6 +26,8 @@ import { ENDPOINTS } from "@/api/endpoints";
 import { usePaymentStore } from "@/stores/usePaymentStore";
 import { getAllBankDetails } from "@/api/userApi";
 import { storageAPI } from "@/utils/storage";
+import { useAuthStore } from "@/stores/useAuthStore";
+import Svg, { Path, Rect, Circle, G } from "react-native-svg";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -175,8 +178,10 @@ export default function WalletScreen() {
           updatedCards = [bankCard, ...updatedCards];
         }
 
+        const { user } = useAuthStore.getState();
+        const userId = user?.id || "guest";
         usePaymentStore.setState({ cards: updatedCards });
-        await storageAPI.setItem("user_saved_cards", JSON.stringify(updatedCards));
+        await storageAPI.setItem(`user_saved_cards_${userId}`, JSON.stringify(updatedCards));
       }
     } catch (e) {
       console.warn("Failed to fetch bank details from server:", e);
@@ -254,7 +259,7 @@ export default function WalletScreen() {
   const fetchHistory = useCallback(async () => {
     setLoadingHistory(true);
     try {
-       const res = await apiClient.get(ENDPOINTS.PAYOUT_REQUESTS);
+       const res = await apiClient.get(`${ENDPOINTS.PAYOUT_REQUESTS}?populate=*&populate[user_payout_detail][populate]=*`);
        
       let rawData = res.data?.data || res.data || [];
       if (!Array.isArray(rawData) && typeof rawData === "object" && rawData !== null) {
@@ -266,9 +271,23 @@ export default function WalletScreen() {
         }
       }
       
+      const { user } = useAuthStore.getState();
       const formattedData = Array.isArray(rawData)
         ? rawData
             .map((item: any) => (item && item.attributes ? { id: item.id, ...item.attributes } : item))
+            .filter((item: any) => {
+              if (!user || !user.id) return false;
+              const relId = item.user?.data?.id || item.user?.id || 
+                            item.users_permissions_user?.data?.id || item.users_permissions_user?.id ||
+                            item.user_payout_detail?.data?.attributes?.user?.data?.id ||
+                            item.user_payout_detail?.data?.attributes?.users_permissions_user?.data?.id ||
+                            item.user_payout_detail?.user?.id ||
+                            item.user_payout_detail?.users_permissions_user?.id;
+              if (relId !== undefined && relId !== null) {
+                return String(relId) === String(user.id);
+              }
+              return false;
+            })
             .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         : [];
        setPayoutHistory(formattedData);
@@ -341,8 +360,11 @@ export default function WalletScreen() {
       const resolvedId = resolvedBankDetailsId;
       const arrayId = [resolvedId];
 
+      const { user } = useAuthStore.getState();
       const payoutPayload = {
         amount: amt,
+        user: user?.id ? Number(user.id) : undefined,
+        users_permissions_user: user?.id ? Number(user.id) : undefined,
         bank_card_id: resolvedId,
         bank_card: resolvedId,
         bank_cards: arrayId,
@@ -581,7 +603,7 @@ export default function WalletScreen() {
                 <ActivityIndicator color={Colors.primary} style={{ marginVertical: 24 }} />
               ) : payoutHistory.length === 0 ? (
                 <View style={styles.historyEmpty}>
-                  <Ionicons name="receipt-outline" size={36} color="#D1D5DB" />
+                  <Ionicons name="receipt-outline" size={40} color="#D1D5DB" />
                   <Text style={styles.historyEmptyText}>No Payout Requests Yet</Text>
                 </View>
               ) : (

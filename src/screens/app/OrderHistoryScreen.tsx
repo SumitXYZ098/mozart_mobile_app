@@ -115,7 +115,7 @@ export default function OrderHistoryScreen() {
                       >
                         {log.status
                           ? log.status.charAt(0).toUpperCase() +
-                            log.status.slice(1)
+                          log.status.slice(1)
                           : "N/A"}
                       </Text>
                     </View>

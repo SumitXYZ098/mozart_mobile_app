@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { storageAPI } from "@/utils/storage";
 import { getBillingCards, submitBillingCard, updateBillingCard, deleteBillingCard, getAllBankDetails } from "@/api/userApi";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 export interface Card {
   id: string;
@@ -55,6 +56,15 @@ interface PaymentStore {
 const CARDS_STORAGE_KEY = "user_saved_cards";
 const BANK_STORAGE_KEY = "user_bank_details";
 
+const getStorageKeys = () => {
+  const { user } = useAuthStore.getState();
+  const userId = user?.id || "guest";
+  return {
+    cardsKey: `${CARDS_STORAGE_KEY}_${userId}`,
+    bankKey: `${BANK_STORAGE_KEY}_${userId}`,
+  };
+};
+
 const DEFAULT_CARDS: Card[] = [
   {
     id: "card-1",
@@ -93,8 +103,9 @@ export const usePaymentStore = create<PaymentStore>((set, get) => ({
 
   loadPaymentState: async () => {
     try {
-      const savedCardsRaw = await storageAPI.getItem(CARDS_STORAGE_KEY);
-      const savedBankRaw = await storageAPI.getItem(BANK_STORAGE_KEY);
+      const { cardsKey, bankKey } = getStorageKeys();
+      const savedCardsRaw = await storageAPI.getItem(cardsKey);
+      const savedBankRaw = await storageAPI.getItem(bankKey);
 
       let cardsList = savedCardsRaw ? JSON.parse(savedCardsRaw) : [];
 
@@ -131,18 +142,18 @@ export const usePaymentStore = create<PaymentStore>((set, get) => ({
 
         // Merge server billing cards with server bank details
         cardsList = [...(serverCards || []), ...formattedBankCards];
-        await storageAPI.setItem(CARDS_STORAGE_KEY, JSON.stringify(cardsList));
+        await storageAPI.setItem(cardsKey, JSON.stringify(cardsList));
         
         // Update local bank details storage with the first one as a fallback
         if (serverBankList && serverBankList.length > 0) {
-          await storageAPI.setItem(BANK_STORAGE_KEY, JSON.stringify(serverBankList[0]));
+          await storageAPI.setItem(bankKey, JSON.stringify(serverBankList[0]));
         }
       } catch (err) {
         console.warn("Failed to load cards from server, using local fallback:", err);
       }
 
       let bankDetails = DEFAULT_BANK_DETAILS;
-      const currentBankRaw = await storageAPI.getItem(BANK_STORAGE_KEY);
+      const currentBankRaw = await storageAPI.getItem(bankKey);
       if (currentBankRaw) {
         bankDetails = JSON.parse(currentBankRaw);
       }
@@ -192,7 +203,8 @@ export const usePaymentStore = create<PaymentStore>((set, get) => ({
 
     updatedCards.push(newCard);
     set({ cards: updatedCards });
-    await storageAPI.setItem(CARDS_STORAGE_KEY, JSON.stringify(updatedCards));
+    const { cardsKey } = getStorageKeys();
+    await storageAPI.setItem(cardsKey, JSON.stringify(updatedCards));
   },
 
   removeCard: async (id) => {
@@ -212,7 +224,8 @@ export const usePaymentStore = create<PaymentStore>((set, get) => ({
     }
 
     set({ cards: updatedCards });
-    await storageAPI.setItem(CARDS_STORAGE_KEY, JSON.stringify(updatedCards));
+    const { cardsKey } = getStorageKeys();
+    await storageAPI.setItem(cardsKey, JSON.stringify(updatedCards));
   },
 
   setPrimaryCard: async (id) => {
@@ -222,7 +235,8 @@ export const usePaymentStore = create<PaymentStore>((set, get) => ({
       isPrimary: c.id === id,
     }));
     set({ cards: updatedCards });
-    await storageAPI.setItem(CARDS_STORAGE_KEY, JSON.stringify(updatedCards));
+    const { cardsKey } = getStorageKeys();
+    await storageAPI.setItem(cardsKey, JSON.stringify(updatedCards));
   },
 
   updateCard: async (id, updatedCardData) => {
@@ -259,11 +273,13 @@ export const usePaymentStore = create<PaymentStore>((set, get) => ({
     }
 
     set({ cards: updatedCards });
-    await storageAPI.setItem(CARDS_STORAGE_KEY, JSON.stringify(updatedCards));
+    const { cardsKey } = getStorageKeys();
+    await storageAPI.setItem(cardsKey, JSON.stringify(updatedCards));
   },
 
   saveBankDetails: async (details) => {
     set({ bankDetails: details });
-    await storageAPI.setItem(BANK_STORAGE_KEY, JSON.stringify(details));
+    const { bankKey } = getStorageKeys();
+    await storageAPI.setItem(bankKey, JSON.stringify(details));
   },
 }));

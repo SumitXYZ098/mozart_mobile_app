@@ -55,7 +55,7 @@ export function useGoogleLogin() {
     mutationFn: loginWithGoogle,
 
     onSuccess: async (data) => {
-      console.log("GOOGLE LOGIN SUCCESS DATA:", data);
+      // console.log("GOOGLE LOGIN SUCCESS DATA:", data);
 
       const userData = {
         id: data.user.id.toString(),
@@ -91,7 +91,7 @@ export function useFacebookLogin() {
     mutationFn: loginWithFacebook,
 
     onSuccess: async (data) => {
-      console.log("FACEBOOK LOGIN SUCCESS DATA:", data);
+      // console.log("FACEBOOK LOGIN SUCCESS DATA:", data);
 
       const userData = {
         id: data.user.id.toString(),
@@ -118,4 +118,4 @@ export function useFacebookLogin() {
       console.warn("FACEBOOK LOGIN ERROR:", error);
     },
   });
-}
+}

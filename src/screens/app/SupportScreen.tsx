@@ -8,6 +8,7 @@ import {
   TextInput,
   ActivityIndicator,
   RefreshControl,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -86,9 +87,36 @@ export default function SupportScreen() {
     });
   };
 
+  const getCategoryIcon = (cat: string) => {
+    const clean = cat?.toLowerCase() || "";
+    if (clean.includes("tech")) return "cog";
+    if (clean.includes("content")) return "albums";
+    if (clean.includes("meet") || clean.includes("call")) return "calendar";
+    if (clean.includes("quality") || clean.includes("control")) return "shield-checkmark";
+    if (clean.includes("copyright") || clean.includes("claim")) return "alert-circle";
+    if (clean.includes("invoice") || clean.includes("payment")) return "cash";
+    if (clean.includes("contract") || clean.includes("terminate")) return "close-circle";
+    return "help-circle";
+  };
+
+  const BarcodeMock = () => (
+    <View style={styles.barcodeWrapper}>
+      <View style={[styles.barcodeBar, { width: 1.5 }]} />
+      <View style={[styles.barcodeBar, { width: 1, marginLeft: 1.5 }]} />
+      <View style={[styles.barcodeBar, { width: 3, marginLeft: 1 }]} />
+      <View style={[styles.barcodeBar, { width: 1, marginLeft: 1.5 }]} />
+      <View style={[styles.barcodeBar, { width: 2, marginLeft: 1 }]} />
+      <View style={[styles.barcodeBar, { width: 1.5, marginLeft: 1 }]} />
+      <View style={[styles.barcodeBar, { width: 4, marginLeft: 2 }]} />
+      <View style={[styles.barcodeBar, { width: 1, marginLeft: 1 }]} />
+      <View style={[styles.barcodeBar, { width: 2, marginLeft: 1.5 }]} />
+    </View>
+  );
+
   const renderTicketItem = ({ item }: { item: any }) => {
     const statusInfo = getStatusStyle(item.status);
     const ticketNo = item.ticketNumber || `TKT-${item.id.slice(0, 6).toUpperCase()}`;
+    const iconName = getCategoryIcon(item.category);
 
     return (
       <TouchableOpacity
@@ -96,6 +124,11 @@ export default function SupportScreen() {
         activeOpacity={0.85}
         onPress={() => navigation.navigate("TicketDetails", { ticketId: Number(item.id) })}
       >
+        {/* Ticket Notches */}
+        <View style={styles.notchLeft} />
+        <View style={styles.notchRight} />
+
+        {/* Ticket Top Section */}
         <View style={styles.cardHeader}>
           <Text style={styles.ticketId}>{ticketNo}</Text>
           <View style={[styles.statusBadge, { backgroundColor: statusInfo.bg }]}>
@@ -104,15 +137,36 @@ export default function SupportScreen() {
             </Text>
           </View>
         </View>
-        <Text style={styles.cardTitle} numberOfLines={1}>
-          {item.title}
-        </Text>
-        <Text style={styles.cardCategory}>
-          {formatCategory(item.category || "quality_control_process")}
-        </Text>
+
+        {/* Ticket Main Details Layout with Category Icon */}
+        <View style={styles.cardBody}>
+          <View style={styles.iconContainer}>
+            <Image
+              source={require("../../../assets/icon.png")}
+              style={{ width: 40, height: 40, tintColor: Colors.primary }}
+              resizeMode="contain"
+            />
+          </View>
+          <View style={styles.bodyTextContainer}>
+            <Text style={styles.cardTitle} numberOfLines={1}>
+              {item.title}
+            </Text>
+            <Text style={styles.cardCategory}>
+              {formatCategory(item.category || "quality_control_process")}
+            </Text>
+          </View>
+        </View>
+
+        {/* Perforated Separator Line */}
+        <View style={styles.dashedLine} />
+
+        {/* Ticket Bottom Section */}
         <View style={styles.cardFooter}>
           <Text style={styles.cardDate}>{formatDate(item.createdAt)}</Text>
-          <Ionicons name="chevron-forward" size={16} color={Colors.gray} />
+          <View style={styles.footerRight}>
+            <BarcodeMock />
+            <Ionicons name="chevron-forward" size={16} color={Colors.gray} style={{ marginLeft: 8 }} />
+          </View>
         </View>
       </TouchableOpacity>
     );
@@ -269,6 +323,38 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 2,
+    position: "relative",
+  },
+  notchLeft: {
+    position: "absolute",
+    left: -8,
+    bottom: 28,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: "#F9FAFB", // matches parent background
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    zIndex: 10,
+  },
+  notchRight: {
+    position: "absolute",
+    right: -8,
+    bottom: 28,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: "#F9FAFB", // matches parent background
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    zIndex: 10,
+  },
+  dashedLine: {
+    borderStyle: "dashed",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    height: 0,
+    marginVertical: 12,
   },
   cardHeader: {
     flexDirection: "row",
@@ -305,9 +391,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    borderTopWidth: 1,
-    borderTopColor: "#F3F4F6",
-    paddingTop: 12,
+    paddingTop: 0,
   },
   cardDate: {
     fontSize: 12,
@@ -341,5 +425,41 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontSize: 16,
     fontWeight: "600",
+  },
+  cardBody: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 4,
+  },
+  iconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  // Adjust image style directly where Image is rendered (width/height 32)
+
+  bodyTextContainer: {
+    flex: 1,
+    justifyContent: "center",
+  },
+  footerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  barcodeWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    height: 16,
+    opacity: 0.2,
+  },
+  barcodeBar: {
+    height: "100%",
+    backgroundColor: "#000000",
   },
 });
