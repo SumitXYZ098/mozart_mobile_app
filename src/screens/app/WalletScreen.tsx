@@ -49,9 +49,17 @@ interface PayoutRequest {
   transactionReference?: string;
   rejectionReason?: string;
   user_payout_detail?: any;
+  currency?: string;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const maskAccountSelector = (num: string) => {
+  if (!num) return "";
+  const cleaned = num.replace(/\s/g, "");
+  if (cleaned.length <= 8) return num;
+  return `${cleaned.slice(0, 4)}••••${cleaned.slice(-4)}`;
+};
 
 const formatCurrency = (amount: number) =>
   `$${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -161,7 +169,7 @@ export default function WalletScreen() {
         const currentCards = usePaymentStore.getState().cards;
         // Clean out any existing bank cards to replace them with the fresh user-owned bank accounts list
         let updatedCards = currentCards.filter(c => !c.isBankAccount);
-        
+
         for (const resp of bankList) {
           const bankCard = {
             id: `card-bank-${resp.id}`,
@@ -169,7 +177,7 @@ export default function WalletScreen() {
             cardNumber: (resp.account_number || resp.accountNumber || resp.iban || "0000 0000 0000 0000").replace(/\s/g, "").replace(/(.{4})/g, "$1 ").trim(),
             expiryDate: "12/29",
             cvv: "123",
-            isPrimary: false,
+            isPrimary: !!resp.setDefault,
             enableAutopay: true,
             isBankAccount: true,
             bankDetailsId: resp.id,
@@ -191,9 +199,9 @@ export default function WalletScreen() {
   const fetchEarnings = useCallback(async (r: EarningsRange) => {
     setLoadingChart(true);
     try {
-    
+
       const res = await apiClient.get(ENDPOINTS.TOTAL_EARNINGS(r));
-       
+
       let rawData = res.data?.data || res.data || [];
       if (!Array.isArray(rawData) && typeof rawData === "object" && rawData !== null) {
         const arrayKey = Object.keys(rawData).find(key => Array.isArray(rawData[key]));
@@ -203,35 +211,35 @@ export default function WalletScreen() {
           rawData = [];
         }
       }
-      
+
       const data: EarningsPoint[] = Array.isArray(rawData)
         ? rawData.map((item: any) => {
-            const fields = item && item.attributes ? { id: item.id, ...item.attributes } : item;
-            return {
-              month: fields.month || fields.label || fields.date || "",
-              total: parseFloat(
-                fields.total ?? 
-                fields.earnings ?? 
-                fields.totalEarnings ?? 
-                fields.total_earnings ?? 
-                fields.earnings_sum ?? 
-                fields.value ?? 
-                fields.amount ?? 
-                fields.sum ?? 
-                fields.royalty ?? 
-                0
-              ) || 0,
-            };
-          })
+          const fields = item && item.attributes ? { id: item.id, ...item.attributes } : item;
+          return {
+            month: fields.month || fields.label || fields.date || "",
+            total: parseFloat(
+              fields.total ??
+              fields.earnings ??
+              fields.totalEarnings ??
+              fields.total_earnings ??
+              fields.earnings_sum ??
+              fields.value ??
+              fields.amount ??
+              fields.sum ??
+              fields.royalty ??
+              0
+            ) || 0,
+          };
+        })
         : [];
-        
-       const total = data.reduce((sum: number, p: EarningsPoint) => sum + (p.total || 0), 0);
+
+      const total = data.reduce((sum: number, p: EarningsPoint) => sum + (p.total || 0), 0);
       setTotalEarnings(total);
-      
+
       const paddedData = padEarningsData(data);
-       setEarningsData(paddedData);
+      setEarningsData(paddedData);
     } catch (e) {
-       setEarningsData([]);
+      setEarningsData([]);
       setTotalEarnings(0);
     } finally {
       setLoadingChart(false);
@@ -241,16 +249,16 @@ export default function WalletScreen() {
   const fetchBalance = useCallback(async () => {
     setLoadingBalance(true);
     try {
-       const res = await apiClient.get(ENDPOINTS.AVAILABLE_WITHDRAW_BALANCE);
+      const res = await apiClient.get(ENDPOINTS.AVAILABLE_WITHDRAW_BALANCE);
       setAvailableBalance(
-        res.data?.availableBalance ?? 
-        res.data?.balance ?? 
-        res.data?.data?.availableBalance ?? 
-        res.data?.data?.balance ?? 
+        res.data?.availableBalance ??
+        res.data?.balance ??
+        res.data?.data?.availableBalance ??
+        res.data?.data?.balance ??
         0
       );
     } catch (e) {
-       setAvailableBalance(0);
+      setAvailableBalance(0);
     } finally {
       setLoadingBalance(false);
     }
@@ -259,8 +267,8 @@ export default function WalletScreen() {
   const fetchHistory = useCallback(async () => {
     setLoadingHistory(true);
     try {
-       const res = await apiClient.get(`${ENDPOINTS.PAYOUT_REQUESTS}?populate=*&populate[user_payout_detail][populate]=*`);
-       
+      const res = await apiClient.get(`${ENDPOINTS.PAYOUT_REQUESTS}?populate=*&populate[user_payout_detail][populate]=*`);
+
       let rawData = res.data?.data || res.data || [];
       if (!Array.isArray(rawData) && typeof rawData === "object" && rawData !== null) {
         const arrayKey = Object.keys(rawData).find(key => Array.isArray(rawData[key]));
@@ -270,29 +278,29 @@ export default function WalletScreen() {
           rawData = [];
         }
       }
-      
+
       const { user } = useAuthStore.getState();
       const formattedData = Array.isArray(rawData)
         ? rawData
-            .map((item: any) => (item && item.attributes ? { id: item.id, ...item.attributes } : item))
-            .filter((item: any) => {
-              if (!user || !user.id) return false;
-              const relId = item.user?.data?.id || item.user?.id || 
-                            item.users_permissions_user?.data?.id || item.users_permissions_user?.id ||
-                            item.user_payout_detail?.data?.attributes?.user?.data?.id ||
-                            item.user_payout_detail?.data?.attributes?.users_permissions_user?.data?.id ||
-                            item.user_payout_detail?.user?.id ||
-                            item.user_payout_detail?.users_permissions_user?.id;
-              if (relId !== undefined && relId !== null) {
-                return String(relId) === String(user.id);
-              }
-              return false;
-            })
-            .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .map((item: any) => (item && item.attributes ? { id: item.id, ...item.attributes } : item))
+          .filter((item: any) => {
+            if (!user || !user.id) return false;
+            const relId = item.user?.data?.id || item.user?.id ||
+              item.users_permissions_user?.data?.id || item.users_permissions_user?.id ||
+              item.user_payout_detail?.data?.attributes?.user?.data?.id ||
+              item.user_payout_detail?.data?.attributes?.users_permissions_user?.data?.id ||
+              item.user_payout_detail?.user?.id ||
+              item.user_payout_detail?.users_permissions_user?.id;
+            if (relId !== undefined && relId !== null) {
+              return String(relId) === String(user.id);
+            }
+            return true;
+          })
+          .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         : [];
-       setPayoutHistory(formattedData);
+      setPayoutHistory(formattedData);
     } catch (e) {
-       setPayoutHistory([]);
+      setPayoutHistory([]);
     } finally {
       setLoadingHistory(false);
     }
@@ -329,13 +337,13 @@ export default function WalletScreen() {
       Alert.alert("Select Bank Account", "Please select a bank account to proceed.");
       return;
     }
-    
+
     const amt = parseFloat(payoutAmount);
     if (isNaN(amt) || amt < 50) {
       Alert.alert("Invalid Amount", "Minimum payout amount is $50.00.");
       return;
     }
-    
+
     if (amt > availableBalance) {
       Alert.alert(
         "Insufficient Balance",
@@ -348,7 +356,7 @@ export default function WalletScreen() {
     try {
       const selectedBankCard = bankCards.find((b) => b.id === selectedBankCardId);
       const bankDetailsId = selectedBankCard?.bankDetailsId;
-      
+
       let resolvedBankDetailsId: any = bankDetailsId;
       if (!resolvedBankDetailsId && typeof selectedBankCardId === "string" && selectedBankCardId.startsWith("card-bank-")) {
         const parsedId = parseInt(selectedBankCardId.replace("card-bank-", ""), 10);
@@ -357,10 +365,34 @@ export default function WalletScreen() {
         }
       }
 
-      const resolvedId = resolvedBankDetailsId;
-      const arrayId = [resolvedId];
+      let resolvedId = resolvedBankDetailsId;
+
+      // Fallback 1: Parse first digits sequence in selectedBankCardId
+      if (!resolvedId && typeof selectedBankCardId === "string") {
+        const numMatch = selectedBankCardId.match(/\d+/);
+        if (numMatch) {
+          resolvedId = parseInt(numMatch[0], 10);
+        }
+      }
+
+      // Fallback 2: Check first item in bankCards list
+      if (!resolvedId && bankCards.length > 0) {
+        resolvedId = bankCards[0].bankDetailsId;
+        if (!resolvedId && bankCards[0].id) {
+          const numMatch = bankCards[0].id.match(/\d+/);
+          if (numMatch) {
+            resolvedId = parseInt(numMatch[0], 10);
+          }
+        }
+      }
+
+      if (!resolvedId) {
+        throw new Error("Payout bank account ID not found. Please try re-saving your payout details first.");
+      }
 
       const { user } = useAuthStore.getState();
+      const arrayId = [resolvedId];
+
       const payoutPayload = {
         amount: amt,
         user: user?.id ? Number(user.id) : undefined,
@@ -369,6 +401,7 @@ export default function WalletScreen() {
         bank_card: resolvedId,
         bank_cards: arrayId,
         user_payout_detail: resolvedId,
+        userPayoutDetailId: resolvedId,
         user_payout_details: arrayId,
         payout_account: resolvedId,
         payout_accounts: arrayId,
@@ -385,7 +418,6 @@ export default function WalletScreen() {
       };
 
       await apiClient.post(ENDPOINTS.PAYOUT_REQUESTS, {
-        ...payoutPayload,
         data: payoutPayload,
       });
       setPayoutModalVisible(false);
@@ -438,7 +470,7 @@ export default function WalletScreen() {
         <View style={styles.card}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
             <Text style={[styles.cardSectionLabel, { marginBottom: 0 }]}>Total Earnings</Text>
-            
+
             {/* Range Selector */}
             <View style={styles.rangeRow}>
               {(["1M", "3M", "6M"] as EarningsRange[]).map((r) => (
@@ -586,83 +618,124 @@ export default function WalletScreen() {
         <View style={styles.card}>
           <Text style={styles.cardSectionLabel}>Payout History</Text>
 
-          {/* Table Container with Horizontal Scroll */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={true}>
-            <View style={{ width: 530 }}>
-              {/* Table Header */}
-              <View style={styles.tableHeader}>
-                <Text style={[styles.tableHeaderCell, { width: 90 }]}>Date</Text>
-                <Text style={[styles.tableHeaderCell, { width: 85 }]}>Amount</Text>
-                <Text style={[styles.tableHeaderCell, { width: 95 }]}>Status</Text>
-                <Text style={[styles.tableHeaderCell, { width: 100 }]}>Reviewed By</Text>
-                <Text style={[styles.tableHeaderCell, { width: 100 }]}>Reviewed On</Text>
-                <Text style={[styles.tableHeaderCell, { width: 60, textAlign: "center" }]}>Action</Text>
-              </View>
+          {loadingHistory ? (
+            <ActivityIndicator color={Colors.primary} style={{ marginVertical: 24 }} />
+          ) : payoutHistory.length === 0 ? (
+            <View style={styles.historyEmpty}>
+              <Ionicons name="receipt-outline" size={40} color="#D1D5DB" />
+              <Text style={styles.historyEmptyText}>No Payout Requests Yet</Text>
+            </View>
+          ) : (
+            <>
+              {payoutHistory.slice(0, 3).map((item, idx) => {
+                const detailRaw = item.user_payout_detail;
+                const detail = (detailRaw?.data?.attributes
+                  ? { id: detailRaw.data.id, ...detailRaw.data.attributes }
+                  : detailRaw) || {};
+                const bankName = detail.bank_name || "Bank Transfer";
+                const currency = item.currency || detail.currency || "";
+                const accountNum = detail.account_number || detail.iban || "";
+                const maskedNum = accountNum ? `••••${accountNum.replace(/\s/g, "").slice(-4)}` : "••••";
+                const COUNTRY_FLAGS_MAP: Record<string, string> = {
+                  "India": "🇮🇳", "United States": "🇺🇸", "Canada": "🇨🇦", "United Kingdom": "🇬🇧",
+                  "Germany": "🇩🇪", "France": "🇫🇷", "Italy": "🇮🇹", "Spain": "🇪🇸",
+                  "Netherlands": "🇳🇱", "Belgium": "🇧🇪", "Switzerland": "🇨🇭", "Australia": "🇦🇺",
+                  "Japan": "🇯🇵", "China": "🇨🇳", "Brazil": "🇧🇷", "Mexico": "🇲🇽",
+                  "South Africa": "🇿🇦", "Singapore": "🇸🇬", "United Arab Emirates": "🇦🇪",
+                  "Saudi Arabia": "🇸🇦", "New Zealand": "🇳🇿", "Sweden": "🇸🇪", "Norway": "🇳🇴",
+                  "Denmark": "🇩🇰", "Finland": "🇫🇮", "Ireland": "🇮🇪", "Austria": "🇦🇹",
+                  "Portugal": "🇵🇹", "Poland": "🇵🇱", "Turkey": "🇹🇷", "Russia": "🇷🇺",
+                  "South Korea": "🇰🇷", "Hong Kong": "🇭🇰", "Malaysia": "🇲🇾", "Thailand": "🇹🇭",
+                  "Indonesia": "🇮🇩", "Philippines": "🇵🇭", "Vietnam": "🇻🇳", "Egypt": "🇪🇬",
+                  "Nigeria": "🇳🇬", "Kenya": "🇰🇪", "Argentina": "🇦🇷", "Colombia": "🇨🇴",
+                  "Chile": "🇨🇱", "Peru": "🇵🇪", "Bouvet Island": "🇳🇴",
+                };
+                const countryCode = (detail.country || "").trim();
+                let countryFlag = "🏦";
+                if (COUNTRY_FLAGS_MAP[countryCode]) {
+                  countryFlag = COUNTRY_FLAGS_MAP[countryCode];
+                } else {
+                  const matchedKey = Object.keys(COUNTRY_FLAGS_MAP).find(
+                    (k) => k.toLowerCase() === countryCode.toLowerCase()
+                  );
+                  if (matchedKey) {
+                    countryFlag = COUNTRY_FLAGS_MAP[matchedKey];
+                  } else if (countryCode.length === 2) {
+                    try {
+                      const cps = countryCode.toUpperCase().split("").map((c: string) => 127397 + c.charCodeAt(0));
+                      countryFlag = String.fromCodePoint(...cps);
+                    } catch (_) { }
+                  }
+                }
 
-              {loadingHistory ? (
-                <ActivityIndicator color={Colors.primary} style={{ marginVertical: 24 }} />
-              ) : payoutHistory.length === 0 ? (
-                <View style={styles.historyEmpty}>
-                  <Ionicons name="receipt-outline" size={40} color="#D1D5DB" />
-                  <Text style={styles.historyEmptyText}>No Payout Requests Yet</Text>
-                </View>
-              ) : (
-                payoutHistory.map((item, idx) => (
+                return (
                   <View
                     key={item.id}
-                    style={[styles.tableRow, idx % 2 === 0 && styles.tableRowEven]}
+                    style={[styles.historyCard, idx > 0 && { marginTop: 10 }]}
                   >
-                    <Text style={[styles.tableCell, { width: 90 }]}>
-                      {new Date(item.createdAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                    </Text>
-                    <Text style={[styles.tableCell, { width: 85 }]}>
-                      {formatCurrency(item.amount)}
-                    </Text>
-                    <View style={{ width: 95 }}>
-                      <View
-                        style={[
-                          styles.statusBadge,
-                          { backgroundColor: `${statusColor(item.status)}18` },
-                        ]}
-                      >
-                        <Text
-                          style={[styles.statusText, { color: statusColor(item.status) }]}
-                        >
-                          {statusLabel(item.status)}
+                    {/* Top Row: Bank info + Amount */}
+                    <View style={styles.historyCardTop}>
+                      <View style={styles.historyBankInfo}>
+                        <View style={styles.historyFlagCircle}>
+                          <Text style={{ fontSize: 18 }}>{countryFlag}</Text>
+                        </View>
+                        <View>
+                          <Text style={styles.historyBankName} numberOfLines={1}>
+                            {bankName.charAt(0).toUpperCase() + bankName.slice(1)}
+                          </Text>
+                          <Text style={styles.historyAccNum}>{maskedNum} {currency ? `· ${currency}` : ""}</Text>
+                        </View>
+                      </View>
+                      <View style={{ alignItems: "flex-end" }}>
+                        <Text style={styles.historyAmount}>
+                          {currency || "$"}{item.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </Text>
+                        <View style={[styles.statusBadge, { backgroundColor: `${statusColor(item.status)}18`, marginTop: 4 }]}>
+                          <Text style={[styles.statusText, { color: statusColor(item.status) }]}>
+                            {statusLabel(item.status)}
+                          </Text>
+                        </View>
                       </View>
                     </View>
-                    <Text style={[styles.tableCell, { width: 100 }]} numberOfLines={1}>
-                      {item.reviewedBy || "—"}
-                    </Text>
-                    <Text style={[styles.tableCell, { width: 100 }]}>
-                      {item.reviewedAt || item.reviewedOn
-                        ? new Date(item.reviewedAt || item.reviewedOn!).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })
-                        : "—"}
-                    </Text>
-                    <TouchableOpacity
-                      style={{ width: 60, alignItems: "center", justifyContent: "center" }}
-                      onPress={() => {
-                        setSelectedHistoryItem(item);
-                        setHistoryModalVisible(true);
-                      }}
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons name="eye-outline" size={18} color={Colors.primary} />
-                    </TouchableOpacity>
+
+                    {/* Bottom Row: Date + View button */}
+                    <View style={styles.historyCardBottom}>
+                      <Text style={styles.historyDate}>
+                        {new Date(item.createdAt).toLocaleDateString("en-US", {
+                          month: "short", day: "numeric", year: "numeric",
+                        })}
+                      </Text>
+                      <TouchableOpacity
+                        style={styles.historyViewBtn}
+                        onPress={() => {
+                          setSelectedHistoryItem(item);
+                          setHistoryModalVisible(true);
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="eye-outline" size={14} color={Colors.primary} />
+                        <Text style={styles.historyViewBtnText}>View Details</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                ))
+                );
+              })}
+              {payoutHistory.length > 3 && (
+                <TouchableOpacity
+                  style={styles.seeAllBtn}
+                  onPress={() => navigation.navigate("PayoutHistory")}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.seeAllBtnText}>See All</Text>
+                  <Ionicons
+                    name="arrow-forward"
+                    size={15}
+                    color={Colors.primary}
+                  />
+                </TouchableOpacity>
               )}
-            </View>
-          </ScrollView>
+            </>
+          )}
         </View>
       </ScrollView>
 
@@ -692,7 +765,10 @@ export default function WalletScreen() {
 
             {selectedHistoryItem && (() => {
               const item = selectedHistoryItem;
-              const detail = item.user_payout_detail || {};
+              const detailRaw = item.user_payout_detail;
+              const detail = (detailRaw?.data?.attributes
+                ? { id: detailRaw.data.id, ...detailRaw.data.attributes }
+                : detailRaw) || {};
               const formattedDate = new Date(item.createdAt).toLocaleString("en-US", {
                 month: "2-digit",
                 day: "2-digit",
@@ -709,7 +785,7 @@ export default function WalletScreen() {
                   <View style={[styles.modalBalanceBox, { backgroundColor: `${statusColor(item.status)}0D`, paddingVertical: 20, alignItems: "center" }]}>
                     <Text style={styles.modalBalanceLabel}>Requested Amount</Text>
                     <Text style={[styles.modalBalanceAmount, { color: statusColor(item.status), fontSize: 32 }]}>
-                      {formatCurrency(item.amount)}
+                      {item.currency || "$"}{item.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </Text>
                     <View style={[styles.statusBadge, { backgroundColor: `${statusColor(item.status)}18`, marginTop: 8 }]}>
                       <Text style={[styles.statusText, { color: statusColor(item.status) }]}>
@@ -771,14 +847,14 @@ export default function WalletScreen() {
                           item.status === "paid" || item.status === "approved"
                             ? "#D1FAE5"
                             : item.status === "rejected"
-                            ? "#FEE2E2"
-                            : "#FEF3C7",
+                              ? "#FEE2E2"
+                              : "#FEF3C7",
                         borderColor:
                           item.status === "paid" || item.status === "approved"
                             ? "#10B981"
                             : item.status === "rejected"
-                            ? "#EF4444"
-                            : "#F59E0B",
+                              ? "#EF4444"
+                              : "#F59E0B",
                       },
                     ]}
                   >
@@ -790,16 +866,16 @@ export default function WalletScreen() {
                             item.status === "paid" || item.status === "approved"
                               ? "#065F46"
                               : item.status === "rejected"
-                              ? "#991B1B"
-                              : "#92400E",
+                                ? "#991B1B"
+                                : "#92400E",
                         },
                       ]}
                     >
                       {item.status === "paid" || item.status === "approved"
                         ? "Your Payout Request Has Been Approved and Transferred."
                         : item.status === "rejected"
-                        ? `Rejected: ${item.rejectionReason || "No reason provided."}`
-                        : "Your Payout Request Is Awaiting Review."}
+                          ? `Rejected: ${item.rejectionReason || "No reason provided."}`
+                          : "Your Payout Request Is Awaiting Review."}
                     </Text>
                   </View>
 
@@ -825,7 +901,7 @@ export default function WalletScreen() {
         onRequestClose={() => setPayoutModalVisible(false)}
       >
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={{ flex: 1 }}
         >
           <View style={styles.modalOverlay}>
@@ -873,11 +949,12 @@ export default function WalletScreen() {
                       <Text style={styles.dropdownTriggerText}>
                         {selectedBankCardId
                           ? (() => {
-                              const c = bankCards.find((b) => b.id === selectedBankCardId);
-                              return c
-                                ? `${c.bankName || c.cardHolder} (****${c.cardNumber.slice(-4)})`
-                                : "Select Bank Account";
-                            })()
+                            const c = bankCards.find((b) => b.id === selectedBankCardId);
+                            if (!c) return "Select Bank Account";
+                            const cleanNum = c.cardNumber.replace(/\s/g, "");
+                            const last4 = cleanNum.slice(-4);
+                            return `${c.bankName || c.cardHolder} (****${last4})`;
+                          })()
                           : "Select Bank Account"}
                       </Text>
                       <Ionicons
@@ -907,7 +984,11 @@ export default function WalletScreen() {
                                 selectedBankCardId === c.id && styles.dropdownItemTextActive,
                               ]}
                             >
-                              {c.bankName || c.cardHolder} (****{c.cardNumber.slice(-4)})
+                              {(() => {
+                                const cleanNum = c.cardNumber.replace(/\s/g, "");
+                                const last4 = cleanNum.slice(-4);
+                                return `${c.bankName || c.cardHolder} (****${last4})`;
+                              })()}
                             </Text>
                           </TouchableOpacity>
                         ))}
@@ -941,7 +1022,7 @@ export default function WalletScreen() {
                     style={[
                       styles.submitBtn,
                       (submitting || bankCards.length === 0 || availableBalance < 50) &&
-                        styles.submitBtnDisabled,
+                      styles.submitBtnDisabled,
                     ]}
                     onPress={handleSubmitPayout}
                     activeOpacity={0.85}
@@ -976,7 +1057,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 12,
- 
+
   },
   headerBtn: {
     backgroundColor: "#F5F5F7",
@@ -1176,6 +1257,100 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#9CA3AF",
     fontFamily: "Poppins_400Regular",
+  },
+  // History Cards
+  historyCard: {
+    backgroundColor: "#F9FAFB",
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  historyCardTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  historyBankInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flex: 1,
+  },
+  historyFlagCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  historyBankName: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#1A1A1A",
+    fontFamily: "PlusJakartaSans_700Bold",
+  },
+  historyAccNum: {
+    fontSize: 11,
+    color: "#6B7280",
+    fontFamily: "Poppins_400Regular",
+    marginTop: 1,
+  },
+  historyAmount: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#1A1A1A",
+    fontFamily: "PlusJakartaSans_700Bold",
+  },
+  historyCardBottom: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#E5E7EB",
+  },
+  historyDate: {
+    fontSize: 11,
+    color: "#9CA3AF",
+    fontFamily: "Poppins_400Regular",
+  },
+  historyViewBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: `${Colors.primary}12`,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  historyViewBtnText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: Colors.primary,
+    fontFamily: "PlusJakartaSans_700Bold",
+  },
+  seeAllBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    marginTop: 14,
+    paddingVertical: 10,
+    backgroundColor: "#F9FAFB",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  seeAllBtnText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: Colors.primary,
+    fontFamily: "PlusJakartaSans_700Bold",
   },
   // Modal
   modalOverlay: {

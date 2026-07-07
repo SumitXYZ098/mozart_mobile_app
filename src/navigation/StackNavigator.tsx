@@ -16,6 +16,8 @@ import OrderHistoryScreen from "@/screens/app/OrderHistoryScreen";
 import SavedCardsScreen from "@/screens/app/SavedCardsScreen";
 import AddNewCardScreen from "@/screens/app/AddNewCardScreen";
 import PayoutDetailsScreen from "@/screens/app/PayoutDetailsScreen";
+import PayoutBankAccountsScreen from "@/screens/app/PayoutBankAccountsScreen";
+import PayoutHistoryScreen from "@/screens/app/PayoutHistoryScreen";
 import TermsOfServiceScreen from "@/screens/auth/TermsOfServiceScreen";
 import PrivacyPolicyScreen from "@/screens/auth/PrivacyPolicyScreen";
 import FAQsScreen from "@/screens/app/FAQsScreen";
@@ -57,6 +59,7 @@ export function WalletStackNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="WalletMain" component={WalletScreen} />
+      <Stack.Screen name="PayoutHistory" component={PayoutHistoryScreen} />
     </Stack.Navigator>
   );
 }
@@ -89,6 +92,7 @@ export function ProfileStackNavigator() {
       <Stack.Screen name="SavedCards" component={SavedCardsScreen} />
       <Stack.Screen name="AddNewCard" component={AddNewCardScreen} />
       <Stack.Screen name="PayoutDetails" component={PayoutDetailsScreen} />
+      <Stack.Screen name="PayoutBankAccounts" component={PayoutBankAccountsScreen} />
       <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
       <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
     </Stack.Navigator>

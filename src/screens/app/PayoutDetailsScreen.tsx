@@ -255,7 +255,7 @@ export default function PayoutDetailsScreen({ route }: any) {
       setConfirmIban("");
       setSwiftCode("");
     }
-  }, []);
+  }, [editCard]);
 
   // No store-sync effect needed — form is driven entirely by route params or blank state
 
@@ -439,9 +439,10 @@ export default function PayoutDetailsScreen({ route }: any) {
         await updateBankDetails(bankDetailsId, apiPayload);
       } else {
         const response = await submitBankDetails(apiPayload);
-        if (response && response.data && response.data.id) {
-          resolvedBankDetailsId = response.data.id;
-          setBankDetailsId(response.data.id);
+        const resolvedId = response?.data?.id || response?.id;
+        if (resolvedId) {
+          resolvedBankDetailsId = resolvedId;
+          setBankDetailsId(resolvedId);
         }
       }
       
@@ -489,7 +490,23 @@ export default function PayoutDetailsScreen({ route }: any) {
       await storageAPI.setItem(`user_saved_cards_${userId}`, JSON.stringify(updatedCards));
 
       toast.success("Payout details saved successfully!");
-      navigation.navigate("SavedCards", {
+      
+      // Clear form fields
+      setBankDetailsId(null);
+      setHolderName("");
+      setBankName("");
+      setAccountNumber("");
+      setConfirmAccountNumber("");
+      setIfscCode("");
+      setRoutingNumber("");
+      setTransitNumber("");
+      setInstitutionNumber("");
+      setSortCode("");
+      setIban("");
+      setConfirmIban("");
+      setSwiftCode("");
+
+      navigation.navigate("PayoutBankAccounts", {
         payoutHolderName: holderName.trim(),
         payoutAccountNumber: system === "IBAN" ? iban.trim() : accountNumber.trim(),
       });

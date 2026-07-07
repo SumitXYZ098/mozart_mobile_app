@@ -164,22 +164,44 @@ const TabNavigator = () => {
       <Tab.Screen
         name="WalletTab"
         component={WalletStackNavigator}
-        options={{
-          tabBarIcon: ({ focused }) => {
-            const imgSrc = focused
-              ? require("../../assets/images/walletFill.png")
-              : require("../../assets/images/wallet.png");
-            return (
-              <Image
-                source={imgSrc}
-                style={{
-                  width: 32,
-                  height: 32,
-                  opacity: focused ? 1 : 0.5,
-                }}
-              />
-            );
-          },
+        options={({ route }) => {
+          const routeName = getFocusedRouteNameFromRoute(route) ?? "WalletMain";
+          const hideOnScreens = ["PayoutHistory"];
+          return {
+            tabBarStyle: hideOnScreens.includes(routeName)
+              ? { display: "none" }
+              : {
+                  position: "absolute",
+                  bottom: 24,
+                  borderRadius: 40,
+                  marginHorizontal: horizontalScale(24),
+                  backgroundColor: "#E8D5FF",
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 8,
+                  elevation: 8,
+                  height: 64,
+                  paddingTop: 16,
+                  paddingBottom: 16,
+                  paddingHorizontal: 16,
+                },
+            tabBarIcon: ({ focused }) => {
+              const imgSrc = focused
+                ? require("../../assets/images/walletFill.png")
+                : require("../../assets/images/wallet.png");
+              return (
+                <Image
+                  source={imgSrc}
+                  style={{
+                    width: 32,
+                    height: 32,
+                    opacity: focused ? 1 : 0.5,
+                  }}
+                />
+              );
+            },
+          };
         }}
       />
       <Tab.Screen

@@ -124,7 +124,7 @@ export const usePaymentStore = create<PaymentStore>((set, get) => ({
             cardNumber: formattedCardNum || "0000 0000 0000 0000",
             expiryDate: "12/29",
             cvv: "123",
-            isPrimary: false,
+            isPrimary: !!resp.setDefault,
             enableAutopay: true,
             isBankAccount: true,
             bankDetailsId: resp.id,

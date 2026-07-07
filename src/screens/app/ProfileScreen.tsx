@@ -230,7 +230,7 @@ export default function ProfileScreen() {
         <Ionicons name="cash" size={20} color={colors.primary} />
       ),
       onPress: () => {
-        navigation.navigate("PayoutDetails");
+        navigation.navigate("PayoutBankAccounts");
       },
     },
   ];

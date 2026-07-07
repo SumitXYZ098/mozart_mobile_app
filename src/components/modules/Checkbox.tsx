@@ -41,7 +41,7 @@ export default function Checkbox({
       >
         {checked && <Ionicons name="checkmark" size={12} color="white" />}
       </View>
-      {label && <Text className="text-[#B3B3B3] text-sm font-poppins ">{label}</Text>}
+      {label && <Text className="text-[#B3B3B3] text-sm font-poppins">{label}</Text>}
     </TouchableOpacity>
   );
 }
