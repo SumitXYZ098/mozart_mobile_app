@@ -98,8 +98,8 @@ const SelectInputField: React.FC<ISelectInputFieldProps> = ({
     error?: boolean,
     helperText?: string
   ) => {
-  const displayValue =
-      multiple 
+    const displayValue =
+      multiple
         ? `${fieldValue.length} selected`
         : fieldValue;
     return (

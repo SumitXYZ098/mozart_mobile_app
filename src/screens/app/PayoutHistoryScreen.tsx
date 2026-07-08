@@ -84,24 +84,24 @@ export default function PayoutHistoryScreen() {
       const { user } = useAuthStore.getState();
       const formattedData = Array.isArray(rawData)
         ? rawData
-            .map((item: any) => (item && item.attributes ? { id: item.id, ...item.attributes } : item))
-            .filter((item: any) => {
-              if (!user || !user.id) return false;
-              const relId =
-                item.user?.data?.id ||
-                item.user?.id ||
-                item.users_permissions_user?.data?.id ||
-                item.users_permissions_user?.id ||
-                item.user_payout_detail?.data?.attributes?.user?.data?.id ||
-                item.user_payout_detail?.data?.attributes?.users_permissions_user?.data?.id ||
-                item.user_payout_detail?.user?.id ||
-                item.user_payout_detail?.users_permissions_user?.id;
-              if (relId !== undefined && relId !== null) {
-                return String(relId) === String(user.id);
-              }
-              return true;
-            })
-            .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .map((item: any) => (item && item.attributes ? { id: item.id, ...item.attributes } : item))
+          .filter((item: any) => {
+            if (!user || !user.id) return false;
+            const relId =
+              item.user?.data?.id ||
+              item.user?.id ||
+              item.users_permissions_user?.data?.id ||
+              item.users_permissions_user?.id ||
+              item.user_payout_detail?.data?.attributes?.user?.data?.id ||
+              item.user_payout_detail?.data?.attributes?.users_permissions_user?.data?.id ||
+              item.user_payout_detail?.user?.id ||
+              item.user_payout_detail?.users_permissions_user?.id;
+            if (relId !== undefined && relId !== null) {
+              return String(relId) === String(user.id);
+            }
+            return true;
+          })
+          .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         : [];
       setPayoutHistory(formattedData);
     } catch (e) {
@@ -351,14 +351,14 @@ export default function PayoutHistoryScreen() {
                           item.status === "paid" || item.status === "approved"
                             ? "#D1FAE5"
                             : item.status === "rejected"
-                            ? "#FEE2E2"
-                            : "#FEF3C7",
+                              ? "#FEE2E2"
+                              : "#FEF3C7",
                         borderColor:
                           item.status === "paid" || item.status === "approved"
                             ? "#10B981"
                             : item.status === "rejected"
-                            ? "#EF4444"
-                            : "#F59E0B",
+                              ? "#EF4444"
+                              : "#F59E0B",
                       },
                     ]}
                   >
@@ -370,16 +370,16 @@ export default function PayoutHistoryScreen() {
                             item.status === "paid" || item.status === "approved"
                               ? "#065F46"
                               : item.status === "rejected"
-                              ? "#991B1B"
-                              : "#92400E",
+                                ? "#991B1B"
+                                : "#92400E",
                         },
                       ]}
                     >
                       {item.status === "paid" || item.status === "approved"
                         ? "Your Payout Request Has Been Approved and Transferred."
                         : item.status === "rejected"
-                        ? `Rejected: ${item.rejectionReason || "No reason provided."}`
-                        : "Your Payout Request Is Awaiting Review."}
+                          ? `Rejected: ${item.rejectionReason || "No reason provided."}`
+                          : "Your Payout Request Is Awaiting Review."}
                     </Text>
                   </View>
 
@@ -489,7 +489,7 @@ function FlatListCustom({
                 .split("")
                 .map((c: string) => 127397 + c.charCodeAt(0));
               countryFlag = String.fromCodePoint(...cps);
-            } catch (_) {}
+            } catch (_) { }
           }
         }
 

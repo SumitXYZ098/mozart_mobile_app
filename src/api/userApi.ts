@@ -120,7 +120,7 @@ export const getBankDetails = async (): Promise<any> => {
       Authorization: `Bearer ${user?.token}`,
     },
   });
-  
+
   const respData = response.data;
   if (respData && respData.data) {
     if (Array.isArray(respData.data)) {
@@ -140,7 +140,7 @@ export const getBankDetails = async (): Promise<any> => {
 export const getAllBankDetails = async (): Promise<any[]> => {
   const { user } = useAuthStore.getState();
   if (!user || !user.id) return [];
-  
+
   const response = await axios.get(
     `${ENDPOINTS.BANK_DETAILS}?populate=*`,
     {
@@ -149,12 +149,12 @@ export const getAllBankDetails = async (): Promise<any[]> => {
       },
     }
   );
-  
+
   const respData = response.data;
   if (respData && respData.data) {
     let rawList = [];
     if (Array.isArray(respData.data)) {
-      rawList = respData.data.map((item: any) => 
+      rawList = respData.data.map((item: any) =>
         item.attributes ? { ...item.attributes, id: item.id, user: item.attributes.user, users_permissions_user: item.attributes.users_permissions_user } : item
       );
     } else {
@@ -164,8 +164,8 @@ export const getAllBankDetails = async (): Promise<any[]> => {
 
     // Filter by user relation id
     return rawList.filter((item: any) => {
-      const relId = item.user?.data?.id || item.user?.id || 
-                    item.users_permissions_user?.data?.id || item.users_permissions_user?.id;
+      const relId = item.user?.data?.id || item.user?.id ||
+        item.users_permissions_user?.data?.id || item.users_permissions_user?.id;
       if (relId !== undefined && relId !== null) {
         return String(relId) === String(user.id);
       }
@@ -219,7 +219,7 @@ export const updateBankDetails = async (id: number, payload: any): Promise<any> 
 
 export const deleteBankDetails = async (id?: number): Promise<any> => {
   const { user } = useAuthStore.getState();
-  
+
   if (id) {
     try {
       const response = await axios.delete(
@@ -259,7 +259,7 @@ export const getBillingCards = async (): Promise<any[]> => {
       },
     }
   );
-  
+
   const respData = response.data;
   if (respData && respData.data) {
     const mapped = respData.data.map((item: any) => {
@@ -284,8 +284,8 @@ export const getBillingCards = async (): Promise<any[]> => {
 
     // Filter by user relation id
     return mapped.filter((item: any) => {
-      const relId = item.user?.data?.id || item.user?.id || 
-                    item.users_permissions_user?.data?.id || item.users_permissions_user?.id;
+      const relId = item.user?.data?.id || item.user?.id ||
+        item.users_permissions_user?.data?.id || item.users_permissions_user?.id;
       if (relId !== undefined && relId !== null) {
         return String(relId) === String(user.id);
       }

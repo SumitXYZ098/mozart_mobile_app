@@ -11,7 +11,7 @@ export function useLogin() {
     mutationFn: loginUser,
 
     onSuccess: async (data, variables) => {
-      console.log("LOGIN SUCCESS DATA:", data);
+      // console.log("LOGIN SUCCESS DATA:", data);
 
       const userData = {
         id: data.user.id.toString(),
