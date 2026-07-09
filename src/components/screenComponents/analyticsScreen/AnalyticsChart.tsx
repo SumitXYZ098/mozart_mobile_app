@@ -22,7 +22,7 @@ interface AnalyticsChartProps {
 
 const AnalyticsChart: React.FC<AnalyticsChartProps> = ({ points }) => {
   const chartHeight = 180;
-  const yAxisLabelWidth = 35;
+  const yAxisLabelWidth = 45;
   const initialSpacing = 15;
   const endSpacing = 15;
 
@@ -41,12 +41,20 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({ points }) => {
 
   const spacing = useMemo(() => {
     if (points.length <= 1) return usableWidth;
-    // If it's a weekly view (weekday names and <= 7 points), stretch it to fit the visible width
+    
+    // Stretch to fit screen if possible to prevent bunching up on the left
+    const minSpacing = 55;
+    const requiredWidth = (points.length - 1) * minSpacing;
+    if (requiredWidth < usableWidth) {
+      return usableWidth / (points.length - 1);
+    }
+    
+    // If it's a weekly view (weekday names and <= 7 points), stretch it
     if (isWeekdayOnly) {
       return usableWidth / (points.length - 1);
     }
-    // For 14/30 days, we want spacing of 55px so it scrolls horizontally
-    return 55;
+    
+    return minSpacing;
   }, [points.length, usableWidth, isWeekdayOnly]);
 
   const chartData = useMemo(() => {
@@ -103,9 +111,7 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({ points }) => {
             hideRules={false}
             rulesColor="#F0EFFB"
             rulesThickness={1.5}
-            rulesType="dashed"
-            dashWidth={4}
-            dashGap={4}
+            rulesType="solid"
             noOfSections={4}
             hideDataPoints={true}
             curved={true}

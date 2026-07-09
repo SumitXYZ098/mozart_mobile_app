@@ -218,29 +218,21 @@ const parseDateString = (dateStr: string) => {
   return dateStr;
 };
 
-// Mapper to normalize any API data response format to DataPoint[]
 const mapApiData = (apiData: any[], period: string) => {
-  if (!apiData || apiData.length === 0) return null;
+  if (!apiData || !Array.isArray(apiData) || apiData.length === 0) return null;
 
-  return apiData.map((item: any) => {
-    let label = "";
-    if (item.label) label = item.label;
-    else if (item.month) label = item.month;
-    else if (item.day) label = parseDateString(item.day);
-    else if (item.date) {
-      label = parseDateString(item.date);
-    }
+  return apiData.filter(Boolean).map((item: any) => {
+    let label = "Unknown";
+    if (item.label) label = String(item.label);
+    else if (item.month) label = String(item.month);
+    else if (item.day) label = parseDateString(String(item.day));
+    else if (item.date) label = parseDateString(String(item.date));
 
     let value = 0;
-    if (typeof item.value === "number") value = item.value;
-    else if (typeof item.totalStreams === "number") value = item.totalStreams;
-    else if (typeof item.streams === "number") value = item.streams;
-    else if (typeof item.count === "number") value = item.count;
-    else if (typeof item.streams_count === "number") value = item.streams_count;
-    else if (item.totalStreams) value = parseFloat(item.totalStreams) || 0;
-    else if (item.value) value = parseFloat(item.value) || 0;
-    else if (item.streams) value = parseFloat(item.streams) || 0;
-    else if (item.count) value = parseFloat(item.count) || 0;
+    const v = item.value ?? item.totalStreams ?? item.streams ?? item.count ?? item.streams_count;
+    if (v !== undefined && v !== null) {
+      value = Number(v) || 0;
+    }
 
     return { label, value };
   });
@@ -254,6 +246,52 @@ const formatTotalUnitsLabel = (units: number) => {
 };
 
 
+
+const getParsedData = (res: any) => {
+  if (!res) return null;
+  let payload = res;
+  if (res.data !== undefined) payload = res.data;
+  
+  if (typeof payload === "string") {
+    try {
+      payload = JSON.parse(payload);
+    } catch (e) {
+      // Ignored
+    }
+  }
+  return payload;
+};
+
+const isResponseValid = (resData: any) => {
+  return resData !== null && resData !== undefined;
+};
+
+const extractArrayData = (parsedData: any) => {
+  if (!parsedData) return [];
+  
+  if (Array.isArray(parsedData)) return parsedData;
+  if (parsedData.data && Array.isArray(parsedData.data)) return parsedData.data;
+
+  const searchObj = (obj: any, depth = 0): any[] | null => {
+    if (!obj || typeof obj !== 'object' || depth > 4) return null;
+    if (Array.isArray(obj) && obj.length > 0) return obj;
+    
+    for (const key of Object.keys(obj)) {
+      if (Array.isArray(obj[key]) && obj[key].length > 0) return obj[key];
+    }
+    
+    for (const key of Object.keys(obj)) {
+      if (obj[key] && typeof obj[key] === 'object' && !Array.isArray(obj[key])) {
+        const found = searchObj(obj[key], depth + 1);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const result = searchObj(parsedData);
+  return result || [];
+};
 
 const AnalyticsScreen = () => {
   const navigation = useNavigation<any>();
@@ -611,26 +649,41 @@ const AnalyticsScreen = () => {
       }
 
       // Handle Streams trend data
-      if (streamsRes && streamsRes.data && streamsRes.data.success) {
-        setApiResponse(streamsRes.data);
-        setApiData(streamsRes.data.data || []);
+      const streamsData = getParsedData(streamsRes);
+      if (streamsData && isResponseValid(streamsData)) {
+        setApiResponse(streamsData);
+        setApiData(extractArrayData(streamsData));
       } else {
         setApiData(null);
         setApiResponse(null);
       }
 
       // Handle Best Performing Stores data
-      if (storesRes && storesRes.data && storesRes.data.success) {
-        setStoresApiResponse(storesRes.data);
-        setStoresApiData(storesRes.data.data || []);
+      const storesData = getParsedData(storesRes);
+      if (storesData && isResponseValid(storesData)) {
+        setStoresApiResponse(storesData);
+        const rawStores = extractArrayData(storesData);
+        const mappedStores = rawStores.filter(Boolean).map((item: any) => ({
+          channel: String(item.channel || item.platform || item.store || "Unknown"),
+          totalUnits: Number(item.totalUnits ?? item.units ?? item.streams ?? item.totalStreams ?? item.value ?? 0),
+          percentage: String(item.percentage || "0"),
+        }));
+        setStoresApiData(mappedStores);
       } else {
         setStoresApiData(null);
         setStoresApiResponse(null);
       }
 
       // Handle Best Performing Countries data
-      if (countriesRes && countriesRes.data && countriesRes.data.success) {
-        setCountriesApiData(countriesRes.data.data || []);
+      const countriesData = getParsedData(countriesRes);
+      if (countriesData && isResponseValid(countriesData)) {
+        const rawCountries = extractArrayData(countriesData);
+        const mappedCountries = rawCountries.filter(Boolean).map((item: any) => ({
+          country: String(item.country || item.countryCode || "Unknown"),
+          totalUnits: Number(item.totalUnits ?? item.units ?? item.streams ?? item.totalStreams ?? item.value ?? 0),
+          percentage: String(item.percentage || "0"),
+        }));
+        setCountriesApiData(mappedCountries);
       } else {
         setCountriesApiData(null);
       }
@@ -723,27 +776,11 @@ const AnalyticsScreen = () => {
         }),
       ]);
 
-      // Helper function to extract array content from standard wrapper object properties
-      const extractArrayData = (res: any) => {
-        if (!res || !res.data) return [];
-        const rawData = res.data.data || res.data || {};
-        if (Array.isArray(rawData)) {
-          return rawData;
-        }
-        if (rawData && typeof rawData === "object") {
-          // Look for any property that contains an array (e.g. 'platforms', 'countries', 'data')
-          const arrayKey = Object.keys(rawData).find(key => Array.isArray(rawData[key]));
-          if (arrayKey) {
-            return rawData[arrayKey];
-          }
-        }
-        return [];
-      };
-
       // 1. Process ROYALTY_TOTAL_STREAMS
-      if (streamsRes && streamsRes.data && streamsRes.data.success) {
-        setSalesStreamsResponse(streamsRes.data);
-        const dataArr = extractArrayData(streamsRes);
+      const streamsData = getParsedData(streamsRes);
+      if (streamsData && isResponseValid(streamsData)) {
+        setSalesStreamsResponse(streamsData);
+        const dataArr = extractArrayData(streamsData);
         const mapped = mapApiData(dataArr, salesPeriod);
         setSalesStreamsData(mapped || []);
       } else {
@@ -752,11 +789,12 @@ const AnalyticsScreen = () => {
       }
 
       // 2. Process ROYALTY_PLATFORM_STREAMS
-      if (storesRes && storesRes.data && storesRes.data.success) {
-        const rawStores = extractArrayData(storesRes);
-        const mappedStores: StoreChannel[] = rawStores.map((item: any) => ({
-          channel: item.channel || item.platform || item.store || "Unknown",
-          totalUnits: typeof item.totalUnits === "number" ? item.totalUnits : (parseFloat(item.streams || item.totalStreams || item.value || 0) || 0),
+      const storesData = getParsedData(storesRes);
+      if (storesData && isResponseValid(storesData)) {
+        const rawStores = extractArrayData(storesData);
+        const mappedStores: StoreChannel[] = rawStores.filter(Boolean).map((item: any) => ({
+          channel: String(item.channel || item.platform || item.store || "Unknown"),
+          totalUnits: Number(item.totalUnits ?? item.units ?? item.streams ?? item.totalStreams ?? item.value ?? 0),
           percentage: String(item.percentage || "0"),
         }));
         setSalesStoresData(mappedStores);
@@ -765,11 +803,12 @@ const AnalyticsScreen = () => {
       }
 
       // 3. Process ROYALTY_COUNTRY_STREAMS
-      if (countriesRes && countriesRes.data && countriesRes.data.success) {
-        const rawCountries = extractArrayData(countriesRes);
-        const mappedCountries: any[] = rawCountries.map((item: any) => ({
-          country: item.country || item.countryCode || "Unknown",
-          totalUnits: typeof item.totalUnits === "number" ? item.totalUnits : (parseFloat(item.streams || item.totalStreams || item.value || 0) || 0),
+      const countriesData = getParsedData(countriesRes);
+      if (countriesData && isResponseValid(countriesData)) {
+        const rawCountries = extractArrayData(countriesData);
+        const mappedCountries: any[] = rawCountries.filter(Boolean).map((item: any) => ({
+          country: String(item.country || item.countryCode || "Unknown"),
+          totalUnits: Number(item.totalUnits ?? item.units ?? item.streams ?? item.totalStreams ?? item.value ?? 0),
           percentage: String(item.percentage || "0"),
         }));
         setSalesCountriesData(mappedCountries);
@@ -925,7 +964,7 @@ const AnalyticsScreen = () => {
           <Ionicons name="chevron-back" size={24} color={Colors.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Analytics Overview</Text>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           onPress={() => navigation.navigate("Notification")}
           style={styles.notificationButton}
         >
@@ -937,7 +976,7 @@ const AnalyticsScreen = () => {
               </View>
             )}
           </View>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
 
       {/* Primary Tab Bar */}
@@ -965,9 +1004,6 @@ const AnalyticsScreen = () => {
           {activeTab === "sales" && <View style={styles.tabIndicator} />}
         </TouchableOpacity>
       </View>
-
-
-
       <ScrollView
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
@@ -1458,7 +1494,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    gap: 40,
     paddingHorizontal: 24,
     paddingVertical: 16,
   },

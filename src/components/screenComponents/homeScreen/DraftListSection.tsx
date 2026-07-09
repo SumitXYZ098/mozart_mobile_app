@@ -148,7 +148,6 @@ const DraftListSection = ({ refreshTrigger }: { refreshTrigger?: number }) => {
 };
 
 export default DraftListSection;
-
 const styles = StyleSheet.create({
   section: {
     flex: 1,
