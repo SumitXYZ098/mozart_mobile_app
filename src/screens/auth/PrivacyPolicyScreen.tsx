@@ -8,6 +8,7 @@ import {
   Animated,
   StatusBar,
   Platform,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -133,9 +134,11 @@ export default function PrivacyPolicyScreen() {
       >
         {/* Hero banner */}
         <View style={styles.heroBanner}>
-          <View style={styles.shieldIconContainer}>
-            <Ionicons name="shield-checkmark" size={48} color={Colors.primary} />
-          </View>
+          <Image
+            source={require("../../../assets/icon.png")}
+            style={styles.heroLogo}
+            resizeMode="contain"
+          />
           <Text style={styles.heroTitle}>AMOZART MUSIC INC.</Text>
           <Text style={styles.heroSubtitle}>
             We only collect the minimum amount of information necessary to provide our services and maintain our business relationship with you.
@@ -226,14 +229,11 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 3,
   },
-  shieldIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#EEF2FF",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 16,
+  heroLogo: {
+    width: 92,
+    height: 92,
+    borderRadius: 18,
+    tintColor: Colors.primary,
   },
   heroTitle: {
     fontSize: 18,

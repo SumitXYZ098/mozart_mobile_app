@@ -238,7 +238,32 @@ const mapApiData = (apiData: any[], period: string) => {
   });
 };
 
+const padForOneMonth = (data: any[]) => {
+  const latestDate = new Date();
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const padded = [];
+  
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(latestDate.getFullYear(), latestDate.getMonth() - i, 1);
+    const label = `${months[d.getMonth()]} ${d.getFullYear()}`;
+    
+    const existing = data?.find((item: any) => 
+      item.label.includes(months[d.getMonth()]) && item.label.includes(String(d.getFullYear()))
+    );
+    
+    if (existing) {
+      padded.push({ ...existing, label });
+    } else {
+      padded.push({ label, value: 0 });
+    }
+  }
+  return padded;
+};
+
 const formatTotalUnitsLabel = (units: number) => {
+  if (units >= 1000000) {
+    return `${(units / 1000000).toFixed(units % 1000000 === 0 ? 0 : 1)}M`;
+  }
   if (units >= 1000) {
     return `${(units / 1000).toFixed(1)}K`;
   }
@@ -251,7 +276,7 @@ const getParsedData = (res: any) => {
   if (!res) return null;
   let payload = res;
   if (res.data !== undefined) payload = res.data;
-  
+
   if (typeof payload === "string") {
     try {
       payload = JSON.parse(payload);
@@ -268,18 +293,21 @@ const isResponseValid = (resData: any) => {
 
 const extractArrayData = (parsedData: any) => {
   if (!parsedData) return [];
-  
+
   if (Array.isArray(parsedData)) return parsedData;
-  if (parsedData.data && Array.isArray(parsedData.data)) return parsedData.data;
+  if (parsedData.items && Array.isArray(parsedData.items)) return parsedData.items;
+  if (parsedData.platforms && Array.isArray(parsedData.platforms)) return parsedData.platforms;
+  if (parsedData.stores && Array.isArray(parsedData.stores)) return parsedData.stores;
+  if (parsedData.countries && Array.isArray(parsedData.countries)) return parsedData.countries;
 
   const searchObj = (obj: any, depth = 0): any[] | null => {
     if (!obj || typeof obj !== 'object' || depth > 4) return null;
     if (Array.isArray(obj) && obj.length > 0) return obj;
-    
+
     for (const key of Object.keys(obj)) {
       if (Array.isArray(obj[key]) && obj[key].length > 0) return obj[key];
     }
-    
+
     for (const key of Object.keys(obj)) {
       if (obj[key] && typeof obj[key] === 'object' && !Array.isArray(obj[key])) {
         const found = searchObj(obj[key], depth + 1);
@@ -781,10 +809,20 @@ const AnalyticsScreen = () => {
       if (streamsData && isResponseValid(streamsData)) {
         setSalesStreamsResponse(streamsData);
         const dataArr = extractArrayData(streamsData);
-        const mapped = mapApiData(dataArr, salesPeriod);
-        setSalesStreamsData(mapped || []);
+        const mapped = mapApiData(dataArr, salesPeriod) || [];
+        if (salesPeriod === "1month") {
+          setSalesStreamsData(padForOneMonth(mapped));
+        } else {
+          // Reverse because API sends newest first (e.g. Mar, Feb, Jan) 
+          // and chart needs oldest first left-to-right (Jan, Feb, Mar)
+          setSalesStreamsData(mapped.reverse());
+        }
       } else {
-        setSalesStreamsData([]);
+        if (salesPeriod === "1month") {
+          setSalesStreamsData(padForOneMonth([]));
+        } else {
+          setSalesStreamsData([]);
+        }
         setSalesStreamsResponse(null);
       }
 
@@ -793,7 +831,7 @@ const AnalyticsScreen = () => {
       if (storesData && isResponseValid(storesData)) {
         const rawStores = extractArrayData(storesData);
         const mappedStores: StoreChannel[] = rawStores.filter(Boolean).map((item: any) => ({
-          channel: String(item.channel || item.platform || item.store || "Unknown"),
+          channel: String(item.channel || item.platform || item.store || item.name || item.storeName || "Unknown"),
           totalUnits: Number(item.totalUnits ?? item.units ?? item.streams ?? item.totalStreams ?? item.value ?? 0),
           percentage: String(item.percentage || "0"),
         }));
@@ -807,7 +845,7 @@ const AnalyticsScreen = () => {
       if (countriesData && isResponseValid(countriesData)) {
         const rawCountries = extractArrayData(countriesData);
         const mappedCountries: any[] = rawCountries.filter(Boolean).map((item: any) => ({
-          country: String(item.country || item.countryCode || "Unknown"),
+          country: String(item.country || item.countryCode || item.name || "Unknown"),
           totalUnits: Number(item.totalUnits ?? item.units ?? item.streams ?? item.totalStreams ?? item.value ?? 0),
           percentage: String(item.percentage || "0"),
         }));
@@ -916,12 +954,15 @@ const AnalyticsScreen = () => {
 
   // Compile active Sales Report total streams and formatted string
   const salesTotalStreamsFormatted = useMemo(() => {
+    if (salesStreamsResponse?.totalStreams) {
+      return formatTotalUnitsLabel(Number(salesStreamsResponse.totalStreams));
+    }
     if (salesStreamsData && salesStreamsData.length > 0) {
       const sum = salesStreamsData.reduce((total, dp) => total + dp.value, 0);
-      return sum.toLocaleString();
+      return formatTotalUnitsLabel(sum);
     }
     return "0";
-  }, [salesStreamsData]);
+  }, [salesStreamsData, salesStreamsResponse]);
 
   const getPeriodLabel = () => {
     switch (selectedPeriod) {

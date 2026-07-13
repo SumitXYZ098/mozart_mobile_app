@@ -4,6 +4,7 @@ import { Colors } from "@/theme/colors";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useIsFocused } from "@react-navigation/native";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { toast } from "@/stores/useToastStore";
 import React from "react";
 import {
   FlatList,
@@ -102,9 +103,33 @@ console.log('Endpoint:', ENDPOINTS.NOTIFICATIONS);
   const handleMarkAsRead = async (item: any) => {
     if (item.read) return;  
     if (!user?.token) return;
+
+    // Optimistic update for snappier UI
+    setNotifications(prev =>
+      prev.map(n => {
+        const nId = n.id || n._id;
+        if (nId === item.id) {
+          if (n.attributes) {
+            return {
+              ...n,
+              attributes: {
+                ...n.attributes,
+                read: true,
+                is_read: true,
+                isRead: true,
+                status: 'read'
+              }
+            };
+          }
+          return { ...n, read: true, is_read: true, isRead: true, status: 'read' };
+        }
+        return n;
+      })
+    );
+
     try {
       await axios.put(
-        ENDPOINTS.MARK_NOTIFICATION_AS_READ(item.id),
+        ENDPOINTS.Mark_notification_As_Read(item.id),
         {},
         {
           headers: {
@@ -112,29 +137,58 @@ console.log('Endpoint:', ENDPOINTS.NOTIFICATIONS);
           },
         }
       );
-      setNotifications(prev =>
-        prev.map(n => {
-          const nId = n.id || n._id;
-          if (nId === item.id) {
-            if (n.attributes) {
-              return {
-                ...n,
-                attributes: {
-                  ...n.attributes,
-                  read: true,
-                  is_read: true,
-                  isRead: true,
-                  status: 'read'
-                }
-              };
-            }
-            return { ...n, read: true, is_read: true, isRead: true, status: 'read' };
-          }
-          return n;
-        })
-      );
     } catch (e) {
       console.error('Mark read error', e);
+      // Revert could be implemented here if needed, but often we just log it.
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    if (!user?.token) return;
+    
+    // Find unread notifications from parsed list
+    const unreadNotifications = parsedNotifications.filter((n: any) => !n.read);
+    if (unreadNotifications.length === 0) {
+      toast.info("All notifications are already read");
+      return;
+    }
+
+    // Optimistic UI update
+    setNotifications(prev =>
+      prev.map(n => {
+        if (n.attributes) {
+          return {
+            ...n,
+            attributes: {
+              ...n.attributes,
+              read: true,
+              is_read: true,
+              isRead: true,
+              status: 'read'
+            }
+          };
+        }
+        return { ...n, read: true, is_read: true, isRead: true, status: 'read' };
+      })
+    );
+
+    // Call API for each unread notification
+    try {
+      await Promise.all(
+        unreadNotifications.map((item: any) =>
+          axios.put(
+            ENDPOINTS.Mark_notification_As_Read(item.id),
+            {},
+            {
+              headers: { Authorization: `Bearer ${user.token}` },
+            }
+          )
+        )
+      );
+      toast.success("All notifications marked as read!");
+    } catch (e) {
+      console.error('Mark all read error', e);
+      toast.error("Failed to mark notifications as read");
     }
   };
 
@@ -185,8 +239,12 @@ console.log('Endpoint:', ENDPOINTS.NOTIFICATIONS);
         </View>
         <View style={styles.contentContainor}>
           <View style={styles.titleRow}>
-            <Text style={styles.contentTitle}>{item.title}</Text>
-            {!item.read && <View style={styles.unreadDot} />}
+            <Text style={styles.contentTitle} numberOfLines={1}>{item.title}</Text>
+            {!item.read ? (
+              <View style={styles.unreadDot} />
+            ) : (
+              <Ionicons name="checkmark-done" size={16} color={Colors.primary} />
+            )}
           </View>
           <Text style={styles.contentSubTitle} numberOfLines={3} ellipsizeMode="tail">
             {item.message}
@@ -219,7 +277,9 @@ console.log('Endpoint:', ENDPOINTS.NOTIFICATIONS);
           <Ionicons name="chevron-back" size={24} color={Colors.primary} />
         </TouchableOpacity>
         <Text style={styles.title}>Notification</Text>
-        <View style={styles.placeholder} />
+        <TouchableOpacity onPress={handleMarkAllAsRead} style={styles.markAllBtn}>
+          <Text style={styles.markAllText}>Mark all read</Text>
+        </TouchableOpacity>
       </View>
 
       {loading ? (
@@ -275,6 +335,15 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     width: 40,
+  },
+  markAllBtn: {
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+  },
+  markAllText: {
+    fontSize: 14,
+    color: Colors.primary,
+    fontFamily: "PlusJakartaSans_600SemiBold",
   },
   listContainer: {
     paddingBottom: 20,

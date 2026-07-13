@@ -120,7 +120,7 @@ export const ENDPOINTS = {
   ARTIST_ADDON: `${BASE_URL}/api/artist-addon`,
   MY_PAYMENT_LOGS: `${BASE_URL}/api/my-payment-logs`,
   NOTIFICATIONS: `${BASE_URL}/api/notifications`,
-  MARK_NOTIFICATION_AS_READ: (id: number | string) => `${BASE_URL}/api/notifications/${id}/read`,
+  Mark_notification_As_Read: (id: number | string) => `${BASE_URL}/api/notifications/${id}/read`,
   CHANGE_PASSWORD: `${BASE_URL}/api/change-password`,
   TOTAL_STREAMS: `${BASE_URL}/api/daily-trends/streams-overview`,
   TOTAL_STREAM_PER_PLATFORM: `${BASE_URL}/api/daily-trends/best-performing-stores`,

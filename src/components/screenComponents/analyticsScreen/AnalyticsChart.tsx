@@ -41,19 +41,19 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({ points }) => {
 
   const spacing = useMemo(() => {
     if (points.length <= 1) return usableWidth;
-    
+
     // Stretch to fit screen if possible to prevent bunching up on the left
     const minSpacing = 55;
     const requiredWidth = (points.length - 1) * minSpacing;
     if (requiredWidth < usableWidth) {
       return usableWidth / (points.length - 1);
     }
-    
+
     // If it's a weekly view (weekday names and <= 7 points), stretch it
     if (isWeekdayOnly) {
       return usableWidth / (points.length - 1);
     }
-    
+
     return minSpacing;
   }, [points.length, usableWidth, isWeekdayOnly]);
 
@@ -68,6 +68,9 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({ points }) => {
   const formatYLabel = (valueStr: string) => {
     const val = parseFloat(valueStr);
     if (isNaN(val)) return valueStr;
+    if (val >= 1000000) {
+      return `${(val / 1000000).toFixed(val % 1000000 === 0 ? 0 : 1)}M`;
+    }
     if (val >= 1000) {
       return `${(val / 1000).toFixed(val % 1000 === 0 ? 0 : 1)}K`;
     }
