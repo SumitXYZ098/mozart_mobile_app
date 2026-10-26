@@ -1,3 +1,4 @@
+import "./src/shims/interaction-manager";
 import { registerRootComponent } from 'expo';
 
 import App from './App';

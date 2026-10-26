@@ -17,16 +17,16 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Audio } from "expo-av";
+import { createAudioPlayer, setAudioModeAsync, AudioPlayer } from "expo-audio";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const MyTrackScreen = (routes: any) => {
   const navigation = useNavigation<any>();
   const pubId = routes?.route.params?.routeId;
   const { currentTrack, loading } = usePublishTrackById(pubId);
-  const shimmerAnimation = new Animated.Value(0);
+  const shimmerAnimation = useRef(new Animated.Value(0)).current;
 
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const [sound, setSound] = useState<AudioPlayer | null>(null);
   const [playingTrackId, setPlayingTrackId] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [loadingTrackId, setLoadingTrackId] = useState<number | null>(null);
@@ -35,7 +35,7 @@ const MyTrackScreen = (routes: any) => {
   const [progressBarWidth, setProgressBarWidth] = useState(0);
 
   const isScrubbingRef = useRef(false);
-  const soundRef = useRef<Audio.Sound | null>(null);
+  const soundRef = useRef<AudioPlayer | null>(null);
   const playingTrackIdRef = useRef<number | null>(null);
   const loadingTrackIdRef = useRef<number | null>(null);
   const progressBarLeftRef = useRef(0);
@@ -57,32 +57,7 @@ const MyTrackScreen = (routes: any) => {
     return null;
   };
 
-  const createPlaybackStatusUpdateHandler = (trackId: number) => (status: any) => {
-    // Only handle status updates if this track is still the active playing track
-    if (playingTrackIdRef.current !== trackId) return;
-
-    if (status.isLoaded) {
-      if (!isScrubbingRef.current) {
-        setPlaybackPosition(status.positionMillis || 0);
-      }
-      setPlaybackDuration(status.durationMillis || 0);
-      setIsPlaying(status.isPlaying);
-      if (status.didJustFinish) {
-        setIsPlaying(false);
-        setPlaybackPosition(0);
-        if (soundRef.current) {
-          soundRef.current.unloadAsync().catch((err) => console.log("Error unloading on finish", err));
-          soundRef.current = null;
-        }
-        setSound(null);
-        updatePlayingTrack(null);
-      }
-    } else if (status.error) {
-      console.error(`Playback error: ${status.error}`);
-    }
-  };
-
-  const handleProgressTouchStart = async (e: any) => {
+  const handleProgressTouchStart = (e: any) => {
     const { pageX, locationX } = e.nativeEvent;
     progressBarLeftRef.current = pageX - locationX;
     isScrubbingRef.current = true;
@@ -92,11 +67,9 @@ const MyTrackScreen = (routes: any) => {
     const percentage = Math.max(0, Math.min(1, locationX / progressBarWidth));
     const seekMillis = percentage * playbackDuration;
     setPlaybackPosition(seekMillis);
-    try {
-      await activeSound.setPositionAsync(seekMillis);
-    } catch (err) {
+    activeSound.seekTo(seekMillis / 1000).catch((err) => {
       console.log("Error seeking on touch start", err);
-    }
+    });
   };
 
   const handleProgressTouchMove = (e: any) => {
@@ -108,7 +81,7 @@ const MyTrackScreen = (routes: any) => {
     setPlaybackPosition(seekMillis);
   };
 
-  const handleProgressTouchEnd = async (e: any) => {
+  const handleProgressTouchEnd = (e: any) => {
     const activeSound = soundRef.current;
     if (!activeSound || playbackDuration <= 0 || progressBarWidth <= 0) return;
     const { pageX } = e.nativeEvent;
@@ -118,11 +91,9 @@ const MyTrackScreen = (routes: any) => {
     
     isScrubbingRef.current = false;
     setPlaybackPosition(seekMillis);
-    try {
-      await activeSound.setPositionAsync(seekMillis);
-    } catch (err) {
+    activeSound.seekTo(seekMillis / 1000).catch((err) => {
       console.log("Error seeking on touch end", err);
-    }
+    });
   };
 
   const playSound = async (trackId: number, uri: string) => {
@@ -131,39 +102,61 @@ const MyTrackScreen = (routes: any) => {
     setIsPlaying(false);
 
     try {
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-        playsInSilentModeIOS: true,
-        shouldDuckAndroid: true,
-        playThroughEarpieceAndroid: false,
-        staysActiveInBackground: true,
+      await setAudioModeAsync({
+        playsInSilentMode: true,
+        shouldPlayInBackground: true,
       });
 
       if (soundRef.current) {
         try {
-          await soundRef.current.stopAsync();
-          await soundRef.current.unloadAsync();
+          soundRef.current.pause();
+          soundRef.current.remove();
         } catch (err) {
-          console.log("Error unloading previous sound:", err);
+          console.log("Error removing previous sound:", err);
         }
         soundRef.current = null;
         setSound(null);
       }
 
-      const { sound: newSound } = await Audio.Sound.createAsync(
-        { uri },
-        { shouldPlay: true },
-        createPlaybackStatusUpdateHandler(trackId)
-      );
+      const newPlayer = createAudioPlayer(uri, { updateInterval: 250 });
 
-      // Verify if the user changed the track or stopped playback during async load
+      (newPlayer as any).addListener("playbackStatusUpdate", (status: any) => {
+        if (playingTrackIdRef.current !== trackId) return;
+
+        if (status.isLoaded) {
+          if (!isScrubbingRef.current) {
+            setPlaybackPosition((status.currentTime || 0) * 1000);
+          }
+          if (status.duration) {
+            setPlaybackDuration(status.duration * 1000);
+          }
+          setIsPlaying(status.playing);
+          if (status.didJustFinish) {
+            setIsPlaying(false);
+            setPlaybackPosition(0);
+            try {
+              newPlayer.remove();
+            } catch (err) {
+              console.log("Error removing player on finish", err);
+            }
+            soundRef.current = null;
+            setSound(null);
+            updatePlayingTrack(null);
+          }
+        }
+      });
+
+      // Verify if the user changed the track or stopped playback during async setup
       if (playingTrackIdRef.current !== trackId) {
-        await newSound.unloadAsync();
+        try {
+          newPlayer.remove();
+        } catch {}
         return;
       }
 
-      setSound(newSound);
-      soundRef.current = newSound;
+      newPlayer.play();
+      setSound(newPlayer);
+      soundRef.current = newPlayer;
       setIsPlaying(true);
     } catch (error) {
       console.error("Error playing sound:", error);
@@ -183,10 +176,10 @@ const MyTrackScreen = (routes: any) => {
     if (!activeSound) return;
     try {
       if (isPlaying) {
-        await activeSound.pauseAsync();
+        activeSound.pause();
         setIsPlaying(false);
       } else {
-        await activeSound.playAsync();
+        activeSound.play();
         setIsPlaying(true);
       }
     } catch (error) {
@@ -206,12 +199,13 @@ const MyTrackScreen = (routes: any) => {
   useEffect(() => {
     const unsubscribe = navigation.addListener("blur", () => {
       if (soundRef.current) {
-        soundRef.current.stopAsync()
-          .then(() => {
-            soundRef.current?.unloadAsync();
-            soundRef.current = null;
-          })
-          .catch((err) => console.log("Error stopping sound on blur", err));
+        try {
+          soundRef.current.pause();
+          soundRef.current.remove();
+        } catch (err) {
+          console.log("Error stopping sound on blur", err);
+        }
+        soundRef.current = null;
         setSound(null);
         setIsPlaying(false);
         updatePlayingTrack(null);
@@ -225,7 +219,12 @@ const MyTrackScreen = (routes: any) => {
     return () => {
       unsubscribe();
       if (soundRef.current) {
-        soundRef.current.unloadAsync().catch((err) => console.log("Error unloading sound on unmount", err));
+        try {
+          soundRef.current.pause();
+          soundRef.current.remove();
+        } catch (err) {
+          console.log("Error unloading sound on unmount", err);
+        }
         soundRef.current = null;
       }
       playingTrackIdRef.current = null;
@@ -615,7 +614,11 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   playOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: "rgba(0, 0, 0, 0.4)",
     justifyContent: "center",
     alignItems: "center",

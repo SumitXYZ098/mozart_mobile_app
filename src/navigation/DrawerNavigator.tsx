@@ -44,6 +44,7 @@ export default function DrawerNavigator() {
       screenOptions={{
         headerShown: false,
         drawerType: "back",
+        swipeEnabled: true,
         overlayColor: "transparent",
         drawerStyle: {
           width: 280,

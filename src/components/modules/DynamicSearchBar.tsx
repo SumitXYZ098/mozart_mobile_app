@@ -11,8 +11,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   Keyboard,
-  NativeSyntheticEvent,
-  TextInputSubmitEditingEventData,
+  type TextInputInstance,
+  type TextInputSubmitEditingEvent,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { debounce } from "lodash";
@@ -39,7 +39,7 @@ const DynamicSearchBar: React.FC<DynamicSearchBarProps> = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const widthAnim = useRef(new Animated.Value(widthCollapsed)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<TextInputInstance>(null);
 
   // 🕐 Debounce handler
   const debouncedSearch = useMemo(
@@ -48,11 +48,18 @@ const DynamicSearchBar: React.FC<DynamicSearchBarProps> = ({
         if (onSearch) onSearch(term);
         else console.log("Searching for:", term);
       }, debounceTime),
-    [onSearch]
+    [onSearch, debounceTime]
   );
+
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
 
   // 🧠 Expand/collapse animations
   const expandSearch = () => {
+    setIsExpanded(true);
     Animated.parallel([
       Animated.timing(widthAnim, {
         toValue: widthExpanded,
@@ -65,13 +72,13 @@ const DynamicSearchBar: React.FC<DynamicSearchBarProps> = ({
         useNativeDriver: true,
       }),
     ]).start(() => {
-      setIsExpanded(true);
       inputRef.current?.focus();
     });
   };
 
   const collapseSearch = () => {
     Keyboard.dismiss();
+    debouncedSearch.cancel();
     Animated.parallel([
       Animated.timing(widthAnim, {
         toValue: widthCollapsed,
@@ -86,6 +93,7 @@ const DynamicSearchBar: React.FC<DynamicSearchBarProps> = ({
     ]).start(() => {
       setIsExpanded(false);
       setSearchTerm("");
+      if (onSearch) onSearch("");
     });
   };
 
@@ -99,12 +107,18 @@ const DynamicSearchBar: React.FC<DynamicSearchBarProps> = ({
   );
 
   // 🔎 Manual submit (Enter key or icon click)
-  const handleSubmit = (
-    e?: NativeSyntheticEvent<TextInputSubmitEditingEventData>
-  ) => {
+  const handleSubmit = (e?: TextInputSubmitEditingEvent) => {
     const term = e ? e.nativeEvent.text : searchTerm;
+    debouncedSearch.cancel();
     if (onSearch) onSearch(term.trim());
     else console.log("Searching for:", term.trim());
+  };
+
+  const handleClear = () => {
+    setSearchTerm("");
+    debouncedSearch.cancel();
+    if (onSearch) onSearch("");
+    inputRef.current?.focus();
   };
 
   return (
@@ -113,9 +127,11 @@ const DynamicSearchBar: React.FC<DynamicSearchBarProps> = ({
       <TouchableOpacity
         style={styles.iconButton}
         onPress={() => {
-          if (isExpanded === false) expandSearch();
-          else if (isExpanded === true) collapseSearch();
-          else handleSubmit();
+          if (!isExpanded) {
+            expandSearch();
+          } else {
+            handleSubmit();
+          }
         }}
       >
         <MaterialCommunityIcons name="magnify" size={20} color={Colors.gray} />
@@ -139,7 +155,7 @@ const DynamicSearchBar: React.FC<DynamicSearchBarProps> = ({
 
       {/* ❌ Clear button */}
       {isExpanded && searchTerm.length > 0 && (
-        <TouchableOpacity onPress={collapseSearch} style={styles.clearButton}>
+        <TouchableOpacity onPress={handleClear} style={styles.clearButton}>
           <MaterialCommunityIcons name="close" size={18} color={Colors.gray} />
         </TouchableOpacity>
       )}

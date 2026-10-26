@@ -1,4 +1,7 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import BaseBottomSheet, {
+  BaseBottomSheetRef,
+} from "@/components/modules/baseBottomSheet/BaseBottomSheet";
 import {
   View,
   Text,
@@ -146,8 +149,8 @@ export default function WalletScreen() {
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Modal state
-  const [payoutModalVisible, setPayoutModalVisible] = useState(false);
+  // Bottom sheet & modal state
+  const payoutSheetRef = useRef<BaseBottomSheetRef>(null);
   const [selectedBankCardId, setSelectedBankCardId] = useState<string | null>(null);
   const [bankDropdownOpen, setBankDropdownOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -420,7 +423,7 @@ export default function WalletScreen() {
       await apiClient.post(ENDPOINTS.PAYOUT_REQUESTS, {
         data: payoutPayload,
       });
-      setPayoutModalVisible(false);
+      payoutSheetRef.current?.dismiss();
       setPayoutAmount("");
       Alert.alert("Success", "Your payout request has been submitted!");
       await Promise.all([fetchBalance(), fetchHistory()]);
@@ -607,7 +610,7 @@ export default function WalletScreen() {
             onPress={() => {
               setSelectedBankCardId(bankCards[0]?.id || null);
               setPayoutAmount(availableBalance > 0 ? availableBalance.toString() : "");
-              setPayoutModalVisible(true);
+              payoutSheetRef.current?.expand();
             }}
           >
             <Text style={styles.requestPayoutBtnText}>Request Payout</Text>
@@ -893,153 +896,142 @@ export default function WalletScreen() {
         </View>
       </Modal>
 
-      {/* ── Payout Request Modal ── */}
-      <Modal
-        visible={payoutModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setPayoutModalVisible(false)}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-          style={{ flex: 1 }}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContainer}>
-              <ScrollView
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
-                contentContainerStyle={{ flexGrow: 1 }}
-              >
-                {/* Modal Header */}
-                <Text style={styles.modalTitle}>Withdraw Request</Text>
+      {/* ── Payout Request Bottom Sheet ── */}
+      <BaseBottomSheet ref={payoutSheetRef}>
+        {/* Header Row */}
+        <View style={styles.sheetHeaderRow}>
+          <Text style={styles.sheetTitle}>Withdraw Request</Text>
+          <TouchableOpacity
+            style={styles.sheetCloseBtn}
+            onPress={() => payoutSheetRef.current?.dismiss()}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="close" size={20} color="#6B7280" />
+          </TouchableOpacity>
+        </View>
 
-                {/* Available Balance display */}
-                <View style={styles.modalBalanceBox}>
-                  <Text style={styles.modalBalanceLabel}>Available Balance</Text>
-                  <Text style={styles.modalBalanceAmount}>
-                    {formatCurrency(availableBalance)}
-                  </Text>
-                  <Text style={styles.modalMinimum}>Minimum Payout: $50.00</Text>
-                </View>
+        {/* Available Balance display */}
+        <View style={styles.modalBalanceBox}>
+          <Text style={styles.modalBalanceLabel}>Available Balance</Text>
+          <Text style={styles.modalBalanceAmount}>
+            {formatCurrency(availableBalance)}
+          </Text>
+          <Text style={styles.modalMinimum}>Minimum Payout: $50.00</Text>
+        </View>
 
-                {/* Bank Account selector */}
-                <Text style={styles.modalFieldLabel}>Bank Account</Text>
+        {/* Bank Account selector */}
+        <Text style={styles.modalFieldLabel}>Bank Account</Text>
 
-                {bankCards.length === 0 ? (
+        {bankCards.length === 0 ? (
+          <TouchableOpacity
+            style={styles.noBankBtn}
+            onPress={() => {
+              payoutSheetRef.current?.dismiss();
+              navigation.navigate("ProfileTab", {
+                screen: "PayoutDetails",
+              });
+            }}
+          >
+            <Ionicons name="add-circle-outline" size={18} color={Colors.primary} />
+            <Text style={styles.noBankBtnText}>Add a Payout Bank Account first</Text>
+          </TouchableOpacity>
+        ) : (
+          <>
+            <TouchableOpacity
+              style={styles.dropdownTrigger}
+              onPress={() => setBankDropdownOpen((v) => !v)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.dropdownTriggerText}>
+                {selectedBankCardId
+                  ? (() => {
+                    const c = bankCards.find((b) => b.id === selectedBankCardId);
+                    if (!c) return "Select Bank Account";
+                    const cleanNum = c.cardNumber.replace(/\s/g, "");
+                    const last4 = cleanNum.slice(-4);
+                    return `${c.bankName || c.cardHolder} (****${last4})`;
+                  })()
+                  : "Select Bank Account"}
+              </Text>
+              <Ionicons
+                name={bankDropdownOpen ? "chevron-up" : "chevron-down"}
+                size={18}
+                color="#6B7280"
+              />
+            </TouchableOpacity>
+
+            {bankDropdownOpen && (
+              <View style={styles.dropdownList}>
+                {bankCards.map((c) => (
                   <TouchableOpacity
-                    style={styles.noBankBtn}
+                    key={c.id}
+                    style={[
+                      styles.dropdownItem,
+                      selectedBankCardId === c.id && styles.dropdownItemActive,
+                    ]}
                     onPress={() => {
-                      setPayoutModalVisible(false);
-                      navigation.navigate("ProfileTab", {
-                        screen: "PayoutDetails",
-                      });
+                      setSelectedBankCardId(c.id);
+                      setBankDropdownOpen(false);
                     }}
                   >
-                    <Ionicons name="add-circle-outline" size={18} color={Colors.primary} />
-                    <Text style={styles.noBankBtnText}>Add a Payout Bank Account first</Text>
-                  </TouchableOpacity>
-                ) : (
-                  <>
-                    <TouchableOpacity
-                      style={styles.dropdownTrigger}
-                      onPress={() => setBankDropdownOpen((v) => !v)}
-                      activeOpacity={0.8}
+                    <Text
+                      style={[
+                        styles.dropdownItemText,
+                        selectedBankCardId === c.id && styles.dropdownItemTextActive,
+                      ]}
                     >
-                      <Text style={styles.dropdownTriggerText}>
-                        {selectedBankCardId
-                          ? (() => {
-                            const c = bankCards.find((b) => b.id === selectedBankCardId);
-                            if (!c) return "Select Bank Account";
-                            const cleanNum = c.cardNumber.replace(/\s/g, "");
-                            const last4 = cleanNum.slice(-4);
-                            return `${c.bankName || c.cardHolder} (****${last4})`;
-                          })()
-                          : "Select Bank Account"}
-                      </Text>
-                      <Ionicons
-                        name={bankDropdownOpen ? "chevron-up" : "chevron-down"}
-                        size={18}
-                        color="#6B7280"
-                      />
-                    </TouchableOpacity>
-
-                    {bankDropdownOpen && (
-                      <View style={styles.dropdownList}>
-                        {bankCards.map((c) => (
-                          <TouchableOpacity
-                            key={c.id}
-                            style={[
-                              styles.dropdownItem,
-                              selectedBankCardId === c.id && styles.dropdownItemActive,
-                            ]}
-                            onPress={() => {
-                              setSelectedBankCardId(c.id);
-                              setBankDropdownOpen(false);
-                            }}
-                          >
-                            <Text
-                              style={[
-                                styles.dropdownItemText,
-                                selectedBankCardId === c.id && styles.dropdownItemTextActive,
-                              ]}
-                            >
-                              {(() => {
-                                const cleanNum = c.cardNumber.replace(/\s/g, "");
-                                const last4 = cleanNum.slice(-4);
-                                return `${c.bankName || c.cardHolder} (****${last4})`;
-                              })()}
-                            </Text>
-                          </TouchableOpacity>
-                        ))}
-                      </View>
-                    )}
-                  </>
-                )}
-
-                {/* Amount input */}
-                <Text style={[styles.modalFieldLabel, { marginTop: 16 }]}>Amount</Text>
-                <TextInput
-                  style={styles.amountInput}
-                  placeholder="Enter payout amount"
-                  placeholderTextColor="#A0AEC0"
-                  keyboardType="numeric"
-                  value={payoutAmount}
-                  onChangeText={setPayoutAmount}
-                />
-
-                {/* Action Buttons */}
-                <View style={styles.modalActions}>
-                  <TouchableOpacity
-                    style={styles.cancelBtn}
-                    onPress={() => setPayoutModalVisible(false)}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.cancelBtnText}>Cancel</Text>
+                      {(() => {
+                        const cleanNum = c.cardNumber.replace(/\s/g, "");
+                        const last4 = cleanNum.slice(-4);
+                        return `${c.bankName || c.cardHolder} (****${last4})`;
+                      })()}
+                    </Text>
                   </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </>
+        )}
 
-                  <TouchableOpacity
-                    style={[
-                      styles.submitBtn,
-                      (submitting || bankCards.length === 0 || availableBalance < 50) &&
-                      styles.submitBtnDisabled,
-                    ]}
-                    onPress={handleSubmitPayout}
-                    activeOpacity={0.85}
-                    disabled={submitting || bankCards.length === 0 || availableBalance < 50}
-                  >
-                    {submitting ? (
-                      <ActivityIndicator color="#fff" size="small" />
-                    ) : (
-                      <Text style={styles.submitBtnText}>Submit Request</Text>
-                    )}
-                  </TouchableOpacity>
-                </View>
-              </ScrollView>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+        {/* Amount input */}
+        <Text style={[styles.modalFieldLabel, { marginTop: 16 }]}>Amount</Text>
+        <TextInput
+          style={styles.amountInput}
+          placeholder="Enter payout amount"
+          placeholderTextColor="#A0AEC0"
+          keyboardType="numeric"
+          value={payoutAmount}
+          onChangeText={setPayoutAmount}
+        />
+
+        {/* Action Buttons */}
+        <View style={styles.modalActions}>
+          <TouchableOpacity
+            style={styles.cancelBtn}
+            onPress={() => payoutSheetRef.current?.dismiss()}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.cancelBtnText}>Cancel</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.submitBtn,
+              (submitting || bankCards.length === 0 || availableBalance < 50) &&
+              styles.submitBtnDisabled,
+            ]}
+            onPress={handleSubmitPayout}
+            activeOpacity={0.85}
+            disabled={submitting || bankCards.length === 0 || availableBalance < 50}
+          >
+            {submitting ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text style={styles.submitBtnText}>Submit Request</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </BaseBottomSheet>
     </SafeAreaView>
   );
 }
@@ -1477,10 +1469,28 @@ const styles = StyleSheet.create({
     backgroundColor: "#F9FAFB",
     marginTop: 8,
   },
+  sheetHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+  sheetTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#1A1A1A",
+    fontFamily: "PlusJakartaSans_700Bold",
+  },
+  sheetCloseBtn: {
+    padding: 6,
+    backgroundColor: "#F3F4F6",
+    borderRadius: 20,
+  },
   modalActions: {
     flexDirection: "row",
     gap: 12,
     marginTop: 24,
+    marginBottom: 36,
   },
   cancelBtn: {
     flex: 1,
