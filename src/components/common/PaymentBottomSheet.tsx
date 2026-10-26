@@ -181,7 +181,7 @@ const PaymentBottomSheet = forwardRef<PaymentBottomSheetRef, {}>(
 
         if (verifySessionId && user?.token) {
           try {
-            if (paymentType == "priority") {
+            if (paymentType === "priority") {
               console.log("Verifying priority payment:", verifySessionId);
               await verifyPriorityPayment(verifySessionId, user.token);
             } else {
