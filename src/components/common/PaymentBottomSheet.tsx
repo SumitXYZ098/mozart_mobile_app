@@ -181,7 +181,7 @@ const PaymentBottomSheet = forwardRef<PaymentBottomSheetRef, {}>(
 
         if (verifySessionId && user?.token) {
           try {
-            if (paymentType === "priority") {
+            if (paymentType == "priority") {
               console.log("Verifying priority payment:", verifySessionId);
               await verifyPriorityPayment(verifySessionId, user.token);
             } else {
@@ -219,7 +219,9 @@ const PaymentBottomSheet = forwardRef<PaymentBottomSheetRef, {}>(
     };
 
     const checkIsRedirect = (url: string) => {
-      if (!url) return { isSuccess: false, isCancel: false };
+  if (!url || url === "about:blank" || url.startsWith("blob:")) {
+    return { isSuccess: false, isCancel: false };
+  }
 
       const lowerUrl = url.toLowerCase();
       

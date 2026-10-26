@@ -245,15 +245,8 @@ export default function ReleaseCreditsSection() {
                       value={currentValue}
                       onChangeText={(text) => {
                         setArtistQueries((prev) => ({ ...prev, [index]: text }));
-                        setVisibleSuggestions({
-                          [index]: true,
-                        });
+                       setVisibleSuggestions((prev) => ({ ...prev, [index]: true }));
                         onChange(text);
-                      }}
-                      onFocus={() => {
-                        setVisibleSuggestions({
-                          [index]: true,
-                        });
                       }}
                       onBlur={onBlur}
                       style={styles.textInput}
