@@ -12,7 +12,7 @@ export default function AuthLayout({ children, withBackground = true }: Props) {
   return (
     <KeyboardAwareScrollView
       bottomOffset={62}
-      contentContainerStyle={styles.container}
+      contentContainerStyle={styles.contentContainer}
       keyboardShouldPersistTaps="handled"
     >
       <View style={styles.container}>
@@ -34,12 +34,17 @@ export default function AuthLayout({ children, withBackground = true }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  contentContainer: {
+    flexGrow: 1,
+  },
+  container: {
+    flex: 1,
+  },
   background: {
     flex: 1,
     justifyContent: "center",
     width: "100%",
-    height: "100%",
+    minHeight: "100%",
   },
   overlay: {
     flex: 1,

@@ -143,7 +143,7 @@ export default function LoginScreen({ navigation }: Props) {
           style={[styles.container, { opacity: fadeAnim }]}
           className="h-auto"
         >
-          <ScrollView contentContainerStyle={styles.inner}>
+          <View style={styles.inner}>
             <Text style={styles.title}>Welcome Back!</Text>
             <Text style={styles.subtitle}>
               Sign up to enjoy the feature of Revolutie
@@ -245,7 +245,7 @@ export default function LoginScreen({ navigation }: Props) {
                 <Text style={styles.signupText}> Create one</Text>
               </TouchableOpacity>
             </View>
-          </ScrollView>
+          </View>
         </Animated.View>
       </AuthLayout>
   );
