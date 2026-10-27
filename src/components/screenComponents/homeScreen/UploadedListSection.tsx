@@ -109,7 +109,7 @@ const UploadedListSection = ({ refreshTrigger }: { refreshTrigger?: number }) =>
               <SkeletonCard />
             </>
           ) : (
-            tracks?.slice(0.5).map((track) => (
+            tracks?.slice(0, 5).map((track) => (
               <Pressable
                 key={track.id}
                 onPress={() =>
@@ -119,13 +119,11 @@ const UploadedListSection = ({ refreshTrigger }: { refreshTrigger?: number }) =>
                   })
                 }
               >
-
-                
                 <UploadCard
                   id={track.id.toLocaleString()}
                   albumName={track.ReleaseTitle}
                   albumType={track.ReleaseType}
-                  albumImage={track.CoverArt.formats?.thumbnail?.url ?? ""}
+                  albumImage={track.CoverArt?.formats?.thumbnail?.url ?? ""}
                 />
               </Pressable>
             ))

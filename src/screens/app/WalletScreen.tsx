@@ -471,8 +471,14 @@ export default function WalletScreen() {
       >
         {/* ── Earnings Chart Card ── */}
         <View style={styles.card}>
-          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-            <Text style={[styles.cardSectionLabel, { marginBottom: 0 }]}>Total Earnings</Text>
+          {/* ── Top Row: Eyebrow Badge + Range Selector ── */}
+          <View style={styles.earningsHeaderTop}>
+            <View style={styles.earningsBadgeRow}>
+              <View style={styles.earningsIconBox}>
+                <Ionicons name="trending-up" size={16} color={Colors.primary} />
+              </View>
+              <Text style={styles.earningsEyebrow}>TOTAL EARNINGS</Text>
+            </View>
 
             {/* Range Selector */}
             <View style={styles.rangeRow}>
@@ -490,6 +496,19 @@ export default function WalletScreen() {
               ))}
             </View>
           </View>
+
+          {/* ── Hero Amount Row: Large Prominent Figure ── */}
+          <View style={styles.heroAmountRow}>
+            {loadingChart ? (
+              <ActivityIndicator color={Colors.primary} size="small" style={{ marginVertical: 4 }} />
+            ) : (
+              <Text style={styles.heroEarningsAmount}>{formatCurrency(totalEarnings)}</Text>
+            )}
+            <View style={styles.periodPill}>
+              <Text style={styles.periodPillText}>{rangeLabel}</Text>
+            </View>
+          </View>
+
 
           {loadingChart ? (
             <View style={styles.chartLoader}>
@@ -576,46 +595,75 @@ export default function WalletScreen() {
             </View>
           )}
 
+          {/*✅ Clean summary footer */}
           <View style={styles.chartFooter}>
-            <Text style={styles.chartFooterLabel}>Monthly Report ({rangeLabel})</Text>
-            <Text style={styles.chartFooterValue}>
-              Total Earnings = {formatCurrency(totalEarnings)}
-            </Text>
+            <Text style={styles.chartFooterLabel}>Reporting Period</Text>
+            <Text style={styles.chartFooterValue}>{rangeLabel} Overview</Text>
           </View>
+
         </View>
 
-        {/* ── Available Balance Banner ── */}
+        {/* ── Available Balance Card ── */}
         <LinearGradient
-          colors={[Colors.primary, "#5B21B6"]}
+          colors={[Colors.primary, "#4C1D95"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.balanceBanner}
         >
-          <View style={styles.balanceLeft}>
+         
+
+          {/* Top Row: Status badge & Wallet Icon */}
+          <View style={styles.bannerTopRow}>
             <View style={styles.balanceIconWrapper}>
-              <Ionicons name="business" size={24} color="#fff" />
-            </View>
-            <View>
-              {loadingBalance ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <Text style={styles.balanceAmount}>{formatCurrency(availableBalance)}</Text>
-              )}
-              <Text style={styles.balanceLabel}>Available To Withdraw</Text>
+              <Ionicons name="wallet-outline" size={20} color="#fff" />
             </View>
           </View>
+
+          {/* Middle: Eyebrow Label & Hero Amount */}
+          <View style={styles.bannerMiddle}>
+            <Text style={styles.balanceEyebrow}>AVAILABLE TO WITHDRAW</Text>
+            {loadingBalance ? (
+              <ActivityIndicator color="#fff" size="small" style={{ marginVertical: 8, alignSelf: "flex-start" }} />
+            ) : (
+              <Text style={styles.balanceAmount}>{formatCurrency(availableBalance)}</Text>
+            )}
+          </View>
+
+          {/* Threshold Notice (Shown only if balance is below $50) */}
+          {availableBalance < 50 && !loadingBalance && (
+            <View style={styles.thresholdNotice}>
+              <Ionicons name="information-circle-outline" size={15} color="rgba(255,255,255,0.9)" />
+              <Text style={styles.thresholdNoticeText}>
+                {formatCurrency(50 - availableBalance)} more needed to reach minimum payout ($50.00)
+              </Text>
+            </View>
+          )}
+
+          {/* Bottom Row: High-Contrast Primary CTA Button */}
           <TouchableOpacity
-            style={styles.requestPayoutBtn}
+            style={[
+              styles.requestPayoutBtn,
+              availableBalance < 50 && styles.requestPayoutBtnDisabled,
+            ]}
             activeOpacity={0.85}
+            disabled={availableBalance < 50}
             onPress={() => {
               setSelectedBankCardId(bankCards[0]?.id || null);
-              setPayoutAmount(availableBalance > 0 ? availableBalance.toString() : "");
+              setPayoutAmount(availableBalance >= 50 ? availableBalance.toString() : "");
               payoutSheetRef.current?.expand();
             }}
           >
-            <Text style={styles.requestPayoutBtnText}>Request Payout</Text>
+            <Text style={[styles.requestPayoutBtnText, availableBalance < 50 && styles.requestPayoutBtnTextDisabled]}>
+              Request Payout
+            </Text>
+            <Ionicons
+              name="arrow-forward"
+              size={16}
+              color= "#1A1A1A"
+            />
           </TouchableOpacity>
         </LinearGradient>
+
 
         {/* ── Payout History ── */}
         <View style={styles.card}>
@@ -1151,51 +1199,108 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     fontFamily: "PlusJakartaSans_700Bold",
   },
-  // Balance Banner
+  // Balance Card
   balanceBanner: {
-    borderRadius: 16,
-    paddingHorizontal: 10,
+    borderRadius: 20,
+    paddingHorizontal: 18,
     paddingVertical: 20,
+    position: "relative",
+    overflow: "hidden",
+  },
+  bannerTopRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    marginBottom: 14,
   },
-  balanceLeft: {
+  bannerStatusPill: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
+    gap: 6,
+    backgroundColor: "rgba(255, 255, 255, 0.16)",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+  },
+  bannerStatusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  bannerStatusText: {
+    fontSize: 11,
+    color: "#FFFFFF",
+    fontFamily: "PlusJakartaSans_700Bold",
+    fontWeight: "600",
   },
   balanceIconWrapper: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: "rgba(255,255,255,0.18)",
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.16)",
     alignItems: "center",
     justifyContent: "center",
   },
+  bannerMiddle: {
+    marginBottom: 16,
+  },
+  balanceEyebrow: {
+    fontSize: 11,
+    color: "rgba(255, 255, 255, 0.75)",
+    fontFamily: "PlusJakartaSans_700Bold",
+    letterSpacing: 0.6,
+    marginBottom: 4,
+  },
   balanceAmount: {
-    fontSize: 22,
+    fontSize: 32,
     fontWeight: "800",
-    color: "#fff",
+    color: "#FFFFFF",
     fontFamily: "PlusJakartaSans_700Bold",
   },
-  balanceLabel: {
-    fontSize: 12,
-    color: "rgba(255,255,255,0.75)",
+  thresholdNotice: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "rgba(245, 158, 11, 0.2)",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    marginBottom: 14,
+  },
+  thresholdNoticeText: {
+    fontSize: 11,
+    color: "#FFFFFF",
     fontFamily: "Poppins_400Regular",
-    marginTop: 2,
+    flex: 1,
   },
   requestPayoutBtn: {
-    backgroundColor: "rgba(255,255,255,0.22)",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  requestPayoutBtnDisabled: {
+    backgroundColor: "#ffffff",
+    shadowOpacity: 0,
+    elevation: 0,
   },
   requestPayoutBtnText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "700",
-    color: "#fff",
+    color: Colors.primary,
     fontFamily: "PlusJakartaSans_700Bold",
+  },
+  requestPayoutBtnTextDisabled: {
+    color: "#1A1A1A",
   },
   // Table
   tableHeader: {
@@ -1565,5 +1670,55 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_400Regular",
     fontWeight: "600",
     lineHeight: 16,
+  },
+  earningsHeaderTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  earningsBadgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  earningsIconBox: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: `${Colors.primary}15`,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  earningsEyebrow: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#6B7280",
+    letterSpacing: 0.8,
+    fontFamily: "PlusJakartaSans_700Bold",
+  },
+  heroAmountRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 10,
+    marginBottom: 16,
+  },
+  heroEarningsAmount: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#1A1A1A",
+    fontFamily: "PlusJakartaSans_700Bold",
+  },
+  periodPill: {
+    backgroundColor: "#F3F4F6",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  periodPillText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#6B7280",
+    fontFamily: "PlusJakartaSans_700Bold",
   },
 });
