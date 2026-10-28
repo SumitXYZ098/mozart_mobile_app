@@ -5,7 +5,6 @@ import {   View, Linking, Modal, Text, TouchableOpacity, StyleSheet, Image } fro
 import { Colors } from "@/theme/colors";
 import AuthNavigator from "./AuthNavigator";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { useLanguageStore } from "@/stores/useLanguageStore";
 import DrawerNavigator from "./DrawerNavigator";
 import ChoosePlanScreen from "@/screens/app/ChoosePlanScreen";
 import UpgradePlanScreen from "@/screens/app/UpgradePlanScreen";
@@ -28,7 +27,6 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
   const { user, isAuthLoaded, loadUserFromStorage } = useAuthStore();
-  const { loadLanguageFromStorage } = useLanguageStore();
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertType, setAlertType] = useState<"success" | "cancel">("success");
   const [alertDescription, setAlertDescription] = useState("");
@@ -36,7 +34,6 @@ export default function RootNavigator() {
 
   useEffect(() => {
     loadUserFromStorage();
-    loadLanguageFromStorage();
   }, []);
 
   useEffect(() => {

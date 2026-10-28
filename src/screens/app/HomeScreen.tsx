@@ -20,11 +20,9 @@ import DraftListSection from "@/components/screenComponents/homeScreen/DraftList
 import UploadedListSection from "@/components/screenComponents/homeScreen/UploadedListSection";
 import { useNavigation, useIsFocused } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useTranslation } from "@/utils/translations";
 
 export default function HomeScreen() {
   const { user } = useAuthStore();
-  const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const isFocused = useIsFocused();
   const [notificationCount, setNotificationCount] = React.useState<number>(0);
@@ -34,17 +32,17 @@ export default function HomeScreen() {
   const colors = useThemeColors();
   const isDarkMode = useThemeStore((state) => state.isDarkMode);
 
-  const getGreetingKey = (): "good_morning" | "good_afternoon" | "good_evening" | "good_night" => {
+  const getGreeting = (): string => {
     const hour = new Date().getHours();
 
     if (hour < 12) {
-      return "good_morning";
+      return "Good Morning";
     } else if (hour < 17) {
-      return "good_afternoon";
+      return "Good Afternoon";
     } else if (hour < 21) {
-      return "good_evening";
+      return "Good Evening";
     } else {
-      return "good_night";
+      return "Good Night";
     }
   };
 
@@ -154,8 +152,8 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.header}>
-            <Text style={[styles.title, { color: colors.black }]}>{`${t(getGreetingKey())}, ${user?.name}`}</Text>
-            <Text style={[styles.subtitle, { color: colors.black }]}>{t("welcome_to_mozart")}</Text>
+            <Text style={[styles.title, { color: colors.black }]}>{`${getGreeting()}, ${user?.name}`}</Text>
+            <Text style={[styles.subtitle, { color: colors.black }]}>Welcome to Mozart! 🎶</Text>
           </View>
 
           <View style={styles.newRelease}>
@@ -163,9 +161,9 @@ export default function HomeScreen() {
             <View className="w-[64px] h-[64px] rounded-full bg-white opacity-[0.1] absolute -left-9 -bottom-[35px] z-10" />
             <View className="flex flex-row justify-between items-center">
               <View className="flex flex-col">
-                <Text style={styles.releaseTitle}>{t("new_release")}</Text>
+                <Text style={styles.releaseTitle}>New Release</Text>
                 <Text style={styles.releaseSubTitle}>
-                  {t("new_release_desc")}
+                  Start a new single, EP, or album
                 </Text>
               </View>
               <TouchableOpacity

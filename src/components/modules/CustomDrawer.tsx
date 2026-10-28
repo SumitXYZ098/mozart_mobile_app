@@ -10,7 +10,6 @@ import {
 } from "react-native";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useThemeStore } from "@/stores/useThemeStore";
-import { useTranslation } from "@/utils/translations";
 import { LazyImage } from "./LazyImage";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -101,7 +100,6 @@ const DrawerItem = ({
 export default function CustomDrawer(props: any) {
   const { user, logOut } = useAuthStore();
   const { loadThemeFromStorage } = useThemeStore();
-  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
@@ -111,7 +109,7 @@ export default function CustomDrawer(props: any) {
   const activeRouteName = getActiveRouteName(props.state);
 
   const handleLogout = () => {
-    Alert.alert(t("logout") || "Log Out", "Are you sure you want to log out?", [
+    Alert.alert("Log Out", "Are you sure you want to log out?", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Log Out",
@@ -214,7 +212,7 @@ export default function CustomDrawer(props: any) {
 
           <DrawerItem
             icon="people"
-            label={t("artists") || "Artists"}
+            label="Artists"
             active={activeRouteName === "Artist"}
             onPress={() =>
               props.navigation.navigate("MainTabs", {
@@ -226,7 +224,7 @@ export default function CustomDrawer(props: any) {
 
           <DrawerItem
             icon="musical-notes"
-            label={t("catalogue") || "Catalogue"}
+            label="Catalogue"
             active={["Draft", "Upload", "NewRelease", "Track", "CalendarEvent"].includes(
               activeRouteName
             )}
@@ -240,7 +238,7 @@ export default function CustomDrawer(props: any) {
 
           <DrawerItem
             icon="wallet"
-            label={t("royalties") || "Royalties"}
+            label="Royalties"
             active={activeRouteName === "WalletMain"}
             onPress={() =>
               props.navigation.navigate("MainTabs", {
@@ -252,7 +250,7 @@ export default function CustomDrawer(props: any) {
 
           <DrawerItem
             icon="help-circle"
-            label={t("faqs") || "FAQs"}
+            label="FAQs"
             active={activeRouteName === "FAQs"}
             onPress={() =>
               props.navigation.navigate("MainTabs", {
@@ -264,7 +262,7 @@ export default function CustomDrawer(props: any) {
 
           <DrawerItem
             icon="chatbubble-ellipses"
-            label={t("live_chat") || "Live Chat"}
+            label="Live Chat"
             active={activeRouteName === "LiveChat"}
             onPress={() =>
               props.navigation.navigate("MainTabs", {
@@ -288,7 +286,7 @@ export default function CustomDrawer(props: any) {
 
           <DrawerItem
             icon="person"
-            label={t("profile") || "Profile"}
+            label="Profile"
             active={[
               "ProfileMain",
               "ChangePassword",
@@ -315,7 +313,7 @@ export default function CustomDrawer(props: any) {
             style={styles.logoutButton}
           >
             <Ionicons name="log-out" size={18} color="#ef4444" />
-            <Text style={styles.logoutText}>{t("logout") || "Log Out"}</Text>
+            <Text style={styles.logoutText}>Log Out</Text>
           </TouchableOpacity>
         </View>
       </View>
