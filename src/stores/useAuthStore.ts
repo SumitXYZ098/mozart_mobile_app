@@ -57,6 +57,12 @@ export const useAuthStore = create<AuthStore>((set) => ({
    * Clear user from store, AsyncStorage, and SecureStore
    */
   logOut: async () => {
+    try {
+      const { unregisterDeviceTokenWithBackend } = await import('@/services/notificationService');
+      await unregisterDeviceTokenWithBackend();
+    } catch (err) {
+      console.warn('Failed to unregister notification token on logout:', err);
+    }
     await storageAPI.removeItem(STORAGE_KEY);
     await secureStoreAPI.removeItem("userToken");
     set({ user: null });

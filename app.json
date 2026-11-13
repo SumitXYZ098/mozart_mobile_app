@@ -33,18 +33,21 @@
     },
     "android": {
       "icon": "./assets/icon.png",
-      "backgroundColor": "#6739B7",
+      "backgroundColor": "#7f4fd1",
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#6739B7"
       },
+      "googleServicesFile": "./google-services.json",
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO",
-        "android.permission.INTERNET"
+        "android.permission.INTERNET",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.VIBRATE"
       ],
       "package": "com.anonymous.amozart"
     },
@@ -82,7 +85,26 @@
           "iosUserTrackingPermission": "This identifier will be used to deliver personalized ads to you."
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      "expo-audio",
+      "expo-status-bar",
+      "@react-native-firebase/app",
+      "@react-native-firebase/messaging",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#6739B7"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "extraProguardRules": "-keep class * extends androidx.room.RoomDatabase { *; <init>(); }\n-keep class * extends androidx.work.InputMerger { *; <init>(); }\n-keep class androidx.work.impl.** { *; }\n-dontwarn androidx.work.impl.**\n-keep class androidx.work.** { *; }\n-keep class androidx.startup.** { *; }\n-dontwarn androidx.startup.**"
+          }
+        }
+      ]
     ],
     "extra": {
       "eas": {

@@ -14,6 +14,10 @@ import { verifyPayment } from "@/api/subscriptionApi";
 import { getArtistsLimit } from "@/utils/utils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SplashScreen from 'expo-splash-screen';
+import {
+  registerDeviceTokenWithBackend,
+  setupFirebaseNotificationListeners,
+} from "@/services/notificationService";
 
 export type RootStackParamList = {
   Dashboard: undefined;
@@ -35,6 +39,23 @@ export default function RootNavigator() {
   useEffect(() => {
     loadUserFromStorage();
   }, []);
+
+  useEffect(() => {
+    const unsubscribe = setupFirebaseNotificationListeners();
+    return () => {
+      if (typeof unsubscribe === "function") {
+        unsubscribe();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (user?.token) {
+      registerDeviceTokenWithBackend().catch((e) =>
+        console.warn("Notification registration warning:", e)
+      );
+    }
+  }, [user?.token]);
 
   useEffect(() => {
     if (isAuthLoaded) {

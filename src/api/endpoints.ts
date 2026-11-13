@@ -139,4 +139,8 @@ export const ENDPOINTS = {
   PAYOUT_REQUESTS: `${BASE_URL}/api/payout-requests`,
   PAYOUT_REQUEST_BY_ID: (id: number | string) =>
     `${BASE_URL}/api/payout-requests/${id}`,
+
+// Notification
+REGISTER_DEVICE_TOKEN: `${BASE_URL}/api/device-tokens/register`,
+UNREGISTER_DEVICE_TOKEN: `${BASE_URL}/api/device-tokens/unregister`,
 };

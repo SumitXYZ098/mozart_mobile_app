@@ -16,7 +16,7 @@ export default function AuthLayout({ children, withBackground = true }: Props) {
       keyboardShouldPersistTaps="handled"
     >
       <View style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
+        <StatusBar barStyle="dark-content"  />
         {withBackground ? (
           <ImageBackground
             source={require("../../../assets/images/background.png")}
