@@ -2,9 +2,6 @@ import "react-native-reanimated";
 import "react-native-gesture-handler";
 import React, { useEffect, useState } from "react";
 import * as SplashScreen from 'expo-splash-screen';
-
-// Keep the splash screen visible while loading the initial auth state and resources
-SplashScreen.preventAutoHideAsync().catch(() => { });
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as Font from "expo-font";
@@ -26,7 +23,8 @@ import RootNavigator from "@/navigation/RootNavigator";
 import { PortalProvider } from "@gorhom/portal";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 
-
+// Keep the splash screen visible while loading the initial auth state and resources
+SplashScreen.preventAutoHideAsync().catch(() => { });
 
 const queryClient = new QueryClient();
 
